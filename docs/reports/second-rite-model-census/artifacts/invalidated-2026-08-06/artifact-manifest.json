@@ -1,42 +1,37 @@
 {
   "status": "invalidated",
   "source": "user-supplied outputs from the 2026-08-06 local model-census run",
-  "preview_policy": "Committed PNGs are nearest-neighbor downscaled and palette-reduced review previews. Original source hashes are retained for provenance.",
-  "files": [
+  "committed_preview": {
+    "file": "invalidated-overview.png",
+    "bytes": 130448,
+    "sha256": "6fa39f3eb83c0a69174f7a9376bb980eea3b865d8c23f63acd138038729325b4",
+    "description": "Compact composite assembled from the supplied invalidated decision sheets for regression/audit reference."
+  },
+  "source_sheets": [
     {
       "file": "failures.png",
-      "committed_bytes": 103,
-      "committed_sha256": "628452bb093573c1f87922e52047e36b3d6b275072bc64a936cf8bb4af093787",
-      "source_bytes": 717,
-      "source_sha256": "5970e760e83c4a226861eabba319a8c00b3a4ec3703184345eb1007d594b2ec0"
+      "bytes": 717,
+      "sha256": "5970e760e83c4a226861eabba319a8c00b3a4ec3703184345eb1007d594b2ec0"
     },
     {
       "file": "paired_states.png",
-      "committed_bytes": 59926,
-      "committed_sha256": "9fe89d777396980dae5c74703cf254a11066fd17403f9a2579373f1574299e09",
-      "source_bytes": 456314,
-      "source_sha256": "8861faff83cfaf4b68ed03ca08ff013957a06a87b8a0cb1c5501a127455f96ec"
+      "bytes": 456314,
+      "sha256": "8861faff83cfaf4b68ed03ca08ff013957a06a87b8a0cb1c5501a127455f96ec"
     },
     {
       "file": "tier_a_stateful.png",
-      "committed_bytes": 50034,
-      "committed_sha256": "d21fd06e09d258d1fb28c44ef7beafe3337b51c8743e950fa322e3d2da8299c7",
-      "source_bytes": 375051,
-      "source_sha256": "114589adece26dcf963010d60d2357efd502126a1061c36bd81d599794df2b42"
+      "bytes": 375051,
+      "sha256": "114589adece26dcf963010d60d2357efd502126a1061c36bd81d599794df2b42"
     },
     {
       "file": "tier_b_architecture.png",
-      "committed_bytes": 20384,
-      "committed_sha256": "03aadb048d3c3fe9ae937447afc49f245b34d04fa82cf4a14902deb6cd7759e9",
-      "source_bytes": 151736,
-      "source_sha256": "224deb6a0509ffe7b62052691ac56f933faed2f965f1eea3c1a75fffc38dbca0"
+      "bytes": 151736,
+      "sha256": "224deb6a0509ffe7b62052691ac56f933faed2f965f1eea3c1a75fffc38dbca0"
     },
     {
       "file": "tier_c_environment.png",
-      "committed_bytes": 20221,
-      "committed_sha256": "da075188e8db375e0481a010dcdb387bce907bc5172bb5ba2aa8907f483e9329",
-      "source_bytes": 152364,
-      "source_sha256": "76ebdc258c3703642bf6d85978b65b9e3881a2ad78a2dcb36b6a07a2b79a05c8"
+      "bytes": 152364,
+      "sha256": "76ebdc258c3703642bf6d85978b65b9e3881a2ad78a2dcb36b6a07a2b79a05c8"
     }
   ]
 }
