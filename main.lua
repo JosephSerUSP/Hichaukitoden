@@ -1351,6 +1351,9 @@ require("engine.scenes.battle").onResolved = function(outcome)
     if not resume or not activeWalker then return end
     local target = (outcome == "victory") and resume.victoryNode or resume.defeatNode
     if not target or not activeWalker.graph or not activeWalker.graph.nodes[target] then
+        activeWalker.currentNode = nil
+        activeWalker.currentNodeId = nil
+        finishDialogueToMap()
         return
     end
     activeWalker:goToNode(target)
@@ -1376,6 +1379,9 @@ require("engine.recruitment").onResolved = function(outcome)
         target = resume.cancelledNode
     end
     if not target or not activeWalker.graph or not activeWalker.graph.nodes[target] then
+        activeWalker.currentNode = nil
+        activeWalker.currentNodeId = nil
+        finishDialogueToMap()
         return
     end
     activeWalker:goToNode(target)
