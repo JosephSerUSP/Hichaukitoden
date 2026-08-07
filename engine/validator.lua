@@ -3017,11 +3017,14 @@ elseif paramDef.type == "script" then
         check(mockPassedCtx == mockCtx, "flow.run passed incorrect context to interpreter")
         check(evs and evs[1] and evs[1].type == "mock_flow_event", "flow.run did not return events from interpreter")
 
-        -- Invalid phase
+        -- Invalid phase: required phases are an engine contract, so a missing
+        -- one raises rather than yielding an empty event list (see flow.run).
         mockRunCalled = false
-        local emptyEvs = flow.run("_test.missing_phase", mockCtx)
+        local okMissing, missingErr = pcall(flow.run, "_test.missing_phase", mockCtx)
         check(not mockRunCalled, "flow.run called interpreter for missing phase")
-        check(type(emptyEvs) == "table" and #emptyEvs == 0, "flow.run did not return empty table for missing phase")
+        check(not okMissing, "flow.run did not raise for missing phase")
+        check(type(missingErr) == "string" and missingErr:find("_test.missing_phase", 1, true) ~= nil,
+            "flow.run's missing-phase error did not name the phase")
 
         interpreter.runImmediate = origRunImmediate
     end
