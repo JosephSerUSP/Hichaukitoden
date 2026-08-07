@@ -115,6 +115,13 @@ function loader.init(root)
     loader.system = J("system.json")
     loader.commonEvents = J("commonEvents.json")
     loader.skills = J("skills.json")
+    local validSkillScopes = { battle = true, field = true, always = true, none = true }
+    for id, skill in pairs(loader.skills or {}) do
+        if type(skill.scope) ~= "string" or not validSkillScopes[skill.scope] then
+            error("skill '" .. tostring(id) .. "' has invalid or missing scope '"
+                .. tostring(skill.scope) .. "' (expected battle, field, always, or none)")
+        end
+    end
     loader.passives = J("passives.json")
     loader.states = J("states.json")
     loader.roles = J("roles.json")
