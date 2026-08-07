@@ -26,6 +26,7 @@ Usage:
 
 import argparse
 import base64
+import html
 import json
 import os
 import sys
@@ -36,6 +37,7 @@ END = "SCREENSHOTS END"
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 REF_DIR = os.path.join(ROOT, "tools", "golden", "screens")
 ACTUAL_DIR = os.path.join(ROOT, "tools", "golden", "screens-actual")
+COMPARISON_HTML = os.path.join(ROOT, "tools", "golden", "screens-comparison.html")
 
 
 def extract_payload(text):
@@ -128,6 +130,8 @@ def do_check(captures):
     for rel in sorted(orphaned):
         print("  ORPHANED REFERENCE  %s (no longer captured)" % rel)
 
+    write_comparison_html(seen, mismatched, missing, orphaned)
+
     if mismatched or missing or orphaned:
         print("")
         print("Differing frames written to tools/golden/screens-actual/ -- open them")
@@ -139,6 +143,65 @@ def do_check(captures):
         raise SystemExit(1)
 
     print("SCREENS OK")
+
+
+def write_comparison_html(seen, mismatched, missing, orphaned):
+    """Write a local side-by-side gallery after every G5 comparison."""
+    reference_paths = set()
+    for dirpath, _, filenames in os.walk(REF_DIR):
+        for name in filenames:
+            if name.endswith(".png"):
+                reference_paths.add(os.path.relpath(
+                    os.path.join(dirpath, name), REF_DIR).replace("\\", "/"))
+
+    actual_paths = set()
+    if os.path.isdir(ACTUAL_DIR):
+        for dirpath, _, filenames in os.walk(ACTUAL_DIR):
+            for name in filenames:
+                if name.endswith(".png"):
+                    actual_paths.add(os.path.relpath(
+                        os.path.join(dirpath, name), ACTUAL_DIR).replace("\\", "/"))
+
+    paths = sorted(reference_paths | actual_paths | set(seen))
+    mismatch_set, missing_set, orphaned_set = set(mismatched), set(missing), set(orphaned)
+    rows = []
+    for rel in paths:
+        status = ("mismatch" if rel in mismatch_set else
+                  "missing" if rel in missing_set else
+                  "orphaned" if rel in orphaned_set else "match")
+        ref_src = "screens/" + rel if rel in reference_paths else ""
+        actual_src = "screens-actual/" + rel if rel in actual_paths else ""
+        ref_img = '<img src="%s" loading="lazy" alt="reference">' % html.escape(ref_src) if ref_src else '<div class="empty">No reference</div>'
+        actual_img = '<img src="%s" loading="lazy" alt="actual">' % html.escape(actual_src) if actual_src else '<div class="empty">No actual capture</div>'
+        rows.append("""<article class=\"card %s\" data-status=\"%s\">\n"
+                    "<div class=\"title\"><span>%s</span><b>%s</b></div>\n"
+                    "<div class=\"pair\"><figure><figcaption>Reference</figcaption>%s</figure>"
+                    "<figure><figcaption>Actual</figcaption>%s</figure></div>\n"
+                    "</article>""" % (
+                        status, status, html.escape(rel), status.upper(), ref_img, actual_img))
+
+    counts = {key: sum(1 for rel in paths if ("mismatch" if rel in mismatch_set else
+              "missing" if rel in missing_set else "orphaned" if rel in orphaned_set else "match") == key)
+              for key in ("match", "mismatch", "missing", "orphaned")}
+    document = """<!doctype html>
+<meta charset="utf-8">
+<title>G5 screenshot comparison</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111827;color:#e5e7eb;font:14px system-ui,sans-serif}
+header{position:sticky;top:0;z-index:2;padding:16px 20px;background:#1f2937;border-bottom:1px solid #374151}
+h1{margin:0 0 8px;font-size:20px}button{margin-right:6px;padding:6px 10px;border:1px solid #4b5563;border-radius:5px;background:#111827;color:#e5e7eb;cursor:pointer}button.active{background:#2563eb;border-color:#60a5fa}
+#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:14px;padding:16px}
+.card{background:#1f2937;border:2px solid #374151;border-radius:8px;padding:10px}.card.mismatch{border-color:#ef4444}.card.missing{border-color:#f59e0b}.card.orphaned{border-color:#a855f7}.card.match{border-color:#166534}
+.title{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font:12px ui-monospace,monospace}.title b{font:11px system-ui,sans-serif}.mismatch .title b{color:#fca5a5}.missing .title b{color:#fcd34d}.orphaned .title b{color:#d8b4fe}.match .title b{color:#86efac}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}figure{margin:0;background:#030712;padding:5px}figcaption{color:#9ca3af;font-size:11px;margin-bottom:4px}img{display:block;width:100%%;image-rendering:auto}.empty{height:180px;display:grid;place-items:center;color:#6b7280}
+</style>
+<header><h1>G5 screenshot comparison</h1><div id=\"summary\">Generated after the latest G5 run: %d match, %d mismatch, %d missing, %d orphaned.</div><p><button class=\"active\" data-filter=\"all\">All</button><button data-filter=\"mismatch\">Mismatches</button><button data-filter=\"missing\">Missing</button><button data-filter=\"orphaned\">Orphaned</button><button data-filter=\"match\">Matches</button></p></header>
+<main id=\"grid\">%s</main>
+<script>document.querySelectorAll('button').forEach(b=>b.onclick=()=>{document.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');let f=b.dataset.filter;document.querySelectorAll('.card').forEach(c=>c.hidden=f!='all'&&c.dataset.status!=f)})</script>
+""" % (counts["match"], counts["mismatch"], counts["missing"], counts["orphaned"], "\n".join(rows))
+    with open(COMPARISON_HTML, "w", encoding="utf-8") as handle:
+        handle.write(document)
+    print("Wrote screenshot comparison: tools/golden/screens-comparison.html")
 
 
 def write_actual(rel, data):

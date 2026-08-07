@@ -1233,6 +1233,13 @@ local function drawWorldSpace(session)
     local persistentBatchDraws, dynamicMeshDraws, modelDraws = 0, 0, 0
     local dynamicByCategory = {}
     local dynamicSourceQuads = {}
+    local profile = {
+        queuePlacedModelsMs = 0, modelVisibilityMs = 0, nearClipMs = 0,
+        meshUploadMs = 0, modelDrawLoopMs = 0, placedModelsVisited = 0,
+        modelsNearClipped = 0, inputTrianglesClipped = 0,
+        outputVerticesUploaded = 0, clippedMeshResizes = 0,
+    }
+    local profileVariant = session.profile3dVariant or "current"
     local function quadVisible(a, b, c, d)
         local minDepth, maxDepth = math.huge, -math.huge
         for _, point in ipairs({ a, b, c, d }) do
@@ -1730,6 +1737,7 @@ local function drawWorldSpace(session)
             placed[#placed + 1] = {
                 mesh = mesh, model = true, vertices = vertices,
                 texture = modelGroup.texture,
+                isHeightSurface = spec.runtimeSurface and true or false,
                 centerX = originX, centerY = originY, centerZ = 0.5,
             }
         end
@@ -1742,19 +1750,33 @@ local function drawWorldSpace(session)
         -- hardware plane produced one-pixel cracks between independently
         -- clipped neighbours as the camera moved along a wall.
         local cpuClipPlane = 0.005
+        local queueStarted = love.timer.getTime()
         for _, placed in ipairs(placedGroups) do
+            if not (profileVariant == "no-height" and placed.isHeightSurface) then
+            profile.placedModelsVisited = profile.placedModelsVisited + 1
+            local visibilityStarted = love.timer.getTime()
             local anyInFront, anyBehind = false, false
             for _, vertex in ipairs(placed.vertices) do
                 local vertexDepth = (vertex[1] - cameraX) * dirX + (vertex[2] - cameraY) * dirY
                 if vertexDepth >= cpuClipPlane then anyInFront = true else anyBehind = true end
             end
+            profile.modelVisibilityMs = profile.modelVisibilityMs
+                + (love.timer.getTime() - visibilityStarted) * 1000
             if anyInFront then
                 local drawable = placed
-                if anyBehind then
+                if anyBehind and profileVariant ~= "no-clip" then
+                    profile.modelsNearClipped = profile.modelsNearClipped + 1
+                    profile.inputTrianglesClipped = profile.inputTrianglesClipped
+                        + math.floor(#placed.vertices / 3)
+                    local clipStarted = love.timer.getTime()
                     local clipped = viewport_3d.clipTrianglesToNear(
                         placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane)
+                    profile.nearClipMs = profile.nearClipMs
+                        + (love.timer.getTime() - clipStarted) * 1000
                     local needed = #clipped
+                    profile.outputVerticesUploaded = profile.outputVerticesUploaded + needed
                     if not placed.clippedMesh or placed.clippedCapacity < needed then
+                        profile.clippedMeshResizes = profile.clippedMeshResizes + 1
                         if placed.clippedMesh and placed.clippedMesh.release then placed.clippedMesh:release() end
                         local capacity = 6
                         while capacity < needed do capacity = capacity * 2 end
@@ -1763,8 +1785,11 @@ local function drawWorldSpace(session)
                         if placed.texture then placed.clippedMesh:setTexture(placed.texture) end
                         placed.clippedCapacity = capacity
                     end
+                    local uploadStarted = love.timer.getTime()
                     placed.clippedMesh:setVertices(clipped, 1, needed)
                     placed.clippedMesh:setDrawRange(1, needed)
+                    profile.meshUploadMs = profile.meshUploadMs
+                        + (love.timer.getTime() - uploadStarted) * 1000
                     drawable = {
                         mesh = placed.clippedMesh, model = true,
                         centerX = placed.centerX, centerY = placed.centerY, centerZ = placed.centerZ,
@@ -1775,7 +1800,10 @@ local function drawWorldSpace(session)
                 drawable.sequence = #surfaces + 1
                 surfaces[#surfaces + 1] = drawable
             end
+            end
         end
+        profile.queuePlacedModelsMs = profile.queuePlacedModelsMs
+            + (love.timer.getTime() - queueStarted) * 1000
     end
 
     for _, placement in ipairs(pendingFloorModels) do
@@ -1995,10 +2023,13 @@ local function drawWorldSpace(session)
         if a.depth == b.depth then return a.sequence < b.sequence end
         return a.depth > b.depth
     end)
+    local modelDrawStarted = love.timer.getTime()
     for _, g in ipairs(surfaces) do
         if g.mesh then
             if g.model then modelDraws = modelDraws + 1 end
-            love.graphics.draw(g.mesh)
+            if not (profileVariant == "no-draw" and g.model) then
+                love.graphics.draw(g.mesh)
+            end
         elseif #g.vertices > 0 then
             dynamicMeshDraws = dynamicMeshDraws + 1
             dynamicByCategory[g.category or "dynamic"] =
@@ -2025,9 +2056,12 @@ local function drawWorldSpace(session)
             end
             entry.mesh:setVertices(g.vertices, 1, needed)
             entry.mesh:setDrawRange(1, needed)
-            love.graphics.draw(entry.mesh)
+            if not (profileVariant == "no-draw" and g.model) then
+                love.graphics.draw(entry.mesh)
+            end
         end
     end
+    profile.modelDrawLoopMs = (love.timer.getTime() - modelDrawStarted) * 1000
     love.graphics.setShader()
     if #(structure.worldEffectHandles or {}) > 0 or structure.ambientEffectHandle then
         require("presentation.effekseer").drawWorld({
@@ -2069,6 +2103,7 @@ local function drawWorldSpace(session)
         residentStructuralVertices = residentVertices,
         dynamicByCategory = dynamicByCategory,
         dynamicSourceQuads = dynamicSourceQuads,
+        profile = profile,
     }
     require("presentation.door_transition").draw()
 end

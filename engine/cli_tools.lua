@@ -1146,7 +1146,7 @@ end
 
 -- Deterministic headless 3D renderer profile. `flush` makes each sample include
 -- command submission instead of measuring only Lua-side queue construction.
-function cli.runProfile3D(mapId, frameCount, loader)
+function cli.runProfile3D(mapId, frameCount, loader, variant)
     local json = require("data.json")
     local exploration = require("engine.exploration")
     local viewport_3d = require("presentation.viewport_3d")
@@ -1165,6 +1165,7 @@ function cli.runProfile3D(mapId, frameCount, loader)
     os.time = originalTime
     if not loaded then error(loadError, 0) end
     positionAtClearCorridor(session)
+    session.profile3dVariant = variant or "current"
     viewport_3d.init()
     local canvas = love.graphics.newCanvas(256, 240)
     love.graphics.setCanvas({ canvas, depth = true, stencil = true })
@@ -1204,6 +1205,7 @@ function cli.runProfile3D(mapId, frameCount, loader)
     love.graphics.setCanvas()
     local payload = {
         mapId = mapId,
+        variant = session.profile3dVariant,
         frames = count,
         coldMs = coldMs,
         meanMs = total / count,
@@ -1227,6 +1229,7 @@ function cli.runProfile3D(mapId, frameCount, loader)
         worldEffectHandles = frameStats.worldEffectHandles,
         dynamicByCategory = frameStats.dynamicByCategory,
         dynamicSourceQuads = frameStats.dynamicSourceQuads,
+        profile = frameStats.profile,
         queuedSurfaces = frameStats.queuedSurfaces,
     }
     print("PROFILE 3D BEGIN")

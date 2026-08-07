@@ -95,6 +95,7 @@ local previewGeometryOverlay = nil
 local isProfile3DMode = false
 local profile3DMapId = nil
 local profile3DFrames = nil
+local profile3DVariant = nil
 local isPreviewFogMode = false
 local previewFogSpec = nil
 local previewFogMapId = nil
@@ -374,7 +375,8 @@ function love.load(arg)
                 isProfile3DMode = true
                 profile3DMapId = arg[i + 1]
                 profile3DFrames = arg[i + 2]
-                i = i + 2
+                profile3DVariant = arg[i + 3]
+                i = i + 3
             elseif val == "savetest" then
                 isSaveTestMode = true
             elseif val == "unittest" then
@@ -517,7 +519,7 @@ function love.load(arg)
 
     if isProfile3DMode then
         loader.init(cliCampaignRoot)
-        cli_tools.runProfile3D(profile3DMapId or 1, profile3DFrames, loader)
+        cli_tools.runProfile3D(profile3DMapId or 1, profile3DFrames, loader, profile3DVariant)
         love.event.quit(0)
         return
     end
