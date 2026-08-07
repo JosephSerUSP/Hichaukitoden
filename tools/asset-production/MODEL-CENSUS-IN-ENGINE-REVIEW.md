@@ -1,229 +1,287 @@
-# Second Rite model census — local in-engine review
+# Second Rite Model Census — In-Engine Review Protocol (v2)
 
-This brief defines the first local engine-rendering pass for the procedural model
-census. It is deliberately narrower than production integration: the goal is to
-learn which architectural and environmental model families survive Second Rite's
-actual first-person renderer, scale, fog, snapping, dithering and materials.
+This is the authoritative review protocol for the 16-concept / 25-state procedural model census.
+
+**The 2026-08-06 v1 review is invalidated.** Its contact sheets exposed placement-adapter and camera/context defects. See `docs/reports/second-rite-model-census/in-engine-review.md` and the preserved invalid sheets under `docs/reports/second-rite-model-census/artifacts/invalidated-2026-08-06/`.
 
 ## Purpose
 
-Use the real LÖVE runtime and existing world renderer to produce repeatable,
-comparable screenshots of a curated 16-concept cohort. Judge models in ordinary
-play conditions rather than in Blender or isolated contact-sheet lighting.
+The review answers two separate questions instead of conflating them:
 
-This pass must not:
+1. **Model diagnostic:** does the asset's geometry, scale, material hierarchy, state change and silhouette survive Second Rite's actual renderer?
+2. **Context compatibility:** how does the same asset behave against the current legacy First Stratum presentation?
 
-- promote census models into production maps or registries;
-- redesign or repair models during capture;
-- add model-specific runtime branches;
-- introduce a second renderer, OBJ loader, camera implementation or material
-  authority;
-- update or recapture golden reference images;
-- spend time on the census NPC meshes. The humanoid grammar is considered a
-  failed experiment for this pass and remains preserved only as evidence.
+The first question is primary. The current `dungeon_default` atlas is aesthetically outdated, so the contextual pass is useful for runtime scale/readability/fog competition but is not treated as the target art-direction authority.
 
-## Materialize the census
+All captures must pass through `presentation.viewport_3d.draw(session)` and the normal production placement channels. Review code may construct hermetic sessions and temporary tilesets, but it must not call renderer-local mesh queue functions directly.
 
-From the repository root:
+## Cohort
 
-```text
+### Tier A — Stateful gameplay objects
+
+- `census_chest_arched_reliquary_chest` — `closed`, `open`
+- `census_door_portcullis` — `closed`, `open`
+- `census_door_chapel_double_door` — `closed`, `open`
+- `census_door_bone_gate` — `closed`, `open`
+- `census_altar_baptismal_font` — `inactive`, `active`
+- `census_altar_portable_reliquary` — `inactive`, `active`
+- `census_altar_ritual_basin` — `inactive`, `active`
+
+### Tier B — Architectural / wall-bound forms
+
+- `census_architecture_grand_archway` — `default`
+- `census_architecture_shrine_alcove` — `default`
+- `census_wall_azulejo_relief` — `default`
+- `census_wall_coat_of_arms` — `default`
+- `census_wall_saint_niche` — `default`
+
+### Tier C — Scale / environmental references
+
+- `census_vessel_azulejo_jar` — `intact`, `broken`
+- `census_vessel_broad_storage_jar` — `intact`, `broken`
+- `census_furniture_supply_cart` — `default`
+- `census_organic_petrified_tree` — `default`
+
+NPC procedural meshes remain excluded as a separate failed experiment.
+
+## Gate Zero — materialization and provenance
+
+Materialize first:
+
+```powershell
 python tools/asset-production/materialize_model_census.py --build
 ```
 
-Before implementing a review harness, verify that these exist:
+The LÖVE harness verifies and hashes the already-materialized inputs. It does not rebuild them. Hash coverage includes OBJ, MTL, `map_Kd` dependencies, `review_manifest.json`, the census asset-set manifest, current dungeon atlas, map/tileset/engine data, and the renderer/OBJ/mesh presentation modules.
 
-```text
-assets/authoring/second_rite_census/asset-set.json
-assets/models/second_rite_census/
-docs/reports/second-rite-model-census/evaluation.json
+Any missing dependency aborts before visual work begins.
+
+## Production placement adapters
+
+The manifest assigns exactly one adapter to each concept.
+
+### `event_model`
+
+Use `currentMapData.events[]` with `model = <obj path>` and a non-wall event. The production event presentation resolver must decide that it is a model placement.
+
+### `floor_feature_model`
+
+Create a temporary tileset feature:
+
+```lua
+{ id = "census_review_feature", role = "floor_feature", model = "...obj" }
 ```
 
-The materializer validates its archive checksum, expands the authored source,
-runs the census tests and regenerates all staged products.
+and a generated placement using the **production lookup key**:
 
-## Primary cohort
-
-State products follow this exact path pattern:
-
-```text
-assets/models/second_rite_census/<asset_id>_<state>.obj
+```lua
+{ material = "census_review_feature", x = ..., y = ... }
 ```
 
-States are products of one concept, not separate concepts.
+Do not use `id` on the generated placement; the renderer reads `material`.
 
-### Tier A — stateful gameplay objects
+### `wall_feature_model`
 
-| Asset ID | Display name | States | Role / placement |
-|---|---|---|---|
-| `census_chest_arched_reliquary_chest` | Arched Reliquary Chest | `closed`, `open` | event prop / floor centre |
-| `census_door_portcullis` | Ritual Portcullis | `closed`, `open` | structural opening / opening centre |
-| `census_door_chapel_double_door` | Chapel Double Door | `closed`, `open` | structural opening / opening centre |
-| `census_door_bone_gate` | Ossuary Bone Gate | `closed`, `open` | structural opening / opening centre |
-| `census_altar_baptismal_font` | Baptismal Font | `inactive`, `active` | event prop / floor centre |
-| `census_altar_portable_reliquary` | Portable Reliquary Dais | `inactive`, `active` | event prop / floor centre |
-| `census_altar_ritual_basin` | Ritual Basin | `inactive`, `active` | event prop / floor centre |
+Create the same feature/material relationship with `role = "wall_feature"`, attach it to an actual `#` wall cell, and expose a neighboring floor face to the camera.
 
-### Tier B — architectural and wall-bound forms
+`wallEvent = true` is not a generic wall-OBJ adapter.
 
-| Asset ID | Display name | States | Role / placement |
-|---|---|---|---|
-| `census_architecture_grand_archway` | Grand Processional Archway | `default` | multi-cell architecture / floor centre |
-| `census_architecture_shrine_alcove` | Deep Shrine Alcove | `default` | multi-cell architecture / wall context |
-| `census_wall_azulejo_relief` | Azulejo Ritual Relief | `default` | surface fixture / wall centre |
-| `census_wall_coat_of_arms` | Funerary Coat of Arms | `default` | surface fixture / wall centre |
-| `census_wall_saint_niche` | Hollow Saint Niche | `default` | surface fixture / wall centre |
+### `opening_model`
 
-### Tier C — scale and environmental references
+The map grid itself must contain `o`. The renderer derives prepared opening cells from that grid value and resolves the door model through `tileset.doors` / door spec. Do not invent or depend on `session.openingCells`.
 
-| Asset ID | Display name | States | Role / placement |
-|---|---|---|---|
-| `census_vessel_azulejo_jar` | Azulejo Storage Jar | `intact`, `broken` | object fixture / floor centre |
-| `census_vessel_broad_storage_jar` | Broad Storage Jar | `intact`, `broken` | object fixture / floor centre |
-| `census_furniture_supply_cart` | Pilgrim Supply Cart | `default` | object fixture / floor centre |
-| `census_organic_petrified_tree` | Petrified Processional Tree | `default` | landmark / floor centre |
+The review fixture uses a north-south corridor with walls immediately west/east of the `o` cell so opening-axis resolution is deterministic.
 
-## Harness rules
+### `large_floor_model`
 
-Inspect the existing map data, model placement path, event representation, CLI
-capture tools and G5 screenshot machinery before changing anything.
+Use the production event-model path at the declared interaction-facing anchor, with camera distance derived from concept bounds so oversized architecture does not intersect the camera.
 
-Prefer, in order:
+## Gate One — adapter visibility smoke test
 
-1. an existing data-driven temporary map or preview scene;
-2. an existing CLI/golden-script route that can enter that map and set a fixed
-   camera;
-3. one small reusable review-only command or scene if the current engine has no
-   suitable route.
+Before the full visual matrix, render five model/control pairs in the neutral context, `one_cell`, frontal, normal lighting:
 
-The harness must use the existing OBJ/MTL loader and real world renderer. It
-must not special-case chest, door or census IDs in production rendering code.
-Missing model files, materials, states or placement frames must fail loudly.
+- chest closed → `event_model`
+- portcullis closed → `opening_model`
+- azulejo jar intact → `floor_feature_model`
+- saint niche default → `wall_feature_model`
+- grand arch default → `large_floor_model`
 
-Keep all review data isolated and clearly named. A temporary review map may live
-in ordinary data only when it is unreachable from the campaign and explicitly
-identified as review-only. Prefer an output or test fixture when the current
-architecture already supports one.
+For each adapter, render:
 
-## Capture matrix
+1. fixture with the production placement but no model payload;
+2. otherwise identical fixture with the model payload.
 
-Each concept must be captured in three contexts where applicable:
+Compute pixel difference. The harness requires at least a small non-zero changed-pixel count and mean absolute delta. An effectively identical pair aborts the run:
 
-1. **neutral geometry bay** — simple floor, wall and ceiling with no flattering
-   decorative competition;
-2. **First Stratum context** — current representative First Stratum surfaces,
-   normal fog and normal renderer effects;
-3. **functional placement** — the model performing its implied role: gate
-   blocking a passage, alcove terminating a wall, relief mounted on a wall,
-   cart occupying plausible floor space, and so on.
+`CAPTURE INVALID: MODEL NOT VISIBLE`
 
-Use these camera conditions:
+This gate is an instrumentation invariant, not a human art score.
 
-- close interaction range;
-- one cell away;
-- two to three cells away;
-- frontal view;
-- approximately 35–45 degree oblique view.
+## Visual contexts
 
-Paired semantic states must use exactly the same camera transform and renderer
-settings. Do not choose a more flattering camera for one state.
+### `neutral` — primary diagnostic
 
-Capture both:
+- runtime-generated unpatterned neutral-gray atlas;
+- very small luminance separation between wall/floor/ceiling only to preserve orientation;
+- no decorative texture or panorama;
+- model retains its own real materials;
+- real Second Rite projection, hardware depth, affine treatment, vertex snapping, dithering and nearest filtering;
+- controlled fog/time behavior.
 
-- the normal First Stratum baseline;
-- a dim/fogged condition representative of actual play.
+This is the main model-comparison surface.
 
-Do not add custom showcase lighting that the campaign does not use.
+### `first_stratum` — legacy contextual companion
 
-Write screenshots under:
+- current effective `dungeon_default` runtime atlas;
+- First Stratum source is map id 2 (`Floor 1: Entry Hall`);
+- map-authored fog is copied if present;
+- explicitly recorded as legacy contextual evidence rather than target aesthetic authority.
 
-```text
-out/model-census-review/<asset_id>/<context>__<distance>__<angle>__<state>.png
+### `functional` — structured exclusion
+
+`functional` remains in the manifest so the original 900-combination design is preserved and auditable, but it is no longer rendered as a third visual environment. Correct functional placement is enforced by the adapter smoke gate.
+
+The manifest therefore records a structured skip rule matching `context = functional`.
+
+## Matrix and accounting
+
+Original full matrix:
+
+`25 states × 3 contexts × 3 distances × 2 angles × 2 lighting = 900`
+
+V2 required visual matrix:
+
+`25 states × 2 rendered contexts × 3 distances × 2 angles × 2 lighting = 600`
+
+Structured skips:
+
+`25 × 1 functional context × 3 × 2 × 2 = 300`
+
+Required invariants:
+
+- `full_matrix_count == required_capture_count + skipped_capture_count`
+- `required_capture_count == successful_capture_count + failed_capture_count`
+- `skipped_capture_count == sum(structured skip rules)`
+
+Skipped records are journaled explicitly and never masquerade as failures or PNGs.
+
+## Camera fixtures
+
+### Frontal
+
+Place the camera south of the target on the target's X axis, facing north.
+
+### Oblique
+
+Use the real turn interpolation:
+
+```lua
+playerDir = "N"
+transitionDir = "turn_right"
+transitionDuration = 1.0
+transitionTimer = 0.5
 ```
 
-Use stable ASCII lower-snake-case values for every filename component.
+but **orbit the camera southwest of the target** by the same anchor distance. The camera then looks northeast at ~45° while the target remains on-axis. Turning in place from the frontal camera position is forbidden because it points away from the target.
 
-## Required outputs
+Distances are adapter/concept aware and derive from the maximum state bounds for a concept. Paired states share the same target and camera fixture.
 
-The completed local run must contain:
+## Paired-state signature
 
-- every requested PNG, including visibly failed or clipped frames;
-- `out/model-census-review/run.json` with commit, branch, command line, platform,
-  renderer settings and timestamps;
-- `out/model-census-review/index.json` mapping every image to asset, state,
-  context and camera transform;
-- `out/model-census-review/review.csv` with one row per concept;
-- contact sheets grouped by tier and by paired state;
-- `docs/reports/second-rite-model-census/in-engine-review.md` summarising the run,
-  failures, strongest candidates and recommended next action.
+For every state pair and matrix coordinate, mechanically assert the same comparison signature across:
 
-The written report must distinguish geometry problems from material problems.
-Do not claim that a model is production-ready merely because it renders.
+- player position/direction;
+- transition state and effective yaw;
+- target/anchor;
+- nominal and actual anchor distance;
+- review-bay geometry identity;
+- context and lighting identity.
 
-## Evaluation
+The model path/state is intentionally excluded from the pair signature.
 
-Score each criterion from 1 to 5 and explain scores briefly:
+## Capture journals
 
-- `recognition` — does the object read at ordinary play distance?
-- `spatialFunction` — does blocking, passage, use, danger or activation read?
-- `styleIntegration` — does it belong beside current First Stratum surfaces?
-- `materialHierarchy` — do stone, metal, wood, bone, cloth and accents remain
-  distinguishable?
-- `screenEconomy` — does meaningful structure survive the game's resolution and
-  renderer effects?
-- `emotionalFunction` — does it communicate dread, reverence, habitation,
-  vulnerability or history rather than generic ornament?
+The runner writes under `out/model-census-review/`:
 
-Assign exactly one verdict:
+- `run.json` before and after the run;
+- `captures.jsonl`, flushed once per attempted/skipped combination;
+- `index.json` containing success, failure and structured-skip records;
+- `review.csv` blank human-review template if absent;
+- `smoke.json` plus five model/control image pairs;
+- raw PNG matrix frames.
 
-- `promote_candidate`
-- `revise_geometry`
-- `revise_materials`
-- `reject`
+A failed render gets an index/journal failure record but no fake PNG.
 
-The census' previous automated score is context only. The in-engine verdict has
-higher authority for this review.
+## Postprocessor correctness
 
-## Stop conditions
+`review_model_census.py` only counts a frame as successful when both are true:
 
-Stop and report rather than widening scope when:
+1. the index record says `success == true`;
+2. the referenced PNG exists on disk.
 
-- the baseline world renderer or existing gates regress;
-- the task appears to require a broad renderer rewrite;
-- a model can only be made convincing by changing its geometry during capture;
-- the existing OBJ loader rejects a supposedly valid non-injected product;
-- capture cannot be made deterministic with the current test/CLI seams.
+It detects duplicate logical capture keys, missing required PNGs, failed records, interrupted JSONL tails, and high border occupancy as a clipping warning.
 
-Preserve failed screenshots, console output and error logs. Do not delete an
-unflattering result and do not silently substitute another model.
+It must return non-zero while the required evidence set is incomplete.
 
-## Validation
+## Decision contact sheets
 
-At minimum, run the census tests:
+Tier sheets use one row per state and four columns at `one_cell + normal`:
 
-```text
+1. neutral frontal
+2. neutral oblique
+3. legacy First Stratum frontal
+4. legacy First Stratum oblique
+
+Additional sheets:
+
+- `paired_states.png` — grouped state A/B comparison in both contexts for frontal and oblique;
+- `distance_readability.png` — neutral frontal close / one-cell / far;
+- `adapter_smoke.png` — all five control/model smoke pairs;
+- `failures.png` — explicit error cards for required failed captures.
+
+A sheet tile must never silently substitute another context/angle when the requested evidence is missing.
+
+## Human review ownership
+
+The score fields remain:
+
+`asset_id,recognition,spatialFunction,styleIntegration,materialHierarchy,screenEconomy,emotionalFunction,verdict,notes`
+
+The runner creates them blank. The postprocessor preserves human-entered values and never generates subjective scores or verdicts.
+
+No concept is promoted/rejected solely because it clashes with the legacy `dungeon_default` look.
+
+## Tracked evidence policy
+
+The exhaustive frame archive can stay disposable under `out/`. Any committed written conclusion must have compact evidence published to:
+
+`docs/reports/second-rite-model-census/artifacts/current/`
+
+The postprocessor publishes:
+
+- run/index/journal metadata;
+- review CSV;
+- smoke metadata and model/control frames;
+- diagnostics;
+- decision contact sheets;
+- SHA-256 `artifact-manifest.json`.
+
+The invalidated v1 sheets remain separately tracked as a harness regression fixture.
+
+## Verification commands
+
+```powershell
+python tools/asset-production/materialize_model_census.py --build
 python -m unittest discover -s tools/asset-production/tests -p "test_*.py" -v
+"C:\Program Files\LOVE\lovec.exe" . unittest
+"C:\Program Files\LOVE\lovec.exe" . validate
+"C:\Program Files\LOVE\lovec.exe" . savetest
+"C:\Program Files\LOVE\lovec.exe" . render-census-review
+python tools/asset-production/review_model_census.py
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\golden\check.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\golden\check-ui.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\golden\check-state.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\golden\check-screens.ps1
 ```
 
-Run the relevant engine gates on the local Windows machine. The expected LÖVE
-console binary is:
-
-```text
-C:\Program Files\LOVE\lovec.exe
-```
-
-G5 is a regression check. Never recapture or update golden references to make it
-pass. If it differs, preserve `tools/golden/screens-actual/`, inspect the frames
-and report the exact mismatch.
-
-## Completion definition
-
-The review is complete only when:
-
-- all 16 primary concepts have attempted captures;
-- paired states use identical cameras;
-- all outputs and metadata above exist;
-- every failure is preserved and explained;
-- the report explicitly identifies which model families deserve another
-  iteration and which procedural approaches should stop;
-- any harness change is small, reusable, tested and separate from production
-  content promotion.
+A review is eligible for subjective evaluation only after the smoke gate passes and the postprocessor exits zero.
