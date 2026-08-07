@@ -99,6 +99,28 @@ local reusedHidden, reusedHiddenCount = viewport3d.clipTrianglesToNear({
 check(reusedHiddenCount == 0 and #reusedHidden == 0,
     "a reused clip buffer becomes empty when the next triangle is fully hidden")
 
+local clipPose = { cameraX = 1, cameraY = 2, dirX = 0, dirY = -1, nearPlane = 0.005 }
+check(viewport3d.sameNearClipPose(clipPose, 1, 2, 0, -1, 0.005),
+    "a clipped mesh cache hits only for the exact pose that produced it")
+check(not viewport3d.sameNearClipPose(clipPose, 1.001, 2, 0, -1, 0.005)
+        and not viewport3d.sameNearClipPose(clipPose, 1, 2, 1, 0, 0.005)
+        and not viewport3d.sameNearClipPose(clipPose, 1, 2, 0, -1, 0.05),
+    "movement, turning, or a near-plane change invalidates clipped mesh reuse")
+check(not viewport3d.sameNearClipPose(nil, 1, 2, 0, -1, 0.005),
+    "an uncached clipped mesh pose never reports a reuse hit")
+
+check(viewport3d.isNearClipPoseCacheSettled({}, 0, nil),
+    "near-clip pose caching is allowed for a settled camera")
+check(viewport3d.isNearClipPoseCacheSettled({}, 0, { dollyX = 0, dollyY = 0, pitch = 0.5 }),
+    "an idle or pitch-only focus camera does not invalidate XY near-clip reuse")
+check(not viewport3d.isNearClipPoseCacheSettled({ transitionTimer = 0.1 }, 0, nil)
+        and not viewport3d.isNearClipPoseCacheSettled({ bumpTimer = 0.1 }, 0, nil)
+        and not viewport3d.isNearClipPoseCacheSettled({}, 0.1, nil)
+        and not viewport3d.isNearClipPoseCacheSettled({}, 0, { dollyX = 0.1, dollyY = 0 }),
+    "movement, bump, door, and focus dolly states suppress pose caching")
+check(viewport3d.isNearClipPoseCacheSettled({ transitionTimer = 0, bumpTimer = 0 }, 0, nil),
+    "expired movement timers restore settled-camera pose caching")
+
 -- 128 is the neutral plane; the fixtures are painted flat neutral, so a base
 -- layer alone must contribute exactly zero displacement.
 local neutral = images.data(FIXTURES .. "valid_plane/height.png")
