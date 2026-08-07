@@ -72,6 +72,7 @@ activeSession = nil
 local isTestBattle = false
 local isValidateMode = false
 local isSaveTestMode = false
+local isCensusReviewMode = false
 local cliCampaignRoot = nil
 local isPreviewSceneMode = false
 local previewSceneId = nil
@@ -277,8 +278,10 @@ function love.load(arg)
                 isGoldenUIMode = true
             elseif val == "screenshots" then
                 isScreenshotMode = true
-            elseif val == "render-census-review" or val == "census-review" then
+            elseif val == "render-census-review" then
                 isRenderCensusReviewMode = true
+            elseif val == "census-review" then
+                isCensusReviewMode = true
             elseif val == "preview-scene" then
                 isPreviewSceneMode = true
                 previewSceneId = arg[i + 1]
@@ -381,6 +384,8 @@ function love.load(arg)
                 isSaveTestMode = true
             elseif val == "unittest" then
                 isUnitTestMode = true
+            elseif val == "census-review" then
+                isCensusReviewMode = true
             elseif val == "developer" then
                 isDeveloperMode = true
             elseif val:match("^campaign=") then
@@ -437,12 +442,42 @@ function love.load(arg)
             "test_geometry", "test_icons", "test_item_display",
             "test_item_model_view", "test_item_model_assignments",
             "test_reachability", "test_formation", "test_chest_3d",
-            "test_model_census_review",
         }) do
             local ok, err = pcall(dofile, "tests/" .. suite .. ".lua")
             if not ok then failFast.crashed(suite, err) end
         end
         failFast.finish()
+        return
+    end
+
+    if isCensusReviewMode then
+        local manifestPath = "assets/authoring/second_rite_census/asset-set.json"
+        local modelsPath = "assets/models/second_rite_census"
+        local manifestPresent = love.filesystem.getInfo(manifestPath) ~= nil
+        local modelsPresent = love.filesystem.getInfo(modelsPath, "directory") ~= nil
+        if not manifestPresent or not modelsPresent then
+            print("CENSUS REVIEW PREREQUISITES MISSING")
+            if not manifestPresent then print("  missing: " .. manifestPath) end
+            if not modelsPresent then print("  missing: " .. modelsPath .. "/ (materialized model outputs)") end
+            print("")
+            print("Prepare the fixtures explicitly, then rerun:")
+            print("  python tools/asset-production/materialize_model_census.py --build")
+            print("  C:\\Program Files\\LOVE\\lovec.exe . census-review")
+            print("")
+            print("This mode never materializes or regenerates census assets.")
+            if io and io.stdout and io.stdout.flush then io.stdout:flush() end
+            os.exit(1)
+        end
+        loader.init(cliCampaignRoot)
+        local ok, err = pcall(dofile, "tests/test_model_census_review.lua")
+        if not ok then
+            print("CENSUS REVIEW FAILED: " .. tostring(err))
+            if io and io.stdout and io.stdout.flush then io.stdout:flush() end
+            os.exit(1)
+        end
+        print("CENSUS REVIEW OK")
+        if io and io.stdout and io.stdout.flush then io.stdout:flush() end
+        os.exit(0)
         return
     end
 

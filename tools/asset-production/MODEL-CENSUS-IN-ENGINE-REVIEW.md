@@ -268,12 +268,34 @@ The postprocessor publishes:
 
 The invalidated v1 sheets remain separately tracked as a harness regression fixture.
 
+## Repository lifecycle
+
+The normal unit suite is a fresh-clone gate and does not require census
+materialization. The census review is an explicit integration/review gate:
+
+1. On a fresh clone, run `lovec . unittest` with no census generation.
+2. Materialize and build the local census fixtures with
+   `python tools/asset-production/materialize_model_census.py --build`.
+3. Run the strict in-engine validation with `lovec . census-review`. This
+   command never materializes or regenerates assets and fails loudly when the
+   prerequisites are absent.
+4. Perform the owner-reviewed in-engine pass and only then accept new review
+   conclusions. Publish compact decision evidence under
+   `docs/reports/second-rite-model-census/artifacts/current/`.
+
+The authored `asset-set.json` and `.census-bootstrap/` are source inputs. OBJ,
+MTL, material textures, evaluation reports, contact sheets and exhaustive raw
+capture journals are reproducible local products. Generated model and raw
+review paths are gitignored; canonical authored reports and promoted `current`
+artifacts remain trackable.
+
 ## Verification commands
 
 ```powershell
 python tools/asset-production/materialize_model_census.py --build
 python -m unittest discover -s tools/asset-production/tests -p "test_*.py" -v
 "C:\Program Files\LOVE\lovec.exe" . unittest
+"C:\Program Files\LOVE\lovec.exe" . census-review
 "C:\Program Files\LOVE\lovec.exe" . validate
 "C:\Program Files\LOVE\lovec.exe" . savetest
 "C:\Program Files\LOVE\lovec.exe" . render-census-review

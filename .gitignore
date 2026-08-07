@@ -43,3 +43,15 @@ effekseer_shim.dll.*
 
 # Local ML venv for the depth tooling (multi-GB torch); see docs/design/image-authored-geometry.md
 tools/asset-gen/.venv/
+
+# Model census generated products. Authored source inputs and the
+# checksum-pinned .census-bootstrap remain tracked.
+assets/models/second_rite_census/
+out/model-census-review/
+docs/reports/second-rite-model-census/evaluation.json
+docs/reports/second-rite-model-census/evaluation.csv
+docs/reports/second-rite-model-census/all-models.md
+docs/reports/second-rite-model-census/failed-models.md
+docs/reports/second-rite-model-census/contact-sheet-*.png
+docs/reports/second-rite-model-census/failed-models-contact-sheet.png
+docs/reports/second-rite-model-census/material-swatches.png

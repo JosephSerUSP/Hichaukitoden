@@ -26,6 +26,14 @@ This follows the repository rules of one implementation, reusable primitives,
 fail-loud validation, contract-owned materials and mechanically enforced rules.
 It does not change runtime schemas or engine behavior.
 
+The census source is the tracked `assets/authoring/second_rite_census/asset-set.json`
+expanded from the checksum-pinned `.census-bootstrap/` archive. Generated models,
+evaluation files, contact sheets and raw review captures are local reproducible
+products and are ignored by Git. Build them explicitly with
+`python tools/asset-production/materialize_model_census.py --build`; then run
+the strict in-engine gate with `lovec . census-review`. The ordinary
+`lovec . unittest` command does not require census fixtures.
+
 ## Build
 
 From the repository root:
