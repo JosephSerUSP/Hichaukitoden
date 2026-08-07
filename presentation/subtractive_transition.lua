@@ -26,7 +26,10 @@ function transition.update(dt)
     if motion.elapsed >= motion.duration then motion = nil end
 end
 
-function transition.draw() fade.draw(amount) end
+-- This is a world/scene transition, not a modal. Passing false is essential:
+-- modal fades reserve the next panel draw for the solid button windowskin, and
+-- the persistent dock is the next panel drawn during a map transition.
+function transition.draw() fade.draw(amount, false) end
 function transition.clear() amount, motion = 0, nil end
 function transition.getAmount() return amount end
 return transition
