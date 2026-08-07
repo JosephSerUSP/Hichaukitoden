@@ -3169,6 +3169,36 @@ elseif paramDef.type == "script" then
         end
     end
 
+    -- The quest walker calls quest.offer and quest.complete unconditionally
+    -- (main.lua OFFER_QUEST / quest completion), so they are required for the
+    -- same reason as the battle phases: flow.run raises on a missing phase.
+    -- The presence checks above (`flows.quest.offer ~= nil`) only prove the key
+    -- exists -- but flow.lua's lookup treats an EMPTY command list as missing,
+    -- so `"offer": []` passed validation and still crashed the player mid-quest.
+    -- Executing the phase is what closes that gap. These cannot ride the loop
+    -- above because they read ctx.quest/ctx.questId, so they get their own
+    -- fixture: the first authored quest by sorted id, deterministic as
+    -- quests.json grows.
+    do
+        local questIds = {}
+        for id in pairs(loader.quests or {}) do table.insert(questIds, tostring(id)) end
+        table.sort(questIds)
+        local questId = questIds[1]
+        check(questId ~= nil, "quests.json defines no quest to run the quest flows against")
+        for _, phase in ipairs({ "quest.offer", "quest.complete" }) do
+            check(flow.has(phase), "flows.json is missing required phase '" .. phase .. "'")
+            if questId and flow.has(phase) then
+                local s = session.GameSession.new(loader)
+                s:initializeStartingParty()
+                local okPhase, phaseErr = pcall(flow.run, phase, {
+                    session = s, party = s.party, loader = loader,
+                    questId = questId, quest = loader.getQuest(questId),
+                })
+                check(okPhase, phase .. " flow failed to execute: " .. tostring(phaseErr))
+            end
+        end
+    end
+
     -- Item effects go through the same pipeline in and out of battle
     local item = loader.getItem(combat.battleItem or 1)
     if item and vSession.party[1] then
