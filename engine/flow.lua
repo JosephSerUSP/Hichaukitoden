@@ -45,14 +45,17 @@ function flow.has(phase, loader)
     return lookup(l, phase) ~= nil
 end
 
--- Runs the phase's command list in immediate mode; returns events[]. An
--- undefined phase yields no events rather than raising, which is why the
--- validator gates the required ones: a host whose phase went missing would
--- otherwise do nothing, quietly.
+-- Runs the phase's command list in immediate mode; returns events[]. Required
+-- phases are an engine contract, not an optional extension point: a missing or
+-- empty phase is therefore a runtime error as well as a validator error. This
+-- keeps the live engine fail-loud if a host/data mismatch somehow escapes G1,
+-- instead of silently skipping an entire piece of phase logic.
 function flow.run(phase, ctx)
     local loader = ctx.loader or (ctx.session and ctx.session.loader)
     local commands = lookup(loader, phase)
-    if not commands then return {} end
+    if not commands then
+        error("required flow phase '" .. tostring(phase) .. "' is missing or empty", 0)
+    end
     return interpreter.runImmediate(commands, ctx)
 end
 
