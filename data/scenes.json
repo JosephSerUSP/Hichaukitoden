@@ -5859,12 +5859,12 @@
         "id": "developer_list",
         "rect": {
           "x": 4,
-          "y": 5,
+          "y": 4,
           "w": 24,
-          "h": 7
+          "h": 8
         },
         "style": "list",
-        "visibleRows": 9,
+        "visibleRows": 10,
         "title": "Developer",
         "content": [
           {
@@ -5923,7 +5923,7 @@
       "on_down": [
         {
           "cmd": "IF",
-            "condition": "v.idx < 9",
+            "condition": "v.idx < 10",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -6041,8 +6041,34 @@
            "cmd": "IF",
            "condition": "v._guard == 0 and v.idx == 9",
            "then": [
-             { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
-             { "cmd": "SCRIPT", "code": "api.forceWinBattle()" }
+             {
+               "cmd": "SET_VAR",
+               "name": "_guard",
+               "value": 1
+             },
+             {
+               "cmd": "SCRIPT",
+               "code": "api.forceWinBattle()"
+             }
+           ]
+         },
+         {
+           "cmd": "IF",
+           "condition": "v._guard == 0 and v.idx == 10",
+           "then": [
+             {
+               "cmd": "SET_VAR",
+               "name": "_guard",
+               "value": 1
+             },
+             {
+               "cmd": "RESET_SESSION"
+             },
+             {
+               "cmd": "SCENE_EVENT",
+               "kind": "goto",
+               "scene": "title"
+             }
            ]
          },
          {
@@ -6104,6 +6130,11 @@
           "id": "win_battle",
           "name": "AUTO-WIN BATTLE",
           "help": "Defeat the current battle's enemies and continue through victory."
+        },
+        {
+          "id": "title",
+          "name": "TITLE SCREEN",
+          "help": "Return to the title screen and reboot the session."
         }
       ]
     }
