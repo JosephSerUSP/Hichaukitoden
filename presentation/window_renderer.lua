@@ -98,6 +98,7 @@ end
 -- ---------------------------------------------------------------------------
 
 local compareIds = require("engine.inventory").compareIds
+local config = require("engine.config")
 
 local function inventoryRows(session, env, win)
     local rows = {}
@@ -139,10 +140,9 @@ end
 
 -- Shared battler-view enrichment for the 'party' and 'reserve' list sources:
 -- progression, role, equipment slots and joined passive/skill/state names as
--- flat strings so {expr} templates can print them. maxSlots differs (4 vs 8);
--- source array is session.party or session.reserve.
+-- flat strings so {expr} templates can print them. maxSlots comes from the
+-- engine's canonical roster limit for the source array being rendered.
 local function battlerListRows(session, sourceArray, maxSlots)
-    local config = require("engine.config")
     local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
     local loader = session and session.loader
     local rows = {}
@@ -200,11 +200,11 @@ local function battlerListRows(session, sourceArray, maxSlots)
 end
 
 local function partyRows(session)
-    return battlerListRows(session, session and session.party, 4)
+    return battlerListRows(session, session and session.party, config.MAX_PARTY_SIZE)
 end
 
 local function reserveRows(session)
-    return battlerListRows(session, session and session.reserve, 8)
+    return battlerListRows(session, session and session.reserve, config.MAX_RESERVE_SIZE)
 end
 
 local function configRows(sceneData, key)
