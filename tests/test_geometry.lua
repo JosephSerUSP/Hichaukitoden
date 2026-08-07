@@ -76,6 +76,29 @@ local hidden = viewport3d.clipTrianglesToNear({
 }, 0, 0, 1, 0, 0.05)
 check(#hidden == 0, "a model triangle wholly behind the near plane is discarded")
 
+local reuseBuffer = {}
+local reusedCrossing, reusedCrossingCount = viewport3d.clipTrianglesToNear({
+    modelVertex(-1, -1), modelVertex(1, -1), modelVertex(1, 1),
+}, 0, 0, 1, 0, 0.05, reuseBuffer)
+check(reusedCrossing == reuseBuffer.output and reusedCrossingCount == 6 and #reusedCrossing == 6,
+    "near-plane clipping can write into a caller-owned reusable output buffer")
+local pooledIntersection = reuseBuffer.intersections[1]
+local reusedVisible, reusedVisibleCount = viewport3d.clipTrianglesToNear({
+    modelVertex(1, -1), modelVertex(2, -1), modelVertex(1, 1),
+}, 0, 0, 1, 0, 0.05, reuseBuffer)
+check(reusedVisible == reusedCrossing and reusedVisibleCount == 3 and #reusedVisible == 3,
+    "a reused clip buffer clears stale output vertices when the result shrinks")
+viewport3d.clipTrianglesToNear({
+    modelVertex(-1, -1), modelVertex(1, -1), modelVertex(1, 1),
+}, 0, 0, 1, 0, 0.05, reuseBuffer)
+check(reuseBuffer.intersections[1] == pooledIntersection,
+    "intersection vertex tables are recycled across clipped frames")
+local reusedHidden, reusedHiddenCount = viewport3d.clipTrianglesToNear({
+    modelVertex(-2, -1), modelVertex(-1, -1), modelVertex(-1, 1),
+}, 0, 0, 1, 0, 0.05, reuseBuffer)
+check(reusedHiddenCount == 0 and #reusedHidden == 0,
+    "a reused clip buffer becomes empty when the next triangle is fully hidden")
+
 -- 128 is the neutral plane; the fixtures are painted flat neutral, so a base
 -- layer alone must contribute exactly zero displacement.
 local neutral = images.data(FIXTURES .. "valid_plane/height.png")

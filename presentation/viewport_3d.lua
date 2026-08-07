@@ -984,42 +984,100 @@ end
 -- its negative-depth vertices invert and stretch the primitive across the
 -- viewport. Vertex arrays use WORLD_MESH_FORMAT order, so every interpolated
 -- field (UV, colour, lighting, fog, and height) remains continuous.
-function viewport_3d.clipTrianglesToNear(vertices, cameraX, cameraY, dirX, dirY, nearPlane)
+function viewport_3d.clipTrianglesToNear(vertices, cameraX, cameraY, dirX, dirY, nearPlane, reuse)
     nearPlane = nearPlane or 0.05
-    local function depth(vertex)
-        return (vertex[1] - cameraX) * dirX + (vertex[2] - cameraY) * dirY
+    reuse = reuse or {}
+    local output = reuse.output
+    if not output then
+        output = {}
+        reuse.output = output
     end
+    local intersections = reuse.intersections
+    if not intersections then
+        intersections = {}
+        reuse.intersections = intersections
+    end
+    local oldCount = reuse.count or #output
+    local outputCount, intersectionCount = 0, 0
+
     local function intersection(from, to, fromDepth, toDepth)
+        intersectionCount = intersectionCount + 1
+        local vertex = intersections[intersectionCount]
+        if not vertex then
+            vertex = {}
+            intersections[intersectionCount] = vertex
+        end
+        local fieldCount = #from
+        local previousFieldCount = #vertex
         local t = (nearPlane - fromDepth) / (toDepth - fromDepth)
-        local vertex = {}
-        for i = 1, #from do vertex[i] = from[i] + (to[i] - from[i]) * t end
+        for i = 1, fieldCount do
+            vertex[i] = from[i] + (to[i] - from[i]) * t
+        end
+        for i = fieldCount + 1, previousFieldCount do vertex[i] = nil end
         return vertex
     end
-    local output = {}
+
+    -- Triangles are clipped directly instead of constructing temporary
+    -- polygon/clipped/output tables for every face. The emitted order matches
+    -- the previous Sutherland-Hodgman fan exactly, preserving winding, UVs,
+    -- lighting, fog and height interpolation while allowing the result and
+    -- intersection vertices to be reused by static placed surfaces.
     for triangle = 1, #vertices, 3 do
-        local polygon = { vertices[triangle], vertices[triangle + 1], vertices[triangle + 2] }
-        local clipped = {}
-        local previous = polygon[#polygon]
-        local previousDepth = depth(previous)
-        for _, current in ipairs(polygon) do
-            local currentDepth = depth(current)
-            local previousInside = previousDepth >= nearPlane
-            local currentInside = currentDepth >= nearPlane
-            if previousInside ~= currentInside then
-                clipped[#clipped + 1] = intersection(previous, current, previousDepth, currentDepth)
-            end
-            if currentInside then clipped[#clipped + 1] = current end
-            previous, previousDepth = current, currentDepth
-        end
-        if #clipped >= 3 then
-            for i = 2, #clipped - 1 do
-                output[#output + 1] = clipped[1]
-                output[#output + 1] = clipped[i]
-                output[#output + 1] = clipped[i + 1]
-            end
+        local a, b, c = vertices[triangle], vertices[triangle + 1], vertices[triangle + 2]
+        local da = (a[1] - cameraX) * dirX + (a[2] - cameraY) * dirY
+        local db = (b[1] - cameraX) * dirX + (b[2] - cameraY) * dirY
+        local dc = (c[1] - cameraX) * dirX + (c[2] - cameraY) * dirY
+        local ia, ib, ic = da >= nearPlane, db >= nearPlane, dc >= nearPlane
+        local o = outputCount
+
+        if ia and ib and ic then
+            output[o + 1], output[o + 2], output[o + 3] = a, b, c
+            outputCount = o + 3
+        elseif not ia and not ib and not ic then
+            -- Entirely behind: emit nothing.
+        elseif ia and not ib and not ic then
+            output[o + 1] = intersection(c, a, dc, da)
+            output[o + 2] = a
+            output[o + 3] = intersection(a, b, da, db)
+            outputCount = o + 3
+        elseif not ia and ib and not ic then
+            output[o + 1] = intersection(a, b, da, db)
+            output[o + 2] = b
+            output[o + 3] = intersection(b, c, db, dc)
+            outputCount = o + 3
+        elseif not ia and not ib and ic then
+            output[o + 1] = intersection(c, a, dc, da)
+            output[o + 2] = intersection(b, c, db, dc)
+            output[o + 3] = c
+            outputCount = o + 3
+        elseif ia and ib and not ic then
+            local ca = intersection(c, a, dc, da)
+            local bc = intersection(b, c, db, dc)
+            output[o + 1], output[o + 2], output[o + 3] = ca, a, b
+            output[o + 4], output[o + 5], output[o + 6] = ca, b, bc
+            outputCount = o + 6
+        elseif ia and not ib and ic then
+            local ab = intersection(a, b, da, db)
+            local bc = intersection(b, c, db, dc)
+            output[o + 1], output[o + 2], output[o + 3] = a, ab, bc
+            output[o + 4], output[o + 5], output[o + 6] = a, bc, c
+            outputCount = o + 6
+        else -- not ia and ib and ic
+            local ca = intersection(c, a, dc, da)
+            local ab = intersection(a, b, da, db)
+            output[o + 1], output[o + 2], output[o + 3] = ca, ab, b
+            output[o + 4], output[o + 5], output[o + 6] = ca, b, c
+            outputCount = o + 6
         end
     end
-    return output
+
+    -- `setVertices` consumes 1..count synchronously. Clear any longer result
+    -- left by the previous frame so callers which inspect `#output` keep the
+    -- normal dense-array contract as the camera crosses triangle boundaries.
+    for i = outputCount + 1, oldCount do output[i] = nil end
+    reuse.count = outputCount
+    reuse.intersectionCount = intersectionCount
+    return output, outputCount
 end
 
 local WORLD_SHADER_SOURCE = retroMeshShader.buildWorldShader()
@@ -1829,11 +1887,12 @@ local function drawWorldSpace(session)
                     profile.inputTrianglesClipped = profile.inputTrianglesClipped
                         + math.floor(#placed.vertices / 3)
                     local clipStarted = love.timer.getTime()
-                    local clipped = viewport_3d.clipTrianglesToNear(
-                        placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane)
+                    placed.clipBuffer = placed.clipBuffer or {}
+                    local clipped, needed = viewport_3d.clipTrianglesToNear(
+                        placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane,
+                        placed.clipBuffer)
                     profile.nearClipMs = profile.nearClipMs
                         + (love.timer.getTime() - clipStarted) * 1000
-                    local needed = #clipped
                     profile.outputVerticesUploaded = profile.outputVerticesUploaded + needed
                     if not placed.clippedMesh or placed.clippedCapacity < needed then
                         profile.clippedMeshResizes = profile.clippedMeshResizes + 1
