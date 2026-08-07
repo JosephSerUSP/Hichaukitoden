@@ -96,7 +96,9 @@ function door_transition.overlayAlpha()
 end
 
 function door_transition.draw()
-    subtractive_fade.draw(door_transition.overlayAlpha())
+    -- This darkens the world during a transition; it does not own a modal
+    -- panel, so it must not arm the solid modal-windowskin rule.
+    subtractive_fade.draw(door_transition.overlayAlpha(), false)
 end
 
 return door_transition
