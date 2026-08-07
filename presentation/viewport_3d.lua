@@ -979,6 +979,28 @@ function viewport_3d.classifyBoundsToNear(bounds, cameraX, cameraY, dirX, dirY, 
     return "intersect"
 end
 
+-- A clipped stream mesh is camera-relative geometry. Reuse is valid only
+-- while the exact pose which produced it is unchanged; any movement/turn
+-- falls through to the normal #157 clip/upload path. Kept pure for unit tests.
+function viewport_3d.sameNearClipPose(pose, cameraX, cameraY, dirX, dirY, nearPlane)
+    return pose ~= nil
+        and pose.cameraX == cameraX and pose.cameraY == cameraY
+        and pose.dirX == dirX and pose.dirY == dirY
+        and pose.nearPlane == nearPlane
+end
+
+-- Pose reuse is deliberately an idle-camera optimization. Active gameplay
+-- camera motion uses #157's stable clip/upload path instead of probing a cache
+-- which cannot usually hit and which showed severe tail latency under motion.
+function viewport_3d.isNearClipPoseCacheSettled(session, doorProgress, focusCam)
+    local focusMovesClipPlane = focusCam
+        and (((focusCam.dollyX or 0) ~= 0) or ((focusCam.dollyY or 0) ~= 0))
+    return not ((session.transitionTimer and session.transitionTimer > 0)
+        or (session.bumpTimer and session.bumpTimer > 0)
+        or (doorProgress or 0) > 0
+        or focusMovesClipPlane)
+end
+
 -- Clip triangle soup in world space before perspective projection. The GPU
 -- cannot safely project a triangle with vertices on both sides of the camera:
 -- its negative-depth vertices invert and stretch the primitive across the
@@ -1320,8 +1342,17 @@ local function drawWorldSpace(session)
         vertexFallbackSurfaces = 0, verticesInspected = 0,
         heightVerticesInspected = 0, nonHeightVerticesInspected = 0,
         heightSurfacePlacementsVisited = 0, nonHeightPlacementsVisited = 0,
+        nearClipCacheHits = 0, nearClipCacheMisses = 0,
+        cachedClipVerticesDrawn = 0, clipPoseCacheEnabled = true,
+        clipPoseCacheSuppressedByMotion = false,
     }
     local profileVariant = session.profile3dVariant or "current"
+    local clipPoseCacheRequested = profileVariant ~= "no-clip-cache"
+    local clipPoseCacheSettled = viewport_3d.isNearClipPoseCacheSettled(
+        session, doorProgress, focusCam)
+    local clipPoseCacheEnabled = clipPoseCacheRequested and clipPoseCacheSettled
+    profile.clipPoseCacheEnabled = clipPoseCacheEnabled
+    profile.clipPoseCacheSuppressedByMotion = clipPoseCacheRequested and not clipPoseCacheSettled
     local function quadVisible(a, b, c, d)
         local minDepth, maxDepth = math.huge, -math.huge
         for _, point in ipairs({ a, b, c, d }) do
@@ -1884,31 +1915,47 @@ local function drawWorldSpace(session)
                 local drawable = placed
                 if anyBehind and profileVariant ~= "no-clip" then
                     profile.modelsNearClipped = profile.modelsNearClipped + 1
-                    profile.inputTrianglesClipped = profile.inputTrianglesClipped
-                        + math.floor(#placed.vertices / 3)
-                    local clipStarted = love.timer.getTime()
-                    placed.clipBuffer = placed.clipBuffer or {}
-                    local clipped, needed = viewport_3d.clipTrianglesToNear(
-                        placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane,
-                        placed.clipBuffer)
-                    profile.nearClipMs = profile.nearClipMs
-                        + (love.timer.getTime() - clipStarted) * 1000
-                    profile.outputVerticesUploaded = profile.outputVerticesUploaded + needed
-                    if not placed.clippedMesh or placed.clippedCapacity < needed then
-                        profile.clippedMeshResizes = profile.clippedMeshResizes + 1
-                        if placed.clippedMesh and placed.clippedMesh.release then placed.clippedMesh:release() end
-                        local capacity = 6
-                        while capacity < needed do capacity = capacity * 2 end
-                        placed.clippedMesh = love.graphics.newMesh(
-                            WORLD_MESH_FORMAT, capacity, "triangles", "stream")
-                        if placed.texture then placed.clippedMesh:setTexture(placed.texture) end
-                        placed.clippedCapacity = capacity
+                    local reuseCachedClip = clipPoseCacheEnabled
+                        and placed.clippedMesh
+                        and viewport_3d.sameNearClipPose(placed.clipPose,
+                            cameraX, cameraY, dirX, dirY, cpuClipPlane)
+                    if reuseCachedClip then
+                        profile.nearClipCacheHits = profile.nearClipCacheHits + 1
+                        profile.cachedClipVerticesDrawn = profile.cachedClipVerticesDrawn
+                            + (placed.clippedVertexCount or 0)
+                    else
+                        profile.nearClipCacheMisses = profile.nearClipCacheMisses + 1
+                        profile.inputTrianglesClipped = profile.inputTrianglesClipped
+                            + math.floor(#placed.vertices / 3)
+                        local clipStarted = love.timer.getTime()
+                        placed.clipBuffer = placed.clipBuffer or {}
+                        local clipped, needed = viewport_3d.clipTrianglesToNear(
+                            placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane,
+                            placed.clipBuffer)
+                        profile.nearClipMs = profile.nearClipMs
+                            + (love.timer.getTime() - clipStarted) * 1000
+                        profile.outputVerticesUploaded = profile.outputVerticesUploaded + needed
+                        if not placed.clippedMesh or placed.clippedCapacity < needed then
+                            profile.clippedMeshResizes = profile.clippedMeshResizes + 1
+                            if placed.clippedMesh and placed.clippedMesh.release then placed.clippedMesh:release() end
+                            local capacity = 6
+                            while capacity < needed do capacity = capacity * 2 end
+                            placed.clippedMesh = love.graphics.newMesh(
+                                WORLD_MESH_FORMAT, capacity, "triangles", "stream")
+                            if placed.texture then placed.clippedMesh:setTexture(placed.texture) end
+                            placed.clippedCapacity = capacity
+                        end
+                        local uploadStarted = love.timer.getTime()
+                        placed.clippedMesh:setVertices(clipped, 1, needed)
+                        placed.clippedMesh:setDrawRange(1, needed)
+                        profile.meshUploadMs = profile.meshUploadMs
+                            + (love.timer.getTime() - uploadStarted) * 1000
+                        placed.clipPose = {
+                            cameraX = cameraX, cameraY = cameraY,
+                            dirX = dirX, dirY = dirY, nearPlane = cpuClipPlane,
+                        }
+                        placed.clippedVertexCount = needed
                     end
-                    local uploadStarted = love.timer.getTime()
-                    placed.clippedMesh:setVertices(clipped, 1, needed)
-                    placed.clippedMesh:setDrawRange(1, needed)
-                    profile.meshUploadMs = profile.meshUploadMs
-                        + (love.timer.getTime() - uploadStarted) * 1000
                     drawable = {
                         mesh = placed.clippedMesh, model = true,
                         centerX = placed.centerX, centerY = placed.centerY, centerZ = placed.centerZ,
