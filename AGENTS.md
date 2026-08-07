@@ -170,6 +170,39 @@ it. Practical consequences an agent must internalize:
   gauges that interpolate instead of jumping, damage numbers with velocity and
   gravity. Review-enforced; see SPEC §2.2–2.3 before touching UI.
 
+## GitHub Issues — durable memory, not a task tax
+
+Issues preserve **actionable work that should survive the current task or
+session**. They are a scope-control and handoff mechanism, not a requirement for
+every owner request.
+
+- **Do not interrupt a small, bounded request just to create an Issue.** Implement
+  it, verify it, and report it normally.
+- **Create an Issue for a meaningful out-of-scope discovery** — a concrete bug,
+  design inconsistency, architectural problem, verification gap, or follow-up
+  that should be addressed later. This is especially important when fixing it
+  now would broaden the current task.
+- Also create one when work is deliberately deferred, or when an investigation
+  produces a concrete follow-up that another agent/session should be able to
+  resume. A substantial branch-worthy task may get an Issue when durable scope
+  or acceptance criteria would help, but do not manufacture one solely because
+  a branch exists or delay an owner-requested implementation just to ticket it.
+- **Do not create speculative backlog sludge.** An Issue must identify a concrete
+  undesirable condition, unresolved decision, or desired invariant and be
+  plausible future work. "Maybe improve/refactor X" is not enough. Check
+  existing open Issues for the same problem when GitHub access permits.
+- Write every Issue as a handoff to a fresh agent with no chat context: include
+  the relevant current behavior/evidence, desired outcome or invariant,
+  constraints/non-goals where they matter, and observable acceptance criteria.
+  Prefer describing the problem and intent over prescribing an implementation
+  before the code has been investigated.
+- **An out-of-scope Issue does not expand the current task.** Record it and keep
+  working on the original request unless the discovery blocks correctness.
+  Mention the Issue number in the task report so the owner knows it exists.
+- Do not leave a repository-level source `TODO` as a substitute for an Issue.
+  When implementing an existing Issue, reference its number in the branch/PR;
+  use `Fixes #N` only when the change fully resolves it.
+
 ## Gotchas that cost real time
 
 Kept short on purpose: an entry earns its place only if it caused a real bug and
