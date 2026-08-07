@@ -1239,6 +1239,16 @@ function cli.runProfile3D(mapId, frameCount, loader, variant, motionPattern)
     local coldMs = renderSample(1)
     for i = 1, 20 do renderSample(i + 1) end
 
+    -- Motion has its own convergence behavior (driver state, streaming
+    -- meshes, and the real transition path), so renderer warm-up alone is
+    -- not enough for a meaningful motion percentile.  Complete several full
+    -- ping-pong cycles before the measured window, without mixing those
+    -- frames into the reported samples.
+    local motionWarmupCycles = motion and 3 or 0
+    for i = 1, motionWarmupCycles * motionCycleFrames do
+        renderSample(i + 21)
+    end
+
     local count = math.max(1, math.floor(tonumber(frameCount) or 300))
     local samples, total = {}, 0
     local aggregate = {
@@ -1250,11 +1260,20 @@ function cli.runProfile3D(mapId, frameCount, loader, variant, motionPattern)
         cachedClipVerticesDrawnTotal = 0,
         modelsNearClippedTotal = 0, modelsNearClippedMax = 0,
         clipWorkFrames = 0,
+        firstHalfMsTotal = 0, firstHalfMsMax = 0,
+        secondHalfMsTotal = 0, secondHalfMsMax = 0,
     }
     for i = 1, count do
         local elapsedMs, frameProfile = renderSample(i + 21)
         samples[i] = elapsedMs
         total = total + elapsedMs
+        if i <= math.floor(count / 2) then
+            aggregate.firstHalfMsTotal = aggregate.firstHalfMsTotal + elapsedMs
+            aggregate.firstHalfMsMax = math.max(aggregate.firstHalfMsMax, elapsedMs)
+        else
+            aggregate.secondHalfMsTotal = aggregate.secondHalfMsTotal + elapsedMs
+            aggregate.secondHalfMsMax = math.max(aggregate.secondHalfMsMax, elapsedMs)
+        end
 
         local nearClip = tonumber(frameProfile.nearClipMs) or 0
         local upload = tonumber(frameProfile.meshUploadMs) or 0
@@ -1280,6 +1299,9 @@ function cli.runProfile3D(mapId, frameCount, loader, variant, motionPattern)
     aggregate.meshUploadMsMean = aggregate.meshUploadMsTotal / count
     aggregate.outputVerticesUploadedMean = aggregate.outputVerticesUploadedTotal / count
     aggregate.modelsNearClippedMean = aggregate.modelsNearClippedTotal / count
+    local halfCount = math.floor(count / 2)
+    aggregate.firstHalfMsMean = aggregate.firstHalfMsTotal / math.max(1, halfCount)
+    aggregate.secondHalfMsMean = aggregate.secondHalfMsTotal / math.max(1, count - halfCount)
 
     table.sort(samples)
     local function percentile(p)
@@ -1300,6 +1322,7 @@ function cli.runProfile3D(mapId, frameCount, loader, variant, motionPattern)
         variant = session.profile3dVariant,
         motionPattern = motion or "stationary",
         motionCycleFrames = motion and motionCycleFrames or 0,
+        motionWarmupCycles = motionWarmupCycles,
         frames = count,
         coldMs = coldMs,
         meanMs = total / count,
