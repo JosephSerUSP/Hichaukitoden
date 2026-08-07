@@ -1147,7 +1147,7 @@ end
 
 -- Deterministic headless 3D renderer profile. `flush` makes each sample include
 -- command submission instead of measuring only Lua-side queue construction.
-function cli.runProfile3D(mapId, frameCount, loader, variant)
+function cli.runProfile3D(mapId, frameCount, loader, variant, motionPattern)
     local json = require("data.json")
     local exploration = require("engine.exploration")
     local viewport_3d = require("presentation.viewport_3d")
@@ -1165,31 +1165,145 @@ function cli.runProfile3D(mapId, frameCount, loader, variant)
     local loaded, loadError = pcall(exploration.loadMap, session, mapIdx)
     os.time = originalTime
     if not loaded then error(loadError, 0) end
-    positionAtClearCorridor(session)
+    local startX, startY, startDir = positionAtClearCorridor(session)
     session.profile3dVariant = variant or "current"
+
+    -- The original profile is intentionally stationary. Optional motion
+    -- patterns exercise the renderer's REAL transition interpolation instead
+    -- of inventing a second camera path in the harness. Forward profiling uses
+    -- the next clear corridor cell as the logical endpoint; turn profiling
+    -- uses the same cardinal turn state as live exploration. A ping-pong sweep
+    -- samples both directions without accumulating map movement, so every run
+    -- remains deterministic and bounded to the same local geometry.
+    local motion = motionPattern
+    if motion ~= nil and motion ~= "" and motion ~= "forward" and motion ~= "turn" then
+        error("profile-3d motion must be 'forward' or 'turn'", 0)
+    end
+    if motion == "" then motion = nil end
+    local motionCycleFrames = 30
+    local transitionDuration = 1.0
+    if motion then
+        local dirs = {
+            N = { dx = 0, dy = -1, right = "E" },
+            E = { dx = 1, dy = 0, right = "S" },
+            S = { dx = 0, dy = 1, right = "W" },
+            W = { dx = -1, dy = 0, right = "N" },
+        }
+        local dir = assert(dirs[startDir], "profile corridor has invalid direction")
+        session.transitionDuration = transitionDuration
+        if motion == "forward" then
+            session.playerX = startX + dir.dx
+            session.playerY = startY + dir.dy
+            session.playerDir = startDir
+            session.transitionDir = "forward"
+        else
+            session.playerX = startX
+            session.playerY = startY
+            session.playerDir = dir.right
+            session.transitionDir = "turn_right"
+        end
+    end
+
+    local function applyMotionPose(sampleIndex)
+        if not motion then return end
+        local phase = (sampleIndex - 1) % motionCycleFrames
+        local half = motionCycleFrames / 2
+        local progress
+        if phase <= half then
+            progress = phase / half
+        else
+            progress = (motionCycleFrames - phase) / half
+        end
+        local fractionRemaining = 1 - progress
+        session.transitionTimer = transitionDuration * fractionRemaining
+        if session.transitionTimer <= 0 then session.transitionTimer = 0 end
+    end
+
     viewport_3d.init()
     local canvas = love.graphics.newCanvas(256, 240)
     love.graphics.setCanvas({ canvas, depth = true, stencil = true })
 
-    local function renderSample()
+    local function renderSample(sampleIndex)
+        applyMotionPose(sampleIndex)
         love.graphics.clear(0, 0, 0, 1, true, true)
         local started = love.timer.getTime()
         viewport_3d.draw(session)
         love.graphics.flushBatch()
-        return (love.timer.getTime() - started) * 1000
+        local elapsedMs = (love.timer.getTime() - started) * 1000
+        local frameStats = viewport_3d.getLastFrameStats()
+        return elapsedMs, (frameStats and frameStats.profile) or {}
     end
+
     collectgarbage("collect")
     local statsBefore = love.graphics.getStats()
     local luaKbBefore = collectgarbage("count")
-    local coldMs = renderSample()
-    for _ = 1, 20 do renderSample() end
+    local coldMs = renderSample(1)
+    for i = 1, 20 do renderSample(i + 1) end
+
+    -- Motion has its own convergence behavior (driver state, streaming
+    -- meshes, and the real transition path), so renderer warm-up alone is
+    -- not enough for a meaningful motion percentile.  Complete several full
+    -- ping-pong cycles before the measured window, without mixing those
+    -- frames into the reported samples.
+    local motionWarmupCycles = motion and 3 or 0
+    for i = 1, motionWarmupCycles * motionCycleFrames do
+        renderSample(i + 21)
+    end
 
     local count = math.max(1, math.floor(tonumber(frameCount) or 300))
     local samples, total = {}, 0
+    local aggregate = {
+        frames = count,
+        nearClipMsTotal = 0, nearClipMsMax = 0,
+        meshUploadMsTotal = 0, meshUploadMsMax = 0,
+        outputVerticesUploadedTotal = 0, outputVerticesUploadedMax = 0,
+        nearClipCacheHitsTotal = 0, nearClipCacheMissesTotal = 0,
+        cachedClipVerticesDrawnTotal = 0,
+        modelsNearClippedTotal = 0, modelsNearClippedMax = 0,
+        clipWorkFrames = 0,
+        firstHalfMsTotal = 0, firstHalfMsMax = 0,
+        secondHalfMsTotal = 0, secondHalfMsMax = 0,
+    }
     for i = 1, count do
-        samples[i] = renderSample()
-        total = total + samples[i]
+        local elapsedMs, frameProfile = renderSample(i + 21)
+        samples[i] = elapsedMs
+        total = total + elapsedMs
+        if i <= math.floor(count / 2) then
+            aggregate.firstHalfMsTotal = aggregate.firstHalfMsTotal + elapsedMs
+            aggregate.firstHalfMsMax = math.max(aggregate.firstHalfMsMax, elapsedMs)
+        else
+            aggregate.secondHalfMsTotal = aggregate.secondHalfMsTotal + elapsedMs
+            aggregate.secondHalfMsMax = math.max(aggregate.secondHalfMsMax, elapsedMs)
+        end
+
+        local nearClip = tonumber(frameProfile.nearClipMs) or 0
+        local upload = tonumber(frameProfile.meshUploadMs) or 0
+        local uploaded = tonumber(frameProfile.outputVerticesUploaded) or 0
+        local clippedModels = tonumber(frameProfile.modelsNearClipped) or 0
+        aggregate.nearClipMsTotal = aggregate.nearClipMsTotal + nearClip
+        aggregate.nearClipMsMax = math.max(aggregate.nearClipMsMax, nearClip)
+        aggregate.meshUploadMsTotal = aggregate.meshUploadMsTotal + upload
+        aggregate.meshUploadMsMax = math.max(aggregate.meshUploadMsMax, upload)
+        aggregate.outputVerticesUploadedTotal = aggregate.outputVerticesUploadedTotal + uploaded
+        aggregate.outputVerticesUploadedMax = math.max(aggregate.outputVerticesUploadedMax, uploaded)
+        aggregate.nearClipCacheHitsTotal = aggregate.nearClipCacheHitsTotal
+            + (tonumber(frameProfile.nearClipCacheHits) or 0)
+        aggregate.nearClipCacheMissesTotal = aggregate.nearClipCacheMissesTotal
+            + (tonumber(frameProfile.nearClipCacheMisses) or 0)
+        aggregate.cachedClipVerticesDrawnTotal = aggregate.cachedClipVerticesDrawnTotal
+            + (tonumber(frameProfile.cachedClipVerticesDrawn) or 0)
+        aggregate.modelsNearClippedTotal = aggregate.modelsNearClippedTotal + clippedModels
+        aggregate.modelsNearClippedMax = math.max(aggregate.modelsNearClippedMax, clippedModels)
+        if uploaded > 0 then aggregate.clipWorkFrames = aggregate.clipWorkFrames + 1 end
     end
+    aggregate.nearClipMsMean = aggregate.nearClipMsTotal / count
+    aggregate.meshUploadMsMean = aggregate.meshUploadMsTotal / count
+    aggregate.outputVerticesUploadedMean = aggregate.outputVerticesUploadedTotal / count
+    aggregate.modelsNearClippedMean = aggregate.modelsNearClippedTotal / count
+    local halfCount = math.floor(count / 2)
+    aggregate.firstHalfMsMean = aggregate.firstHalfMsTotal / math.max(1, halfCount)
+    aggregate.secondHalfMsMean = aggregate.secondHalfMsTotal / math.max(1, count - halfCount)
+
     table.sort(samples)
     local function percentile(p)
         return samples[math.max(1, math.min(count, math.ceil(count * p)))]
@@ -1207,6 +1321,9 @@ function cli.runProfile3D(mapId, frameCount, loader, variant)
     local payload = {
         mapId = mapId,
         variant = session.profile3dVariant,
+        motionPattern = motion or "stationary",
+        motionCycleFrames = motion and motionCycleFrames or 0,
+        motionWarmupCycles = motionWarmupCycles,
         frames = count,
         coldMs = coldMs,
         meanMs = total / count,
@@ -1231,6 +1348,7 @@ function cli.runProfile3D(mapId, frameCount, loader, variant)
         dynamicByCategory = frameStats.dynamicByCategory,
         dynamicSourceQuads = frameStats.dynamicSourceQuads,
         profile = frameStats.profile,
+        profileAggregate = aggregate,
         queuedSurfaces = frameStats.queuedSurfaces,
     }
     print("PROFILE 3D BEGIN")
