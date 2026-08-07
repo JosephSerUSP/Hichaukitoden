@@ -1022,6 +1022,47 @@ function viewport_3d.clipTrianglesToNear(vertices, cameraX, cameraY, dirX, dirY,
     return output
 end
 
+-- Profiling-only mirror of the clipper's arithmetic. It performs the same
+-- depth tests and per-field interpolation math for crossing edges, but never
+-- allocates polygon, clipped-polygon, intersection-vertex, or output tables.
+-- `profile-3d ... clip-math-only` uses this to estimate pure clipping math;
+-- comparing it with `clip-no-upload` isolates Lua result construction/table
+-- churn without changing the normal `current` path.
+function viewport_3d.profileClipMathOnly(vertices, cameraX, cameraY, dirX, dirY, nearPlane)
+    nearPlane = nearPlane or 0.05
+    local outputVertices, intersections, sink = 0, 0, 0
+    local function depth(vertex)
+        return (vertex[1] - cameraX) * dirX + (vertex[2] - cameraY) * dirY
+    end
+    local function crossingMath(from, to, fromDepth, toDepth)
+        local t = (nearPlane - fromDepth) / (toDepth - fromDepth)
+        for i = 1, #from do
+            sink = sink + from[i] + (to[i] - from[i]) * t
+        end
+    end
+    local function inspectEdge(from, to, fromDepth, toDepth, fromInside, toInside)
+        if fromInside ~= toInside then
+            intersections = intersections + 1
+            crossingMath(from, to, fromDepth, toDepth)
+        end
+    end
+    for triangle = 1, #vertices, 3 do
+        local a, b, c = vertices[triangle], vertices[triangle + 1], vertices[triangle + 2]
+        local da, db, dc = depth(a), depth(b), depth(c)
+        local ia, ib, ic = da >= nearPlane, db >= nearPlane, dc >= nearPlane
+        local insideCount = (ia and 1 or 0) + (ib and 1 or 0) + (ic and 1 or 0)
+        if insideCount == 3 then
+            outputVertices = outputVertices + 3
+        elseif insideCount > 0 then
+            inspectEdge(a, b, da, db, ia, ib)
+            inspectEdge(b, c, db, dc, ib, ic)
+            inspectEdge(c, a, dc, da, ic, ia)
+            outputVertices = outputVertices + (insideCount == 1 and 3 or 6)
+        end
+    end
+    return outputVertices, intersections, sink
+end
+
 local WORLD_SHADER_SOURCE = retroMeshShader.buildWorldShader()
 local worldShader = nil
 local worldShaderError = nil
@@ -1262,6 +1303,12 @@ local function drawWorldSpace(session)
         vertexFallbackSurfaces = 0, verticesInspected = 0,
         heightVerticesInspected = 0, nonHeightVerticesInspected = 0,
         heightSurfacePlacementsVisited = 0, nonHeightPlacementsVisited = 0,
+        clipMathOnlyMs = 0, clipMathOnlyOutputVertices = 0,
+        clipMathOnlyIntersections = 0, clipOutputVerticesBuilt = 0,
+        clippedMeshResizeMs = 0, clippedSetVerticesMs = 0,
+        clippedSetDrawRangeMs = 0, clippedDrawSubmitMs = 0,
+        clippedDrawsSubmitted = 0, clippedSurfacesSkippedBeforeUpload = 0,
+        clippedSurfacesSkippedBeforeDraw = 0,
     }
     local profileVariant = session.profile3dVariant or "current"
     local function quadVisible(a, b, c, d)
@@ -1828,37 +1875,73 @@ local function drawWorldSpace(session)
                     profile.modelsNearClipped = profile.modelsNearClipped + 1
                     profile.inputTrianglesClipped = profile.inputTrianglesClipped
                         + math.floor(#placed.vertices / 3)
-                    local clipStarted = love.timer.getTime()
-                    local clipped = viewport_3d.clipTrianglesToNear(
-                        placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane)
-                    profile.nearClipMs = profile.nearClipMs
-                        + (love.timer.getTime() - clipStarted) * 1000
-                    local needed = #clipped
-                    profile.outputVerticesUploaded = profile.outputVerticesUploaded + needed
-                    if not placed.clippedMesh or placed.clippedCapacity < needed then
-                        profile.clippedMeshResizes = profile.clippedMeshResizes + 1
-                        if placed.clippedMesh and placed.clippedMesh.release then placed.clippedMesh:release() end
-                        local capacity = 6
-                        while capacity < needed do capacity = capacity * 2 end
-                        placed.clippedMesh = love.graphics.newMesh(
-                            WORLD_MESH_FORMAT, capacity, "triangles", "stream")
-                        if placed.texture then placed.clippedMesh:setTexture(placed.texture) end
-                        placed.clippedCapacity = capacity
+                    if profileVariant == "clip-math-only" then
+                        local clipStarted = love.timer.getTime()
+                        local needed, intersections = viewport_3d.profileClipMathOnly(
+                            placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane)
+                        profile.clipMathOnlyMs = profile.clipMathOnlyMs
+                            + (love.timer.getTime() - clipStarted) * 1000
+                        profile.clipMathOnlyOutputVertices = profile.clipMathOnlyOutputVertices + needed
+                        profile.clipMathOnlyIntersections = profile.clipMathOnlyIntersections + intersections
+                        profile.clippedSurfacesSkippedBeforeUpload =
+                            profile.clippedSurfacesSkippedBeforeUpload + 1
+                        drawable = nil
+                    else
+                        local clipStarted = love.timer.getTime()
+                        local clipped = viewport_3d.clipTrianglesToNear(
+                            placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane)
+                        profile.nearClipMs = profile.nearClipMs
+                            + (love.timer.getTime() - clipStarted) * 1000
+                        local needed = #clipped
+                        profile.clipOutputVerticesBuilt = profile.clipOutputVerticesBuilt + needed
+                        if profileVariant == "clip-no-upload" then
+                            profile.clippedSurfacesSkippedBeforeUpload =
+                                profile.clippedSurfacesSkippedBeforeUpload + 1
+                            drawable = nil
+                        else
+                            if not placed.clippedMesh or placed.clippedCapacity < needed then
+                                profile.clippedMeshResizes = profile.clippedMeshResizes + 1
+                                local resizeStarted = love.timer.getTime()
+                                if placed.clippedMesh and placed.clippedMesh.release then placed.clippedMesh:release() end
+                                local capacity = 6
+                                while capacity < needed do capacity = capacity * 2 end
+                                placed.clippedMesh = love.graphics.newMesh(
+                                    WORLD_MESH_FORMAT, capacity, "triangles", "stream")
+                                if placed.texture then placed.clippedMesh:setTexture(placed.texture) end
+                                placed.clippedCapacity = capacity
+                                profile.clippedMeshResizeMs = profile.clippedMeshResizeMs
+                                    + (love.timer.getTime() - resizeStarted) * 1000
+                            end
+                            local uploadStarted = love.timer.getTime()
+                            local setVerticesStarted = love.timer.getTime()
+                            placed.clippedMesh:setVertices(clipped, 1, needed)
+                            profile.clippedSetVerticesMs = profile.clippedSetVerticesMs
+                                + (love.timer.getTime() - setVerticesStarted) * 1000
+                            local drawRangeStarted = love.timer.getTime()
+                            placed.clippedMesh:setDrawRange(1, needed)
+                            profile.clippedSetDrawRangeMs = profile.clippedSetDrawRangeMs
+                                + (love.timer.getTime() - drawRangeStarted) * 1000
+                            profile.meshUploadMs = profile.meshUploadMs
+                                + (love.timer.getTime() - uploadStarted) * 1000
+                            profile.outputVerticesUploaded = profile.outputVerticesUploaded + needed
+                            drawable = {
+                                mesh = placed.clippedMesh, model = true, profileClipped = true,
+                                centerX = placed.centerX, centerY = placed.centerY, centerZ = placed.centerZ,
+                            }
+                            if profileVariant == "clip-no-draw" then
+                                drawable.profileSkipDraw = true
+                                profile.clippedSurfacesSkippedBeforeDraw =
+                                    profile.clippedSurfacesSkippedBeforeDraw + 1
+                            end
+                        end
                     end
-                    local uploadStarted = love.timer.getTime()
-                    placed.clippedMesh:setVertices(clipped, 1, needed)
-                    placed.clippedMesh:setDrawRange(1, needed)
-                    profile.meshUploadMs = profile.meshUploadMs
-                        + (love.timer.getTime() - uploadStarted) * 1000
-                    drawable = {
-                        mesh = placed.clippedMesh, model = true,
-                        centerX = placed.centerX, centerY = placed.centerY, centerZ = placed.centerZ,
-                    }
                 end
-                drawable.depth = (placed.centerX - cameraX) * dirX
-                    + (placed.centerY - cameraY) * dirY
-                drawable.sequence = #surfaces + 1
-                surfaces[#surfaces + 1] = drawable
+                if drawable then
+                    drawable.depth = (placed.centerX - cameraX) * dirX
+                        + (placed.centerY - cameraY) * dirY
+                    drawable.sequence = #surfaces + 1
+                    surfaces[#surfaces + 1] = drawable
+                end
             end
             end
         end
@@ -2087,8 +2170,17 @@ local function drawWorldSpace(session)
     for _, g in ipairs(surfaces) do
         if g.mesh then
             if g.model then modelDraws = modelDraws + 1 end
-            if not (profileVariant == "no-draw" and g.model) then
-                love.graphics.draw(g.mesh)
+            local skipDraw = (profileVariant == "no-draw" and g.model) or g.profileSkipDraw
+            if not skipDraw then
+                if g.profileClipped then
+                    local clippedDrawStarted = love.timer.getTime()
+                    love.graphics.draw(g.mesh)
+                    profile.clippedDrawSubmitMs = profile.clippedDrawSubmitMs
+                        + (love.timer.getTime() - clippedDrawStarted) * 1000
+                    profile.clippedDrawsSubmitted = profile.clippedDrawsSubmitted + 1
+                else
+                    love.graphics.draw(g.mesh)
+                end
             end
         elseif #g.vertices > 0 then
             dynamicMeshDraws = dynamicMeshDraws + 1
