@@ -6335,6 +6335,84 @@
         "y": 4,
         "trigger": "interact",
         "sprite": "assets/sprites/OBJ_TreasureChest_001.png"
+      },
+      {
+        "id": 9,
+        "name": "Recruit Console",
+        "x": 11,
+        "y": 4,
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC03.png",
+        "commands": [
+          {
+            "cmd": "TEXT",
+            "text": "Recruitment Console active. Select a creature candidate to test contract recruitment."
+          },
+          {
+            "cmd": "CHOICE",
+            "options": [
+              {
+                "label": "Pixie (Lv 1)",
+                "commands": [
+                  {
+                    "cmd": "OPEN_RECRUIT",
+                    "actorId": 1,
+                    "level": 1,
+                    "sourceKey": "dev:recruit_pixie"
+                  }
+                ]
+              },
+              {
+                "label": "Skeleton (Lv 5)",
+                "commands": [
+                  {
+                    "cmd": "OPEN_RECRUIT",
+                    "actorId": 3,
+                    "level": 5,
+                    "sourceKey": "dev:recruit_skeleton"
+                  }
+                ]
+              },
+              {
+                "label": "Nurse (Lv 8)",
+                "commands": [
+                  {
+                    "cmd": "OPEN_RECRUIT",
+                    "actorId": 9,
+                    "level": 8,
+                    "sourceKey": "dev:recruit_nurse"
+                  }
+                ]
+              },
+              {
+                "label": "Golem (Lv 10)",
+                "commands": [
+                  {
+                    "cmd": "OPEN_RECRUIT",
+                    "actorId": 12,
+                    "level": 10,
+                    "sourceKey": "dev:recruit_golem"
+                  }
+                ]
+              },
+              {
+                "label": "Cerberus (Lv 15)",
+                "commands": [
+                  {
+                    "cmd": "OPEN_RECRUIT",
+                    "actorId": 32,
+                    "level": 15,
+                    "sourceKey": "dev:recruit_cerberus"
+                  }
+                ]
+              },
+              {
+                "label": "Cancel",
+                "commands": []
+              }
+            ]
+          }
+        ]
       }
     ],
     "treasures": [
@@ -6342,7 +6420,13 @@
       2
     ],
     "encounters": [],
-    "recruits": []
+    "recruits": [
+      1,
+      3,
+      9,
+      12,
+      32
+    ]
   },
   {
     "id": 9,
