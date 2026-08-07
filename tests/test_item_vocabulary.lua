@@ -14,6 +14,7 @@ local usability = require("engine.usability")
 local craft = require("engine.craft")
 local traits = require("engine.traits")
 local interpreter = require("engine.interpreter")
+local config = require("engine.config")
 
 print("[TEST] Starting item vocabulary tests...")
 
@@ -70,6 +71,39 @@ do
         if not implemented[s.scope] then allKnown = false end
     end
     check(allKnown, "every registered scope has an implemented branch")
+end
+
+--------------------------------------------------------- roster capacities --
+
+-- Item usability must obey the same authored structural limits as recruitment
+-- itself. Keeping literal 4/16 values here can make a recruit item appear
+-- usable even though the canonical roster transaction has no destination.
+do
+    local previousParty = config.MAX_PARTY_SIZE
+    local previousReserve = config.MAX_RESERVE_SIZE
+    config.MAX_PARTY_SIZE = 2
+    config.MAX_RESERVE_SIZE = 3
+
+    local sess = {
+        party = { {}, {} },
+        reserve = { {}, {}, {} },
+    }
+    local egg = {
+        type = "consumable",
+        target = "none",
+        effects = { { type = "recruit_egg" } },
+    }
+
+    local ok, reason = usability.canUseItem(egg, nil, { session = sess, isBattle = false })
+    check(not ok and reason == "Party and reserve are full",
+        "recruit item refuses use at the canonical party/reserve limits")
+
+    sess.reserve[3] = nil
+    ok = usability.canUseItem(egg, nil, { session = sess, isBattle = false })
+    check(ok, "recruit item becomes usable when a canonical reserve slot is free")
+
+    config.MAX_PARTY_SIZE = previousParty
+    config.MAX_RESERVE_SIZE = previousReserve
 end
 
 -------------------------------------------------------------- percentages --

@@ -1,5 +1,6 @@
 local targeting = require("engine.targeting")
 local skill_cost = require("engine.skill_cost")
+local config = require("engine.config")
 
 local usability = {}
 
@@ -54,12 +55,12 @@ function usability.canUseItem(item, target, context)
                 else unavailableReason = "Maximum MP is already at its limit" end
             elseif eff.type == "recruit_egg" and session then
                 local formation = require("engine.formation")
-                local partyFull = (#formation.denseMembers(session.party) >= 4)
-                local reserveFull = (#formation.denseMembers(session.reserve) >= 16)
+                local partyFull = (#formation.denseMembers(session.party) >= config.MAX_PARTY_SIZE)
+                local reserveFull = (#formation.denseMembers(session.reserve) >= config.MAX_RESERVE_SIZE)
                 if not (partyFull and reserveFull) then canAffect = true
                 else unavailableReason = "Party and reserve are full" end
             elseif (eff.type == "hp" or eff.type == "hp_heal") and session then
-                for slot = 1, 4 do
+                for slot = 1, config.MAX_PARTY_SIZE do
                     local member = session.party and session.party[slot]
                     if member and not member:isDead() and member.hp < member:getMaxHp(session) then
                         canAffect = true
