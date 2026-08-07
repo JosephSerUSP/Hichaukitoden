@@ -1,6 +1,6 @@
 function love.conf(t)
-    t.identity = "Hichaukitoden"
-    t.window.title = "Hichaukitoden"
+    t.identity = "SecondRite"
+    t.window.title = "Second Rite"
     t.window.width = 768 -- 256 * 3
     t.window.height = 720 -- 240 * 3
     t.window.resizable = true

@@ -11,7 +11,7 @@ specification or the authored campaign design.
 
 ## Name and framing
 
-- **Hichaukitoden** survives as an engine or internal project name.
+- **Second Rite** is the permanent game and project name.
 - The released game's working title is **[Primary title]: Thestra no Jijou**.
   The primary title remains open; *Thestra no Jijou* is the subtitle of the
   overall game, not the name of the generated stress-test campaign.

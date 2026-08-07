@@ -12,7 +12,7 @@ Create many small, fully modeled, low-poly item assets for Second Rite. They are
 2. `tools/blender/second_rite_asset_core.py` — canonical shared Blender infrastructure.
 3. `second_rite_item_exporter.py` — thin add-on adapter around the shared export behavior.
 4. Generated `.blend` — editable working library and embedded copies of exporter, core, contract, and materials.
-5. Generated OBJ/MTL — runtime assets consumed by Hichaukitoden.
+5. Generated OBJ/MTL — runtime assets consumed by Second Rite.
 
 The exporter adapter is safe to execute from an embedded Blender Text block:
 it only resolves a sibling `vendor/` directory when `__file__` identifies a
@@ -84,7 +84,7 @@ The final validated CI preview uses Blender Workbench rather than Eevee because 
 - Keep item-specific composition in clearly named builder functions.
 - Rebuild the whole library after source changes.
 - Validate output count, file size, manifest, and preview.
-- Promote selected OBJ/MTL files into `Hichaukitoden/assets/models/items/` and add direct `model` paths to `data/items.json`.
+- Promote selected OBJ/MTL files into `Second-Rite/assets/models/items/` and add direct `model` paths to `data/items.json`.
 
 ## Things deliberately not implemented
 

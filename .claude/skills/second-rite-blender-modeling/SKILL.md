@@ -7,7 +7,7 @@ description: >-
 license: Apache-2.0
 metadata:
   upstream: "terminal-skills blender-3d-modeling 1.0.0"
-  adapted_for: "JosephSerUSP/Hichaukitoden"
+  adapted_for: "JosephSerUSP/Second-Rite"
   version: "1.0.0-second-rite.1"
   category: design
   tags: ["blender", "3d-modeling", "procedural", "bmesh", "second-rite"]

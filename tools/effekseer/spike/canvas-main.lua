@@ -1,7 +1,7 @@
 -- Does Effekseer render INTO a bound LOVE Canvas, in screen-space pixel
 -- coordinates, at the game's real 256x240 resolution?
 --
--- This is the shape Hichaukitoden actually renders in: everything is drawn to
+-- This is the shape Second Rite actually renders in: everything is drawn to
 -- a 256x240 canvas and scaled 3x at the end. If effects cannot land in that
 -- canvas, roadmap step 2 does not work regardless of anything proven so far.
 --

@@ -1,4 +1,4 @@
-# Hichaukitoden - Development Bible & Guidelines
+# Second Rite - Development Bible & Guidelines
 
 **Moved.** This file remains only as a stable entry point; do not add rules here.
 

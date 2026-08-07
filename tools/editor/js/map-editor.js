@@ -72,7 +72,7 @@
 
             const rootHeader = document.createElement('div');
             rootHeader.className = 'tree-node-header';
-            rootHeader.innerHTML = '📁 Hichaukitoden';
+            rootHeader.innerHTML = '📁 Second Rite';
             rootNode.appendChild(rootHeader);
 
             const rootChildren = document.createElement('div');

@@ -13,7 +13,7 @@
                 }
                 console.error('Database fetch error:', err);
                 document.getElementById('status-db').textContent = 'Database: Offline';
-                showToast('Failed to connect to Hichaukitoden dev server!\n\nVerify that the editor server is running.');
+                showToast('Failed to connect to Second Rite dev server!\n\nVerify that the editor server is running.');
                 return;
             }
 

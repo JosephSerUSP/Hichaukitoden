@@ -1,4 +1,4 @@
-"""asset-gen -- prompt to game-ready art for Hichaukitoden.
+"""asset-gen -- prompt to game-ready art for Second Rite.
 
     python tools/asset-gen/gen.py classes
     python tools/asset-gen/gen.py generate smallBattler Kappa "a river-turtle imp"

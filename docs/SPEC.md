@@ -1,4 +1,4 @@
-# Hichaukitoden — Living Spec
+# Second Rite — Living Spec
 
 The single current-state authority for architecture and design rules.
 `BIBLE.md` (root) points here; everything under `docs/archive/` is a

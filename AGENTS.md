@@ -1,4 +1,4 @@
-# Agent orientation — Hichaukitoden
+# Agent orientation — Second Rite
 
 A LÖVE2D (Lua) first-person dungeon RPG with a summoner/creature economy, plus a
 vanilla-JS+Node editor under `tools/editor`. Read this first; it is deliberately

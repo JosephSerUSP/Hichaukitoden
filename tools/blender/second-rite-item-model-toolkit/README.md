@@ -1,6 +1,6 @@
 # Second Rite Item Model Toolkit
 
-A self-contained Blender 5.0+ toolchain for rebuilding and extending the procedural low-poly item library used by **Second Rite / Hichaukitoden**.
+A self-contained Blender 5.0+ toolchain for rebuilding and extending the procedural low-poly item library used by **Second Rite**.
 
 This bundle preserves the tools that generated `second_rite_item_model_library_expanded.blend` and its 53 centered OBJ exports. It is intentionally script-first and deterministic: the Python generator is the source of truth, Blender is the compiler, and the `.blend`, OBJ/MTL files, preview, and manifest are generated outputs.
 

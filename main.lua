@@ -241,7 +241,7 @@ function love.load(arg)
     math.randomseed(os.time())
     scene_host.init("title")
     print("--------------------------------------------------")
-    print("HICHAUKITODEN GAME LOADED (WITH INPUT COOLDOWN FIX)")
+    print("SECOND RITE GAME LOADED (WITH INPUT COOLDOWN FIX)")
     print("--------------------------------------------------")
     
     -- Check for CLI arguments (test-battle, validate)

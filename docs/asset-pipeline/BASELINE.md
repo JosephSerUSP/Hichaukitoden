@@ -43,7 +43,7 @@ The validator emitted its expected sandbox negative-test formula warning for `os
 ## Known warnings and assumptions
 
 - `gen.py runs` has an existing CLI/data error because these local staged manifests are pattern manifests, not generation-run manifests: `tools/asset-gen/out/depth-height-patterns/manifest.json`, `tools/asset-gen/out/depth-height-patterns-64/manifest.json`, and `tools/asset-gen/out/depth-height-patterns-v2/manifest.json`. They lack `class`, `name`, and `variants`. No manifest was edited.
-- The depth baseline was written only to `%TEMP%\hichaukitoden-phase0-depth`; production PNGs and the tracked production manifest were restored unchanged.
+- The depth baseline was written only to `%TEMP%\second-rite-phase0-depth`; production PNGs and the tracked production manifest were restored unchanged.
 - Existing generated binaries were not modified by this phase.
 - `tests/test_geometry.lua` is registered in the `lovec . unittest` suite and directly loads and compiles plane, shell, and radial fixtures; no additional topology smoke-test command is required for the baseline.
 

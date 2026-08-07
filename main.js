@@ -49,7 +49,7 @@ function createWindow() {
         y: state.y,
         width: state.width || 1440,
         height: state.height || 900,
-        title: 'Hichaukitoden Developer Studio',
+        title: 'Second Rite Developer Studio',
         icon: path.join(__dirname, 'tools/editor/Assets/Icons.png'),
         frame: true,
         show: false,
