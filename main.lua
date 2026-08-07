@@ -103,6 +103,7 @@ local isReachabilityMode = false
 local isGoldenMode = false
 local isGoldenUIMode = false
 local isScreenshotMode = false
+local isRenderCensusReviewMode = false
 local isDeveloperMode = false
 local triggerTestBattle
 
@@ -263,6 +264,8 @@ function love.load(arg)
                 isGoldenUIMode = true
             elseif val == "screenshots" then
                 isScreenshotMode = true
+            elseif val == "render-census-review" or val == "census-review" then
+                isRenderCensusReviewMode = true
             elseif val == "preview-scene" then
                 isPreviewSceneMode = true
                 previewSceneId = arg[i + 1]
@@ -420,6 +423,7 @@ function love.load(arg)
             "test_geometry", "test_icons", "test_item_display",
             "test_item_model_view", "test_item_model_assignments",
             "test_reachability", "test_formation", "test_chest_3d",
+            "test_model_census_review",
         }) do
             local ok, err = pcall(dofile, "tests/" .. suite .. ".lua")
             if not ok then failFast.crashed(suite, err) end
@@ -439,6 +443,13 @@ function love.load(arg)
     if isScreenshotMode then
         loader.init(cliCampaignRoot)
         cli_tools.runScreenshots(loader, gameWidth, gameHeight)
+        love.event.quit(0)
+        return
+    end
+
+    if isRenderCensusReviewMode then
+        loader.init(cliCampaignRoot)
+        cli_tools.runModelCensusReview(loader)
         love.event.quit(0)
         return
     end
