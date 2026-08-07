@@ -160,6 +160,32 @@ function usability.canUseSkill(skill, actor, target, context)
     if not skill then return false, "No skill" end
     context = context or {}
 
+    -- Skills historically only existed inside battle, so an unspecified
+    -- context continues to mean battle. Field callers opt in explicitly with
+    -- isField=true. This keeps headless tests and AI callers from becoming
+    -- field calls merely because they do not carry a Battle object.
+    local isField = context.isField == true
+    local isBattle = not isField
+    if context.battle ~= nil or context.isBattle == true then
+        isBattle, isField = true, false
+    end
+
+    -- Reuse the same occasion vocabulary items already author: `battle`,
+    -- `field`, `always`, `none`. Skills default to battle-only so adding field
+    -- use cannot accidentally turn a cooldown-only heal into infinite free
+    -- expedition healing. Charged restorative spells opt into `always` in data.
+    local scope = skill.scope or "battle"
+    if scope ~= "battle" and scope ~= "field" and scope ~= "always" and scope ~= "none" then
+        return false, "Invalid use scope"
+    end
+    if scope == "none" then
+        return false, "Cannot be used"
+    elseif scope == "field" and isBattle then
+        return false, "Cannot be used in battle"
+    elseif scope == "battle" and isField then
+        return false, "Cannot be used in field"
+    end
+
     -- Cost and availability: charges/Overcast for magic, warmup/cooldown/
     -- condition for physical. skill_cost owns the whole answer so that the
     -- player's menu, Battle:getAIAction and the status scene cannot disagree
@@ -191,6 +217,27 @@ function usability.canUseSkill(skill, actor, target, context)
             return false, "Target is dead"
         elseif exp.state == "dead" and not isDead then
             return false, "Target is not dead"
+        end
+
+        -- A single-target restorative skill should not spend a persistent
+        -- charge to heal zero HP. Party-wide actions handle this at the caller
+        -- by checking whether at least one legal target can benefit.
+        if exp.state ~= "dead" and exp.shape == "single" then
+            local hasHpHeal = false
+            for _, eff in ipairs(skill.effects or {}) do
+                if eff.type == "hp" or eff.type == "hp_heal" then
+                    hasHpHeal = true
+                    break
+                end
+            end
+            if hasHpHeal then
+                local session = context.session
+                    or (context.battle and context.battle.session)
+                local maxHp = target.getMaxHp and target:getMaxHp(session) or target.maxHp or 999
+                if (target.hp or 0) >= maxHp then
+                    return false, "HP is already full"
+                end
+            end
         end
     end
 
