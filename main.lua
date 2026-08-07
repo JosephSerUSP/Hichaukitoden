@@ -96,6 +96,7 @@ local isProfile3DMode = false
 local profile3DMapId = nil
 local profile3DFrames = nil
 local profile3DVariant = nil
+local profile3DMotion = nil
 local isPreviewFogMode = false
 local previewFogSpec = nil
 local previewFogMapId = nil
@@ -376,6 +377,11 @@ function love.load(arg)
                 profile3DMapId = arg[i + 1]
                 profile3DFrames = arg[i + 2]
                 profile3DVariant = arg[i + 3]
+                local motion = arg[i + 4]
+                if motion == "forward" or motion == "turn" then
+                    profile3DMotion = motion
+                    i = i + 1
+                end
                 i = i + 3
             elseif val == "savetest" then
                 isSaveTestMode = true
@@ -519,7 +525,7 @@ function love.load(arg)
 
     if isProfile3DMode then
         loader.init(cliCampaignRoot)
-        cli_tools.runProfile3D(profile3DMapId or 1, profile3DFrames, loader, profile3DVariant)
+        cli_tools.runProfile3D(profile3DMapId or 1, profile3DFrames, loader, profile3DVariant, profile3DMotion)
         love.event.quit(0)
         return
     end
