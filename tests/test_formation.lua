@@ -315,6 +315,8 @@ assert(skill_cost.cooldownLeft(testSkill, pixie3) == 2, "Pixie slot 3 has cooldo
 local tickCtx = { party = tickSess.party, enemies = {}, session = tickSess, events = {} }
 interpreter.execList({ { cmd = "STATE_TICKS" }, { cmd = "TICK_SKILL_TIMERS" } }, tickCtx)
 assert(#pixie3.states == 0, "Pixie slot 3 defending state decayed to 0 and removed during STATE_TICKS")
+assert(skill_cost.cooldownLeft(testSkill, pixie3) == 2, "Pixie slot 3 newly armed cooldown survives the first round-end tick")
+interpreter.execList({ { cmd = "TICK_SKILL_TIMERS" } }, tickCtx)
 assert(skill_cost.cooldownLeft(testSkill, pixie3) == 1, "Pixie slot 3 skill cooldown reduced during TICK_SKILL_TIMERS")
 
 print("[PASS] Sparse party round-end state duration and skill timer ticks (slot 3)")
