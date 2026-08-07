@@ -1,13 +1,32 @@
-# Material library for dungeon_altar.obj
+# Blender 5.1.2 MTL File: 'None'
+# www.blender.org
 
-newmtl stone_base
-Kd 0.3200 0.3200 0.3400
+newmtl bronze_gold
+Ns 562.500000
+Ka 0.850000 0.850000 0.850000
+Kd 0.750000 0.580000 0.200000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
 
-newmtl stone_carved
-Kd 0.4200 0.4000 0.3800
+newmtl stone_dark
+Ns 62.500000
+Ka 1.000000 1.000000 1.000000
+Kd 0.280000 0.280000 0.300000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
 
-newmtl stone_slab
-Kd 0.4800 0.4600 0.4400
-
-newmtl brass_accent
-Kd 0.7500 0.6000 0.2500
+newmtl stone_light
+Ns 90.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.450000 0.430000 0.400000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2

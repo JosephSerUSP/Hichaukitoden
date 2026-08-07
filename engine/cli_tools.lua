@@ -1532,4 +1532,9 @@ function cli.runGolden(loader)
     end
 end
 
+function cli.runModelCensusReview(loader)
+    return require("engine.model_census_review").run(loader)
+end
+
 return cli
+
