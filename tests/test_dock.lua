@@ -16,6 +16,7 @@ package.path = package.path .. ";./?.lua;./engine/?.lua"
 
 local loader = require("data.loader")
 local sessionModule = require("engine.session")
+local config = require("engine.config")
 local dock = require("presentation.dock")
 local windowRenderer = require("presentation.window_renderer")
 
@@ -30,6 +31,71 @@ end
 loader.init()
 local sess = sessionModule.GameSession.new(loader)
 local ctx = { session = sess, loader = loader, party = sess.party }
+
+-- Roster capacities are engine contracts, not renderer guesses. Pin both the
+-- config lifecycle and the real declarative list-source path here because a
+-- stale literal in window_renderer once made the Reserve menu advertise eight
+-- expedition slots while session/recruitment only supported four.
+local expectedPartySize = config.MAX_PARTY_SIZE
+local expectedReserveSize = config.MAX_RESERVE_SIZE
+config.load()
+check(config.MAX_PARTY_SIZE == expectedPartySize,
+    "config reload preserves canonical party capacity")
+check(config.MAX_RESERVE_SIZE == expectedReserveSize,
+    "config reload preserves canonical reserve capacity")
+
+local rosterScene = {
+    windows = {
+        {
+            id = "capacity_party",
+            content = {
+                { type = "list", listId = "party", format = "{name}" },
+            },
+        },
+        {
+            id = "capacity_reserve",
+            content = {
+                { type = "list", listId = "reserve", format = "{name}" },
+            },
+        },
+    },
+}
+local rosterState = { v = {}, winState = {}, windowOrder = {} }
+local function resolvedRosterWindows()
+    local resolved = windowRenderer.resolveDataState(rosterScene, ctx, rosterState)
+    local byId = {}
+    for _, win in ipairs(resolved.windows or {}) do byId[win.id] = win end
+    return byId
+end
+
+local rosterWindows = resolvedRosterWindows()
+check(rosterWindows.capacity_party
+        and #rosterWindows.capacity_party.rows == config.MAX_PARTY_SIZE,
+    "party list source exposes exactly the canonical party slots")
+check(rosterWindows.capacity_reserve
+        and #rosterWindows.capacity_reserve.rows == config.MAX_RESERVE_SIZE,
+    "reserve list source exposes exactly the canonical reserve slots")
+
+-- Keep holes meaningful: an occupied third reserve slot must stay slot three,
+-- bracketed by empty rows, rather than being packed or followed by phantom
+-- slots beyond MAX_RESERVE_SIZE. The swap indicator consumes the same authored
+-- slot index, so preserving this row shape pins its source/target geometry too.
+local reserveActor = loader.actors and loader.actors[1]
+if reserveActor then
+    sess.reserve[3] = sess:createPersistentBattler(reserveActor, reserveActor.level or 1,
+        { name = "Capacity Test" })
+    rosterWindows = resolvedRosterWindows()
+    local rows = rosterWindows.capacity_reserve and rosterWindows.capacity_reserve.rows or {}
+    check(#rows == config.MAX_RESERVE_SIZE
+            and rows[1] and rows[1].text == "--Empty--"
+            and rows[2] and rows[2].text == "--Empty--"
+            and rows[3] and rows[3].text == "Capacity Test"
+            and rows[4] and rows[4].text == "--Empty--",
+        "reserve list preserves occupied slot three and surrounding holes")
+    sess.reserve[3] = nil
+else
+    check(false, "reserve capacity fixture has an actor definition")
+end
 
 local function sceneById(id)
     for _, s in ipairs(loader.scenes or {}) do
