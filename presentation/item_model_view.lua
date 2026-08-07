@@ -19,7 +19,7 @@ local itemShaderError = nil
 local canvasCache = {}        -- Keyed by "w,h" -> { color, depth }
 local warnCache = {}          -- Keeps track of paths warned about once
 local errorCache = {}         -- Keeps track of severe errors logged once
-local rotationStates = {}     -- Keyed by stateKey, stores { selKey, angle }
+local rotationStates = {}     -- Keyed by stateKey, stores { selKey, startedAt }
 local resolvedModelCache = {} -- Keyed by requestedPathKey -> { model, resolvedPath, usedFallback }
 
 function item_model_view.clearCache()
@@ -28,6 +28,10 @@ function item_model_view.clearCache()
     errorCache = {}
     rotationStates = {}
     resolvedModelCache = {}
+end
+
+function item_model_view.resetRotationStates()
+    rotationStates = {}
 end
 
 local function ensureItemShader()
@@ -63,18 +67,16 @@ local function getCanvasBuffers(w, h)
     return entry
 end
 
-function item_model_view.getRotationState(stateKey, selKey, dt)
+function item_model_view.getRotationState(stateKey, selKey)
     stateKey = stateKey or "default"
     selKey = selKey or ""
+    local now = love.timer.getTime()
     local st = rotationStates[stateKey]
     if not st or st.selKey ~= selKey then
-        st = { selKey = selKey, angle = 0 }
+        st = { selKey = selKey, startedAt = now }
         rotationStates[stateKey] = st
-    else
-        dt = dt or love.timer.getDelta()
-        st.angle = st.angle + dt * 0.4
     end
-    return st.angle
+    return (now - st.startedAt) * 0.4
 end
 
 function item_model_view.resetState(stateKey)
@@ -184,7 +186,7 @@ function item_model_view.calculateFit(bounds, width, height, fillRatio, tiltRadi
     return { cx, cy, cz }, halfWidth, halfHeight
 end
 
-function item_model_view.draw(x, y, w, h, modelPath, stateKey, selKey, dt)
+function item_model_view.draw(x, y, w, h, modelPath, stateKey, selKey)
     local model = item_model_view.resolveModel(modelPath)
     if not model then return end
 
@@ -194,7 +196,7 @@ function item_model_view.draw(x, y, w, h, modelPath, stateKey, selKey, dt)
     local buffers = getCanvasBuffers(w, h)
     if not buffers then return end
 
-    local angle = item_model_view.getRotationState(stateKey, selKey, dt)
+    local angle = item_model_view.getRotationState(stateKey, selKey)
     local center, halfWidth, halfHeight = item_model_view.calculateFit(model.bounds, w, h, 0.81, ITEM_PRESENTATION_TILT)
 
     -- Fixed light direction from upper-front-left in view space
@@ -255,4 +257,3 @@ function item_model_view.draw(x, y, w, h, modelPath, stateKey, selKey, dt)
 end
 
 return item_model_view
-

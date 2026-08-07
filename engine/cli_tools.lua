@@ -500,6 +500,7 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
         -- editing one scene's script reddens unrelated frames and G5 is
         -- order-dependent.
         require("presentation.small_battlers").reset()
+        require("presentation.item_model_view").resetRotationStates()
         dock.reset()
         stringPictures.clear()
         imagePictures.clear()

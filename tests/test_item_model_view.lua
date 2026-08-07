@@ -37,6 +37,10 @@ check(cfRow.model == "",
 
 item_model_view.clearCache()
 
+local originalGetTime = love.timer.getTime
+local testClock = 10.0
+love.timer.getTime = function() return testClock end
+
 -- Selected item with no model ("" or nil) resolves placeholder_question.obj
 local fbModel, fbPath, fbUsed = item_model_view.resolveModel("")
 check(fbModel ~= nil and fbPath == item_model_view.FALLBACK_PATH and fbUsed == true,
@@ -64,17 +68,28 @@ local sharedObj = "assets/models/items/wind_charm.obj"
 local selKey1 = "wind_charm:" .. sharedObj
 local selKey2 = "light_amulet:" .. sharedObj
 
-local a0 = item_model_view.getRotationState("window_test", selKey1, 0)
+local a0 = item_model_view.getRotationState("window_test", selKey1)
 check(math.abs(a0 - 0.0) < 1e-5, "Initial angle for Wind Charm is 0")
 
-local a1 = item_model_view.getRotationState("window_test", selKey1, 1.0)
-check(math.abs(a1 - 0.4) < 1e-4, "Wind Charm angle advances by dt * 0.4 (got " .. tostring(a1) .. ")")
+local sameTime = item_model_view.getRotationState("window_test", selKey1)
+check(math.abs(sameTime - a0) < 1e-5, "Repeated lookup at the same clock time does not advance rotation")
 
-local b0 = item_model_view.getRotationState("window_test", selKey2, 0.5)
+testClock = 11.0
+local a1 = item_model_view.getRotationState("window_test", selKey1)
+check(math.abs(a1 - 0.4) < 1e-4, "Wind Charm angle follows one second of clock time at 0.4 rad/s (got " .. tostring(a1) .. ")")
+
+local b0 = item_model_view.getRotationState("window_test", selKey2)
 check(math.abs(b0 - 0.0) < 1e-5, "Selection change to Light Amulet (same OBJ) resets angle to 0")
 
-local a2 = item_model_view.getRotationState("window_test", selKey1, 0.5)
+testClock = 12.0
+local a2 = item_model_view.getRotationState("window_test", selKey1)
 check(math.abs(a2 - 0.0) < 1e-5, "Returning to Wind Charm resets angle to 0 rather than inheriting Light Amulet's angle")
+
+item_model_view.resetRotationStates()
+local resetAngle = item_model_view.getRotationState("window_test", selKey1)
+check(math.abs(resetAngle - 0.0) < 1e-5, "Resetting rotation states restarts the selection clock")
+
+love.timer.getTime = originalGetTime
 
 -------------------------------------------------- 4. Tilt-fit calculation tests --
 
@@ -192,4 +207,3 @@ end
 
 print("Item model view tests completed: " .. passed .. " passed, " .. failed .. " failed")
 if failed > 0 then error("item_model_view tests failed", 0) end
-

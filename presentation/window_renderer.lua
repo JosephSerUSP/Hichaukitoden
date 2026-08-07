@@ -1710,7 +1710,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
                 if item then modelPath = item.model end
             end
             local selectionKey = tostring(row.id or row.index or "") .. ":" .. tostring(modelPath or "")
-            itemModelView.draw(x, y, w, h, modelPath, id, selectionKey, ctx and ctx.dt)
+            itemModelView.draw(x, y, w, h, modelPath, id, selectionKey)
         end
     else -- "panel", "frame" and any unknown style: text content
         if text then
