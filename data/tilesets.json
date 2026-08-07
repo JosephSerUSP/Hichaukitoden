@@ -3,6 +3,15 @@
         "id": "dungeon_default",
         "name": "Standard Dungeon",
         "texture": "assets/tilesets/dungeon_001.png",
+        "heightMap": "assets/tilesets/dungeon_001_heightmap.png",
+        "heightMapScale": {
+            "wall": 0.12,
+            "floor": 0.08,
+            "ceiling": 0.08
+        },
+        "heightMapMeshColumns": 24,
+        "heightMapMeshRows": 24,
+        "heightMapTriangleBudget": 384,
         "tileWidth": 64,
         "tileHeight": 64,
         "base": {
@@ -12,38 +21,9 @@
                     "role": "base_wall",
                     "middle": [
                         1,
-                        1
-                    ],
-                    "leftEdge": [
-                        1,
-                        2,
                         0
                     ],
-                    "rightEdge": [
-                        1,
-                        2,
-                        32
-                    ],
-                    "weight": 70
-                },
-                {
-                    "id": "dungeon_wall_2",
-                    "role": "base_wall",
-                    "middle": [
-                        1,
-                        0
-                    ],
-                    "leftEdge": [
-                        1,
-                        2,
-                        0
-                    ],
-                    "rightEdge": [
-                        1,
-                        2,
-                        32
-                    ],
-                    "weight": 30
+                    "weight": 100
                 }
             ],
             "floors": [
@@ -51,20 +31,10 @@
                     "id": "dungeon_floor_1",
                     "role": "base_floor",
                     "atlas": [
-                        3,
-                        0
-                    ],
-                    "weight": 70,
-                    "heightOffset": 0
-                },
-                {
-                    "id": "dungeon_floor_2",
-                    "role": "base_floor",
-                    "atlas": [
                         0,
                         1
                     ],
-                    "weight": 30,
+                    "weight": 100,
                     "heightOffset": 0
                 }
             ],
@@ -85,8 +55,8 @@
                 "id": "dungeon_door",
                 "role": "door",
                 "atlas": [
-                    2,
-                    0
+                    1,
+                    1
                 ]
             }
         ],
