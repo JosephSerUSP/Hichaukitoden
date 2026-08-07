@@ -1,0 +1,115 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "wallPiece",
+  "name": "first_stratum_fixture_wall_votive_relief",
+  "description": "weathered limestone votive relief, one localized low-relief devotional plaque, simple oval carved mass with restrained crossing bands, centered front elevation, shallow softened carving, muted old ivory stone, surrounding wall material continuing quietly to every edge",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, interior room, corridor, tunnel, passage, architecture scene, environmental concept art, establishing shot, camera view, receding floor, receding ceiling, perspective wall, outdoor facade, ruin landscape, doorway view, archway view, horizon line, foreground, background, cutaway, diorama, framed picture, poster, diagram labels, repeated emblem, repeated focal object, dramatic black cavity",
+      "seed": 311100,
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_wall_votive_relief.png",
+    "heightControlWeight": 0.78
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_fixture_wall_votive_relief.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.004017,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.3,
+        "centre_x": 0.84
+      },
+      "fixtureFile": "fixture-1.png",
+      "fixtureHeight": "fixture-height-1.png",
+      "fixtureAlphaCoverage": 0.16943,
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: fixture_wall_votive_relief]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.018791,
+        "chromaOutlierRatio": 4e-06,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.973,
+        "centre_x": 0.721
+      },
+      "fixtureFile": "fixture-2.png",
+      "fixtureHeight": "fixture-height-2.png",
+      "fixtureAlphaCoverage": 0.16943,
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: fixture_wall_votive_relief]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.008762,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.423,
+        "centre_x": 1.07
+      },
+      "fixtureFile": "fixture-3.png",
+      "fixtureHeight": "fixture-height-3.png",
+      "fixtureAlphaCoverage": 0.16943,
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: fixture_wall_votive_relief]",
+      "contextSurface": "wall"
+    }
+  ],
+  "surfaceFixturePreparation": {
+    "preparedAt": "2026-08-06T20:08:23",
+    "heightSource": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_wall_votive_relief.png",
+    "heightOperation": "add",
+    "recommendedHeightScale": 0.055,
+    "alphaAuthority": "height PNG alpha copied after generation; SD output alpha ignored",
+    "originalVariantsPreserved": true
+  }
+}

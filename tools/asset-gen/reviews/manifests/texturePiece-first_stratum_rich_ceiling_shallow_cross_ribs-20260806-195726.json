@@ -1,0 +1,98 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_rich_ceiling_shallow_cross_ribs",
+  "description": "aged limestone and plaster ceiling material, broad shallow crossing ribs, quiet recessed bays, muted old ivory and smoke-grey palette, restrained mineral wear, continuous orthographic ceiling surface, solemn undercroft architecture material",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, interior room, corridor, tunnel, passage, architecture scene, environmental concept art, establishing shot, camera view, receding floor, receding ceiling, perspective wall, outdoor facade, ruin landscape, doorway view, archway view, horizon line, foreground, background, cutaway, diorama, framed picture, poster, diagram labels, repeated emblem, repeated focal object, dramatic black cavity",
+      "seed": 310500,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/ceiling_shallow_cross_ribs.png",
+    "heightControlWeight": 0.62
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_rich_ceiling_shallow_cross_ribs.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 4e-06,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.9,
+        "y": 2.697,
+        "centre_x": 1.103,
+        "centre_y": 1.645
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: ceiling_shallow_cross_ribs]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 6.5e-05,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.526,
+        "y": 3.051,
+        "centre_x": 1.202,
+        "centre_y": 2.094
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: ceiling_shallow_cross_ribs]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.571,
+        "y": 1.93,
+        "centre_x": 1.646,
+        "centre_y": 1.563
+      },
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: ceiling_shallow_cross_ribs]",
+      "contextSurface": "floor"
+    }
+  ]
+}

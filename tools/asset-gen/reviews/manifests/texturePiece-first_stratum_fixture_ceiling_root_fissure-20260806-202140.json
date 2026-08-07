@@ -1,0 +1,115 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_fixture_ceiling_root_fissure",
+  "description": "localized branching fissure across aged plaster and limestone ceiling, one restrained crack network viewed orthographically, shallow dark mineral seam with a few thin root fibres, muted ivory and smoke-grey surface, surrounding intact ceiling continuing to every edge",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, interior room, corridor, tunnel, passage, architecture scene, environmental concept art, establishing shot, camera view, receding floor, receding ceiling, perspective wall, outdoor facade, ruin landscape, doorway view, archway view, horizon line, foreground, background, cutaway, diorama, framed picture, poster, diagram labels, repeated emblem, repeated focal object, dramatic black cavity",
+      "seed": 311800,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_ceiling_root_fissure.png",
+    "heightControlWeight": 0.78
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_fixture_ceiling_root_fissure.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 5e-05,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.696,
+        "y": 0.947,
+        "centre_x": 1.199,
+        "centre_y": 0.683
+      },
+      "fixtureFile": "fixture-1.png",
+      "fixtureHeight": "fixture-height-1.png",
+      "fixtureAlphaCoverage": 0.12524,
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: fixture_ceiling_root_fissure]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 4e-06,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.775,
+        "y": 1.197,
+        "centre_x": 1.008,
+        "centre_y": 0.971
+      },
+      "fixtureFile": "fixture-2.png",
+      "fixtureHeight": "fixture-height-2.png",
+      "fixtureAlphaCoverage": 0.12524,
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: fixture_ceiling_root_fissure]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.439,
+        "y": 1.575,
+        "centre_x": 1.491,
+        "centre_y": 1.403
+      },
+      "fixtureFile": "fixture-3.png",
+      "fixtureHeight": "fixture-height-3.png",
+      "fixtureAlphaCoverage": 0.12524,
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: fixture_ceiling_root_fissure]",
+      "contextSurface": "floor"
+    }
+  ],
+  "surfaceFixturePreparation": {
+    "preparedAt": "2026-08-06T20:23:51",
+    "heightSource": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_ceiling_root_fissure.png",
+    "heightOperation": "replace",
+    "recommendedHeightScale": 0.06,
+    "alphaAuthority": "height PNG alpha copied after generation; SD output alpha ignored",
+    "originalVariantsPreserved": true
+  }
+}

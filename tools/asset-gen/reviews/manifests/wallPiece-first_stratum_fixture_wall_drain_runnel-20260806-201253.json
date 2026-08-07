@@ -1,0 +1,115 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "wallPiece",
+  "name": "first_stratum_fixture_wall_drain_runnel",
+  "description": "weathered masonry drain runnel, one localized branching vertical channel cut into old limestone, shallow eroded groove, restrained dark mineral deposit inside channel, muted warm grey stone, surrounding wall material continuing to every edge",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, interior room, corridor, tunnel, passage, architecture scene, environmental concept art, establishing shot, camera view, receding floor, receding ceiling, perspective wall, outdoor facade, ruin landscape, doorway view, archway view, horizon line, foreground, background, cutaway, diorama, framed picture, poster, diagram labels, repeated emblem, repeated focal object, dramatic black cavity",
+      "seed": 311400,
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_wall_drain_runnel.png",
+    "heightControlWeight": 0.8
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_fixture_wall_drain_runnel.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 1.717,
+        "centre_x": 1.482
+      },
+      "fixtureFile": "fixture-1.png",
+      "fixtureHeight": "fixture-height-1.png",
+      "fixtureAlphaCoverage": 0.11694,
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: fixture_wall_drain_runnel]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 5.7e-05,
+        "chromaOutlierRatio": 4e-06,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 1.746,
+        "centre_x": 0.975
+      },
+      "fixtureFile": "fixture-2.png",
+      "fixtureHeight": "fixture-height-2.png",
+      "fixtureAlphaCoverage": 0.11694,
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: fixture_wall_drain_runnel]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.805,
+        "centre_x": 1.001
+      },
+      "fixtureFile": "fixture-3.png",
+      "fixtureHeight": "fixture-height-3.png",
+      "fixtureAlphaCoverage": 0.11694,
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: fixture_wall_drain_runnel]",
+      "contextSurface": "wall"
+    }
+  ],
+  "surfaceFixturePreparation": {
+    "preparedAt": "2026-08-06T20:15:03",
+    "heightSource": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_wall_drain_runnel.png",
+    "heightOperation": "replace",
+    "recommendedHeightScale": 0.095,
+    "alphaAuthority": "height PNG alpha copied after generation; SD output alpha ignored",
+    "originalVariantsPreserved": true
+  }
+}

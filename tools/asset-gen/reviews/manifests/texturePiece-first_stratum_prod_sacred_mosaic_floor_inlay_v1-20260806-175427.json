@@ -1,0 +1,192 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_prod_sacred_mosaic_floor_inlay_v1",
+  "description": "Mosaic & inlay paving, floor material, ceremonial floor medallions, ritual bands and sacred ceiling panels, intricate geometric stone tesserae, worn smooth by ancient footsteps, ivory marble, jasper red, slate tesserae, aged mortar, authored floor inlay geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+      "seed": 250119,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/floor_inlay.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_prod_sacred_mosaic_floor_inlay_v1.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.039745,
+        "chromaOutlierRatio": 0.000179,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.119,
+        "y": 0.199,
+        "centre_x": 0.933,
+        "centre_y": 0.878
+      },
+      "candidateId": "prod_sacred_mosaic_floor_inlay_v1#v1",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427/raw-1.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427/variant-1.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_inlay]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.013397,
+        "chromaOutlierRatio": 3.4e-05,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.124,
+        "y": 0.401,
+        "centre_x": 1.032,
+        "centre_y": 0.999
+      },
+      "candidateId": "prod_sacred_mosaic_floor_inlay_v1#v2",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427/raw-2.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427/variant-2.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_inlay]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.044712,
+        "chromaOutlierRatio": 1.9e-05,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.184,
+        "y": 1.73,
+        "centre_x": 0.814,
+        "centre_y": 0.809
+      },
+      "candidateId": "prod_sacred_mosaic_floor_inlay_v1#v3",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427/raw-3.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427/variant-3.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_inlay]",
+      "contextSurface": "floor"
+    }
+  ],
+  "overnight": {
+    "jobId": "prod_sacred_mosaic_floor_inlay_v1",
+    "candidateIdBase": "prod_sacred_mosaic_floor_inlay_v1",
+    "surfaceType": "floor",
+    "assetClass": "texturePiece",
+    "geometryPreset": "floor_inlay",
+    "geometryMapPath": "assets/geometry/1_blender_depth_maps/floor_inlay.png",
+    "materialFamily": "sacred_mosaic",
+    "materialFamilyLabel": "Mosaic & inlay paving",
+    "architecturalRole": "ceremonial floor medallions, ritual bands and sacred ceiling panels",
+    "environmentalState": "intricate geometric stone tesserae, worn smooth by ancient footsteps",
+    "paletteBias": "ivory marble, jasper red, slate tesserae, aged mortar",
+    "promptFamilyId": "sacred_mosaic",
+    "exactPositivePrompt": "Mosaic & inlay paving, floor material, ceremonial floor medallions, ritual bands and sacred ceiling panels, intricate geometric stone tesserae, worn smooth by ancient footsteps, ivory marble, jasper red, slate tesserae, aged mortar, authored floor inlay geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation, single seamless tileable material texture, flat head-on orthographic albedo map, uniform detail, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, detailed sharp painted source, masterpiece, best quality, highly detailed, sharp focus, 4k, detailed painted source",
+    "exactNegativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "loras": [],
+    "sampler": "DPM++ 2M",
+    "steps": 26,
+    "cfg": 7.0,
+    "seed": 250119,
+    "depthWeight": 0.6,
+    "activeWrapAxes": "xy",
+    "pairId": null,
+    "pairSide": null,
+    "pairVariable": null,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": "",
+      "tags": []
+    },
+    "updatedAt": "2026-08-06T17:59:25"
+  },
+  "overnightJob": {
+    "jobId": "prod_sacred_mosaic_floor_inlay_v1",
+    "name": "first_stratum_prod_sacred_mosaic_floor_inlay_v1",
+    "class": "texturePiece",
+    "surface": "floor",
+    "geometryPreset": "floor_inlay",
+    "geometryMapPath": "assets/geometry/1_blender_depth_maps/floor_inlay.png",
+    "materialFamily": "sacred_mosaic",
+    "materialFamilyLabel": "Mosaic & inlay paving",
+    "architecturalRole": "ceremonial floor medallions, ritual bands and sacred ceiling panels",
+    "environmentalState": "intricate geometric stone tesserae, worn smooth by ancient footsteps",
+    "paletteBias": "ivory marble, jasper red, slate tesserae, aged mortar",
+    "promptFamilyId": "sacred_mosaic",
+    "description": "Mosaic & inlay paving, floor material, ceremonial floor medallions, ritual bands and sacred ceiling panels, intricate geometric stone tesserae, worn smooth by ancient footsteps, ivory marble, jasper red, slate tesserae, aged mortar, authored floor inlay geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation",
+    "provider": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "variants": 3,
+    "steps": 26,
+    "cfg": 7.0,
+    "sampler": "DPM++ 2M",
+    "seed": 250119,
+    "depthWeight": 0.6,
+    "requestSize": "512x512",
+    "negativeExtra": "sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+    "pairId": null,
+    "pairSide": null,
+    "pairVariable": null,
+    "variation": 1
+  }
+}

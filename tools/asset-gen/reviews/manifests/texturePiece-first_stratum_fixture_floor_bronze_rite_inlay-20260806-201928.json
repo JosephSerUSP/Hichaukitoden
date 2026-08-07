@@ -1,0 +1,115 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_fixture_floor_bronze_rite_inlay",
+  "description": "aged ritual bronze inlay set into limestone, one localized circular rite diagram with thin rings and sparse radial lines, tarnished dark bronze and muted green patina, shallow metal proud of stone, front-facing orthographic floor material, surrounding limestone continuing to every edge",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, interior room, corridor, tunnel, passage, architecture scene, environmental concept art, establishing shot, camera view, receding floor, receding ceiling, perspective wall, outdoor facade, ruin landscape, doorway view, archway view, horizon line, foreground, background, cutaway, diorama, framed picture, poster, diagram labels, repeated emblem, repeated focal object, dramatic black cavity",
+      "seed": 311700,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_floor_bronze_rite_inlay.png",
+    "heightControlWeight": 0.8
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_fixture_floor_bronze_rite_inlay.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.005043,
+        "chromaOutlierRatio": 0.000248,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.977,
+        "y": 1.394,
+        "centre_x": 1.904,
+        "centre_y": 3.189
+      },
+      "fixtureFile": "fixture-1.png",
+      "fixtureHeight": "fixture-height-1.png",
+      "fixtureAlphaCoverage": 0.17969,
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: fixture_floor_bronze_rite_inlay]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.005825,
+        "chromaOutlierRatio": 0.000435,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.72,
+        "y": 1.621,
+        "centre_x": 1.679,
+        "centre_y": 1.829
+      },
+      "fixtureFile": "fixture-2.png",
+      "fixtureHeight": "fixture-height-2.png",
+      "fixtureAlphaCoverage": 0.17969,
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: fixture_floor_bronze_rite_inlay]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.002182,
+        "chromaOutlierRatio": 0.000149,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.886,
+        "y": 1.038,
+        "centre_x": 1.631,
+        "centre_y": 1.438
+      },
+      "fixtureFile": "fixture-3.png",
+      "fixtureHeight": "fixture-height-3.png",
+      "fixtureAlphaCoverage": 0.17969,
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: fixture_floor_bronze_rite_inlay]",
+      "contextSurface": "floor"
+    }
+  ],
+  "surfaceFixturePreparation": {
+    "preparedAt": "2026-08-06T20:21:39",
+    "heightSource": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_floor_bronze_rite_inlay.png",
+    "heightOperation": "add",
+    "recommendedHeightScale": 0.025,
+    "alphaAuthority": "height PNG alpha copied after generation; SD output alpha ignored",
+    "originalVariantsPreserved": true
+  }
+}

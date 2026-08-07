@@ -1055,6 +1055,214 @@
   "score": 5,
   "tags": []
  },
+ "texturePiece-first_stratum_ab_soot-intensity_A-20260806-181323#1": {
+  "at": "2026-08-06T22:57:09",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_ab_soot-intensity_A-20260806-181323.json",
+   "sha256": "cd0365df992140be09c57836fa71473b4566f6fc0e2da60e0787022854f3a4a8"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_ab_soot-intensity_A-20260806-181323#2": {
+  "at": "2026-08-06T22:57:12",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_ab_soot-intensity_A-20260806-181323.json",
+   "sha256": "93705081579d57ad9ec65968b36c121561066122db17cc88b36c3c938f8bfc52"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_ab_soot-intensity_A-20260806-181323#3": {
+  "at": "2026-08-06T22:57:15",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_ab_soot-intensity_A-20260806-181323.json",
+   "sha256": "4e3020a6936d37bda3175bf634749b0952f65c16211f8b5b9a0386ef300cd0c9"
+  },
+  "score": 2,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_ab_soot-intensity_B-20260806-182104#1": {
+  "at": "2026-08-06T22:56:56",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_ab_soot-intensity_B-20260806-182104.json",
+   "sha256": "33f0997dc7b4bcf7146dfa8a48963317bc8a39b31469420d969385aa009a8a37"
+  },
+  "note": "for anything fire-like, it looks bad in-engine unless we make it actually glow - perhaps in post-processing isolate the color and have a third separate \"glow\" mask.",
+  "score": 5,
+  "tags": [
+   "burned",
+   "prompt"
+  ]
+ },
+ "texturePiece-first_stratum_ab_soot-intensity_B-20260806-182104#2": {
+  "at": "2026-08-06T22:56:58",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_ab_soot-intensity_B-20260806-182104.json",
+   "sha256": "a5e9a16401112d70fb89667088b6a9f7492c8883de2a0e7481311a987d951ad7"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_ab_soot-intensity_B-20260806-182104#3": {
+  "at": "2026-08-06T22:57:07",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_ab_soot-intensity_B-20260806-182104.json",
+   "sha256": "8dd25c7384d4c83b7362fbe7b2ba911b5c4fde746638f5ca23804c4ae888dc8a"
+  },
+  "score": 2,
+  "tags": [
+   "harsh",
+   "picture",
+   "repeat"
+  ]
+ },
+ "texturePiece-first_stratum_fixture_ceiling_drip_boss-20260806-202352#1": {
+  "at": "2026-08-06T22:47:44",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_ceiling_drip_boss-20260806-202352.json",
+   "sha256": "4221f6684c2e51f7d9ccfe05ca48104f2e6cc37ce5001c3d7fe6af302ed27b84"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_ceiling_drip_boss-20260806-202352#2": {
+  "at": "2026-08-06T22:47:47",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_ceiling_drip_boss-20260806-202352.json",
+   "sha256": "e47a8b8381df9fe1195a5881392daa30f18a544d9652537f54f6dbe29b48a3d5"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_ceiling_drip_boss-20260806-202352#3": {
+  "at": "2026-08-06T22:47:49",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_ceiling_drip_boss-20260806-202352.json",
+   "sha256": "9117c3d7a00bc34ed667035e09093739eb0e8b27419a0b36060906ae99b6f865"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_ceiling_root_fissure-20260806-202140#1": {
+  "at": "2026-08-06T22:48:05",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_ceiling_root_fissure-20260806-202140.json",
+   "sha256": "52d7fd1c005d6a82bb6913d1888db85fc9daac32c3146be6374e561caa8c5924"
+  },
+  "score": 2,
+  "tags": [
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_fixture_ceiling_root_fissure-20260806-202140#2": {
+  "at": "2026-08-06T22:48:08",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_ceiling_root_fissure-20260806-202140.json",
+   "sha256": "7e4071606ef2214887943193a26399feff0f1ecb86f512a60f9ffaeede74c47a"
+  },
+  "score": 2,
+  "tags": [
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_fixture_ceiling_root_fissure-20260806-202140#3": {
+  "at": "2026-08-06T22:48:15",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_ceiling_root_fissure-20260806-202140.json",
+   "sha256": "4893e59e4874ef83efe18dfea1a72acb093adccec51f23b23f3bb611152b8eb0"
+  },
+  "score": 3,
+  "tags": [
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_fixture_floor_bronze_rite_inlay-20260806-201928#1": {
+  "at": "2026-08-06T22:48:41",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_bronze_rite_inlay-20260806-201928.json",
+   "sha256": "72e21c96f46e1f9ee31ad90711ef1daa3dc6970496802fc856fa0c319ee9b04e"
+  },
+  "note": "these look like the heightmaps are too strong in the preview",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_floor_bronze_rite_inlay-20260806-201928#2": {
+  "at": "2026-08-06T22:48:43",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_bronze_rite_inlay-20260806-201928.json",
+   "sha256": "b71e5eea469a8986fc241991b810db4a9d827697bd2d472b418b5143213449a4"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_floor_bronze_rite_inlay-20260806-201928#3": {
+  "at": "2026-08-06T22:48:44",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_bronze_rite_inlay-20260806-201928.json",
+   "sha256": "7ea3880acd6cbd161c79d12c70a4e870800da28dbce7b84bc4aa68bc1f383bfa"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_floor_collapsed_socket-20260806-201716#1": {
+  "at": "2026-08-06T22:49:10",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_collapsed_socket-20260806-201716.json",
+   "sha256": "a91fd54dd30b2390bebdd0354c35ce3a4fff9ac577cd491dedc2341f853bdd0a"
+  },
+  "note": "these look ok, but it seems like they're adding height instead of removing",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_floor_collapsed_socket-20260806-201716#2": {
+  "at": "2026-08-06T22:49:11",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_collapsed_socket-20260806-201716.json",
+   "sha256": "adce02ac86abb8c819c210adf57bab64f235bb8274f4b4c73e0d98bbbb99c3de"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_floor_collapsed_socket-20260806-201716#3": {
+  "at": "2026-08-06T22:49:12",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_collapsed_socket-20260806-201716.json",
+   "sha256": "37d09cff6e4d4946082179d9b69522708b64d85a637928ccf5a59a76f73f8459"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_floor_shallow_puddle-20260806-201504#1": {
+  "at": "2026-08-06T22:49:21",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_shallow_puddle-20260806-201504.json",
+   "sha256": "631fd44b4bc37ee51d397ed7f5972a644d81a9d39a37e77ebe9f549f5f82cc81"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_floor_shallow_puddle-20260806-201504#2": {
+  "at": "2026-08-06T22:49:24",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_shallow_puddle-20260806-201504.json",
+   "sha256": "f570ff631620582c6214389f9c9e6ae06047a028af8784aaa7492ec06e2b722f"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_fixture_floor_shallow_puddle-20260806-201504#3": {
+  "at": "2026-08-06T22:49:26",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_fixture_floor_shallow_puddle-20260806-201504.json",
+   "sha256": "10c63dc4f12b53d8a6621cc800b1e4a1da7de58efe77f461a7db4edcdc31c6db"
+  },
+  "score": 5,
+  "tags": []
+ },
  "texturePiece-first_stratum_preflight_ceiling_ceiling_vault-20260806-042822#1": {
   "at": "2026-08-06T09:51:28",
   "evidence": {
@@ -1074,6 +1282,38 @@
   },
   "score": 5,
   "tags": []
+ },
+ "texturePiece-first_stratum_prod_azulejo_remnants_ceiling_coffers_v1-20260806-185844#1": {
+  "at": "2026-08-06T22:53:28",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_azulejo_remnants_ceiling_coffers_v1-20260806-185844.json",
+   "sha256": "ed31c5285d2b92639b1327dce88d08aa73aa1e9e618790c763bb81dc7ad21c4a"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_azulejo_remnants_ceiling_coffers_v1-20260806-185844#2": {
+  "at": "2026-08-06T22:53:33",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_azulejo_remnants_ceiling_coffers_v1-20260806-185844.json",
+   "sha256": "f4e536e2c1856e8cc1824cce2561a5741a43cc867239495b47261bda08b452a7"
+  },
+  "score": 5,
+  "tags": [
+   "harsh"
+  ]
+ },
+ "texturePiece-first_stratum_prod_azulejo_remnants_ceiling_coffers_v1-20260806-185844#3": {
+  "at": "2026-08-06T22:53:40",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_azulejo_remnants_ceiling_coffers_v1-20260806-185844.json",
+   "sha256": "4c8cca239e30a86571bc579b47696225ad0c7059afb08865beb53758919221f7"
+  },
+  "score": 6,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
  },
  "texturePiece-first_stratum_prod_azulejo_remnants_floor_inlay_v1-20260806-174441#1": {
   "at": "2026-08-06T17:50:12",
@@ -1103,6 +1343,33 @@
   "tags": [
    "harsh"
   ]
+ },
+ "texturePiece-first_stratum_prod_bronze_inlay_ceiling_coffers_v1-20260806-184912#1": {
+  "at": "2026-08-06T22:53:52",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_bronze_inlay_ceiling_coffers_v1-20260806-184912.json",
+   "sha256": "a124c03291feb324a3830f0484e94ac8dffd3f50c5652665816cc0f8bd9cabda"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_bronze_inlay_ceiling_coffers_v1-20260806-184912#2": {
+  "at": "2026-08-06T22:53:53",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_bronze_inlay_ceiling_coffers_v1-20260806-184912.json",
+   "sha256": "d4070256fb832b4c4675680fd8b881cdd09ac8ae103b1a86f8fab3c65e092ecd"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_bronze_inlay_ceiling_coffers_v1-20260806-184912#3": {
+  "at": "2026-08-06T22:53:56",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_bronze_inlay_ceiling_coffers_v1-20260806-184912.json",
+   "sha256": "10bc0e3d05a75c81a3bbdacca93f4da8c476306314cdd7ca4c14b98cc22867cd"
+  },
+  "score": 6,
+  "tags": []
  },
  "texturePiece-first_stratum_prod_bronze_inlay_floor_inlay_v1-20260806-173505#1": {
   "at": "2026-08-06T17:50:38",
@@ -1184,6 +1451,43 @@
   },
   "score": 4,
   "tags": []
+ },
+ "texturePiece-first_stratum_prod_cistern_infrastructure_floor_cobbles_rough_v1-20260806-180607#1": {
+  "at": "2026-08-06T22:57:19",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_cistern_infrastructure_floor_cobbles_rough_v1-20260806-180607.json",
+   "sha256": "4503d1b06f2ffd483b7bb553fd2879fe2645abc970914d772d4fb751d43b72eb"
+  },
+  "score": 5,
+  "tags": [
+   "harsh",
+   "repeat"
+  ]
+ },
+ "texturePiece-first_stratum_prod_cistern_infrastructure_floor_cobbles_rough_v1-20260806-180607#2": {
+  "at": "2026-08-06T22:57:23",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_cistern_infrastructure_floor_cobbles_rough_v1-20260806-180607.json",
+   "sha256": "04cbf85af1e42a882a2a2b3d5e02f7cdd329c01735f70628cdc62e36978a3aaf"
+  },
+  "score": 4,
+  "tags": [
+   "flat",
+   "repeat"
+  ]
+ },
+ "texturePiece-first_stratum_prod_cistern_infrastructure_floor_cobbles_rough_v1-20260806-180607#3": {
+  "at": "2026-08-06T22:57:28",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_cistern_infrastructure_floor_cobbles_rough_v1-20260806-180607.json",
+   "sha256": "0f057421c4da9979b5ab15f564461fc77c4d9dbfe9ad193276ed823deeff6e5c"
+  },
+  "score": 3,
+  "tags": [
+   "flat",
+   "harsh",
+   "repeat"
+  ]
  },
  "texturePiece-first_stratum_prod_cold_slate_floor_cobbles_v1-20260806-124856#1": {
   "at": "2026-08-06T13:18:22",
@@ -1597,6 +1901,33 @@
    "repeat"
   ]
  },
+ "texturePiece-first_stratum_prod_fitted_limestone_ceiling_coffers_v1-20260806-182707#1": {
+  "at": "2026-08-06T22:54:14",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_fitted_limestone_ceiling_coffers_v1-20260806-182707.json",
+   "sha256": "b7e7cabb00c32d67bd1c8af6da8178887ef5fae5bd94cf730455d5fa53fa0038"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_fitted_limestone_ceiling_coffers_v1-20260806-182707#2": {
+  "at": "2026-08-06T22:54:14",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_fitted_limestone_ceiling_coffers_v1-20260806-182707.json",
+   "sha256": "11bba813a666d287853455c9486d8aade06a8edd3ba4419ae2c2b37b11509c9f"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_fitted_limestone_ceiling_coffers_v1-20260806-182707#3": {
+  "at": "2026-08-06T22:54:15",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_fitted_limestone_ceiling_coffers_v1-20260806-182707.json",
+   "sha256": "b1d4f666de2272c70aa4c7ae231f523056cd3422c694df35a6e223bc0e3c8c89"
+  },
+  "score": 5,
+  "tags": []
+ },
  "texturePiece-first_stratum_prod_fitted_limestone_floor_cobbles_v1-20260806-113326#1": {
   "at": "2026-08-06T12:14:42",
   "evidence": {
@@ -1823,6 +2154,42 @@
    "flat"
   ]
  },
+ "texturePiece-first_stratum_prod_funerary_dark_stone_ceiling_vault_v1-20260806-185357#1": {
+  "at": "2026-08-06T22:53:43",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_funerary_dark_stone_ceiling_vault_v1-20260806-185357.json",
+   "sha256": "d53f66ba896388bc34079f819890c19a0e2701d0fefb94ec425fb881bf323f43"
+  },
+  "score": 1,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_funerary_dark_stone_ceiling_vault_v1-20260806-185357#2": {
+  "at": "2026-08-06T22:53:46",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_funerary_dark_stone_ceiling_vault_v1-20260806-185357.json",
+   "sha256": "0020abfbac05af909d88eff5779f845c147105fbc69223b4cfe1e5d9acc27059"
+  },
+  "score": 3,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_funerary_dark_stone_ceiling_vault_v1-20260806-185357#3": {
+  "at": "2026-08-06T22:53:48",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_funerary_dark_stone_ceiling_vault_v1-20260806-185357.json",
+   "sha256": "d34bddec3ff6d8b15671693c6ba174e527fa295420357763251a99a616191682"
+  },
+  "score": 3,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
  "texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957#1": {
   "at": "2026-08-06T17:50:25",
   "evidence": {
@@ -1854,6 +2221,42 @@
   "score": 4,
   "tags": [
    "seam"
+  ]
+ },
+ "texturePiece-first_stratum_prod_limewash_plaster_ceiling_vault_v1-20260806-190319#1": {
+  "at": "2026-08-06T22:53:14",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_limewash_plaster_ceiling_vault_v1-20260806-190319.json",
+   "sha256": "87745c2ed1dc85aa1aaaa60de1672d98391f875407eb7a2f2846d6fc4c5b95c0"
+  },
+  "score": 1,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_limewash_plaster_ceiling_vault_v1-20260806-190319#2": {
+  "at": "2026-08-06T22:53:18",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_limewash_plaster_ceiling_vault_v1-20260806-190319.json",
+   "sha256": "e8daa5b524f8c2fbc82f3d51f14233b503a3f0c556413322555870fd5c1bf132"
+  },
+  "score": 1,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_limewash_plaster_ceiling_vault_v1-20260806-190319#3": {
+  "at": "2026-08-06T22:53:20",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_limewash_plaster_ceiling_vault_v1-20260806-190319.json",
+   "sha256": "d49d82f7aa7994501eee18202708bac9dbfd48fd8f2f9a7bca46d09024a1db79"
+  },
+  "score": 1,
+  "tags": [
+   "perspective",
+   "picture"
   ]
  },
  "texturePiece-first_stratum_prod_limewash_plaster_floor_cobbles_v1-20260806-174925#1": {
@@ -2032,6 +2435,67 @@
   "score": 5,
   "tags": []
  },
+ "texturePiece-first_stratum_prod_sacred_coffered_floor_flagstones_v1-20260806-175933#1": {
+  "at": "2026-08-06T22:57:32",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sacred_coffered_floor_flagstones_v1-20260806-175933.json",
+   "sha256": "9861215fe5a285defe43b24ba134e22db2dbdb1eac7f6695147c93b04b9e3ab4"
+  },
+  "score": 4,
+  "tags": [
+   "repeat"
+  ]
+ },
+ "texturePiece-first_stratum_prod_sacred_coffered_floor_flagstones_v1-20260806-175933#2": {
+  "at": "2026-08-06T22:57:37",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sacred_coffered_floor_flagstones_v1-20260806-175933.json",
+   "sha256": "59f5d2c0b0f057c4eabb6d85957e7fdbf3e475750ad39965762251cf7a440c2e"
+  },
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-first_stratum_prod_sacred_coffered_floor_flagstones_v1-20260806-175933#3": {
+  "at": "2026-08-06T22:57:40",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sacred_coffered_floor_flagstones_v1-20260806-175933.json",
+   "sha256": "a2fad34e69249807bac6f9ae680c966b1acaeaadc6db5c01e223c276574a8836"
+  },
+  "score": 4,
+  "tags": [
+   "flat",
+   "repeat"
+  ]
+ },
+ "texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427#1": {
+  "at": "2026-08-06T22:57:45",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427.json",
+   "sha256": "baaa3ce045980b67ac131998a9ac5750c8689d23f9dc47b63e657627e6e27a24"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427#2": {
+  "at": "2026-08-06T22:57:49",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427.json",
+   "sha256": "7830a0bc16073a54f461a48d145df2193ecb299cf110bb09e2ea6d9cc711313f"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427#3": {
+  "at": "2026-08-06T22:57:52",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sacred_mosaic_floor_inlay_v1-20260806-175427.json",
+   "sha256": "79bc81189bae89ab6126b9547efdf5e755c319b8e96b5f546e0c67abd86c67a8"
+  },
+  "score": 5,
+  "tags": []
+ },
  "texturePiece-first_stratum_prod_sacred_remnants_floor_flagstones_v1-20260806-115710#1": {
   "at": "2026-08-06T12:13:38",
   "evidence": {
@@ -2148,6 +2612,39 @@
   "score": 4,
   "tags": []
  },
+ "texturePiece-first_stratum_prod_sandstone_civic_ceiling_vault_v1-20260806-183446#1": {
+  "at": "2026-08-06T22:54:05",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sandstone_civic_ceiling_vault_v1-20260806-183446.json",
+   "sha256": "ae4250f2579c7d53e3b529de9c510b29915eb9943e8b208266251a5bac44bd1d"
+  },
+  "score": 2,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_sandstone_civic_ceiling_vault_v1-20260806-183446#2": {
+  "at": "2026-08-06T22:54:09",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sandstone_civic_ceiling_vault_v1-20260806-183446.json",
+   "sha256": "66f597b88cbc6b78b6f2db17cdedbe7b6c1cedd1c832b0c95c0d1be036b8cccd"
+  },
+  "score": 2,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_sandstone_civic_ceiling_vault_v1-20260806-183446#3": {
+  "at": "2026-08-06T22:54:10",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sandstone_civic_ceiling_vault_v1-20260806-183446.json",
+   "sha256": "f940ab1f7cad692e2a899a154cd120185ec792b63bf50c30dc7d90541aaa6428"
+  },
+  "score": 2,
+  "tags": []
+ },
  "texturePiece-first_stratum_prod_sandstone_civic_floor_slabs_varied_v1-20260806-172510#1": {
   "at": "2026-08-06T17:51:07",
   "evidence": {
@@ -2183,6 +2680,33 @@
    "perspective",
    "picture"
   ]
+ },
+ "texturePiece-first_stratum_prod_slate_vaulting_ceiling_vault_v1-20260806-184145#1": {
+  "at": "2026-08-06T22:53:59",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_slate_vaulting_ceiling_vault_v1-20260806-184145.json",
+   "sha256": "403b981ee72968c8e8a91d79f46c6b9f6d1b4b1a801263ba289f7219ad2e9009"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_slate_vaulting_ceiling_vault_v1-20260806-184145#2": {
+  "at": "2026-08-06T22:54:00",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_slate_vaulting_ceiling_vault_v1-20260806-184145.json",
+   "sha256": "07b34918c7743822b2e4468efca45bf16c2d68874d6e9bb717047f91d1013b20"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_slate_vaulting_ceiling_vault_v1-20260806-184145#3": {
+  "at": "2026-08-06T22:54:00",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_slate_vaulting_ceiling_vault_v1-20260806-184145.json",
+   "sha256": "73c1d23c96fbef9315f23ebe01ea9e8f9a22fbc012267f73d1082d4d9a165b65"
+  },
+  "score": 5,
+  "tags": []
  },
  "texturePiece-first_stratum_prod_slate_vaulting_floor_slabs_varied_v1-20260806-173011#1": {
   "at": "2026-08-06T17:50:47",
@@ -2438,6 +2962,116 @@
    "sha256": "a6cc7f12cef98c27b8084deaf891aa7fec9814534163f867c53d91a9861e27d0"
   },
   "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_ceiling_shallow_cross_ribs-20260806-195726#1": {
+  "at": "2026-08-06T22:51:46",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_ceiling_shallow_cross_ribs-20260806-195726.json",
+   "sha256": "0d8b5391bfd0f21649e2d1087b33a8ad41e4affa21332eb4446bbcab9bb2a797"
+  },
+  "note": "these look especially great",
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_ceiling_shallow_cross_ribs-20260806-195726#2": {
+  "at": "2026-08-06T22:51:46",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_ceiling_shallow_cross_ribs-20260806-195726.json",
+   "sha256": "26d4e65d02d2add991282aa4da8f1a2faf991098e9fc847a3b8f15f671ffa541"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_ceiling_shallow_cross_ribs-20260806-195726#3": {
+  "at": "2026-08-06T22:51:47",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_ceiling_shallow_cross_ribs-20260806-195726.json",
+   "sha256": "6766943ba426409acb7b58f12564afbfa71ee60d6af6e17fb5f542ae7822f229"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150#1": {
+  "at": "2026-08-06T22:51:27",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150.json",
+   "sha256": "b11b5fc67787c180d765477ab48cf9fd8a132612c266d97bdb6831869d683009"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150#2": {
+  "at": "2026-08-06T22:51:29",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150.json",
+   "sha256": "b9a498dce87b74ae04ad2535ccc4fb541ef8a6a8603bf0662736e271c539d94e"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150#3": {
+  "at": "2026-08-06T22:51:32",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150.json",
+   "sha256": "6f751d5a09ac63920f9ffd09e8fff9a496c9d7e5ad34c6142fdf2872515556a8"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_floor_flagstones_broad_irregular-20260806-193952#1": {
+  "at": "2026-08-06T22:53:02",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_floor_flagstones_broad_irregular-20260806-193952.json",
+   "sha256": "7540f6c2cba46678e70219182b2664a71476ed482ccf8146a5575de797683b93"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_floor_flagstones_broad_irregular-20260806-193952#2": {
+  "at": "2026-08-06T22:53:08",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_floor_flagstones_broad_irregular-20260806-193952.json",
+   "sha256": "a234d60860436f373baeb6efe0e0d6954967005b62f6e95011d2ce45a5afac4c"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_floor_flagstones_broad_irregular-20260806-193952#3": {
+  "at": "2026-08-06T22:57:59",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_floor_flagstones_broad_irregular-20260806-193952.json",
+   "sha256": "c95bb80e09cc5463a8fcccf1bf75fc25f75c267b3acd7b992b7a187fea28fa64"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418#1": {
+  "at": "2026-08-06T22:52:57",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418.json",
+   "sha256": "cd0b430484d135edf8650dd10b00e91f12d4fc2fa3a88576e00c0f46176b8696"
+  },
+  "note": "love this heightmap. could be denser / smaller in scale though.",
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418#2": {
+  "at": "2026-08-06T22:52:59",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418.json",
+   "sha256": "f4d47f0dfdf73331ccb9ea88fa51b21ce8acc4b881a141dc78792453e1cb447f"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418#3": {
+  "at": "2026-08-06T22:58:00",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418.json",
+   "sha256": "df662419c0f1ba824b8e56ca47f269343b6f8d442932a3ef22e1f686acdc0fc5"
+  },
+  "score": 6,
   "tags": []
  },
  "texturePiece-followup_floor_flagstones_ohmen-20260804-130738#1": {
@@ -4907,6 +5541,117 @@
   "tags": [
    "repeat"
   ]
+ },
+ "wallPiece-first_stratum_fixture_wall_breach_socket-20260806-201043#1": {
+  "at": "2026-08-06T22:50:43",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_breach_socket-20260806-201043.json",
+   "sha256": "1199e29af12fe01943abe4d2981766805cc58ac7a599a34188d608b8a132cd33"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_breach_socket-20260806-201043#2": {
+  "at": "2026-08-06T22:50:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_breach_socket-20260806-201043.json",
+   "sha256": "10533a0b61dfe0d73b0ddf8569d6d4e6ac0a1b99b79a4d90d306757c0c853add"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_breach_socket-20260806-201043#3": {
+  "at": "2026-08-06T22:50:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_breach_socket-20260806-201043.json",
+   "sha256": "7d775f6755ba8e93d7de3895023d374948ff1d1c9bee19ba82f46dd8c3fa42d6"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_drain_runnel-20260806-201253#1": {
+  "at": "2026-08-06T22:49:46",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_drain_runnel-20260806-201253.json",
+   "sha256": "0fb9ccacb58eb2e6fce4442fb03b24ca32316a1c40ee998fa74a75e6111331d6"
+  },
+  "note": "once again it looks like the heightmap is inverted",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_drain_runnel-20260806-201253#2": {
+  "at": "2026-08-06T22:49:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_drain_runnel-20260806-201253.json",
+   "sha256": "f4b82a4ebcd7ef8179eb76eb04ebd01e7f24c3b68c532461be4431c531e35f9a"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_drain_runnel-20260806-201253#3": {
+  "at": "2026-08-06T22:50:34",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_drain_runnel-20260806-201253.json",
+   "sha256": "6e2fc862573642c3b4c2388fb7b8056b79e994ddc7550d1af4775bffe0e82e0e"
+  },
+  "note": "for these depth maps that have transparency, it would be good if the preview actually previewed it against a gray wall with a neutral heightmap and did the whole alpha pipeline",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_reliquary_niche-20260806-200823#1": {
+  "at": "2026-08-06T22:50:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_reliquary_niche-20260806-200823.json",
+   "sha256": "eae2e88b7c43a0cf6b05402cd00e4d916d79936086339b7359796d271e2b1bf0"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_reliquary_niche-20260806-200823#2": {
+  "at": "2026-08-06T22:50:55",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_reliquary_niche-20260806-200823.json",
+   "sha256": "0f6d0d8a6117c0387f61f10d2efb18add4984fdc75d013d085e834c39da0dcf5"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_reliquary_niche-20260806-200823#3": {
+  "at": "2026-08-06T22:50:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_reliquary_niche-20260806-200823.json",
+   "sha256": "ec8c00ea56f68c21d616ec1aff3e65f372ca08c7d27dd2c5c68966aef384f21f"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_votive_relief-20260806-200613#1": {
+  "at": "2026-08-06T22:58:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_votive_relief-20260806-200613.json",
+   "sha256": "9f7c8c41e6fa6b0f1f96ca24fad8ce6324730e652705b1b4d9e85b5a3177e8b0"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_votive_relief-20260806-200613#2": {
+  "at": "2026-08-06T22:51:16",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_votive_relief-20260806-200613.json",
+   "sha256": "b0dc0ca2559bcc3ad33ccd630046bf1449aa359b43fbf22703069bcb354492bd"
+  },
+  "note": "heightmap is maybe a tad too strong for this one too",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-first_stratum_fixture_wall_votive_relief-20260806-200613#3": {
+  "at": "2026-08-06T22:51:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_fixture_wall_votive_relief-20260806-200613.json",
+   "sha256": "a417268ccb0bbc58f4dde488b6a4a7eb7aa1dc84f80229968acc2c7eba7ea102"
+  },
+  "score": 5,
+  "tags": []
  },
  "wallPiece-first_stratum_preflight_wall_wall_pilasters-20260806-042503#1": {
   "at": "2026-08-06T09:51:36",
@@ -7474,6 +8219,63 @@
   "evidence": {
    "manifest": "manifests/wallPiece-first_stratum_prod_stressed_masonry_wall_rubble_v3-20260806-103815.json",
    "sha256": "930ad042e32ef3f07643ca28fd2651c76413789e4aed77ce7e8ce84ce7df9d26"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_rich_wall_broad_ashlar_courses-20260806-194840#1": {
+  "at": "2026-08-06T22:52:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_rich_wall_broad_ashlar_courses-20260806-194840.json",
+   "sha256": "0a365634c30c2ac295675460b16b7529ad88350e58505e92815795bb348fd9cd"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_rich_wall_broad_ashlar_courses-20260806-194840#2": {
+  "at": "2026-08-06T22:52:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_rich_wall_broad_ashlar_courses-20260806-194840.json",
+   "sha256": "8ac08b050f3ce3f9e0f632f8c5230b67f604571da8f84df229e6793234d10507"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_rich_wall_broad_ashlar_courses-20260806-194840#3": {
+  "at": "2026-08-06T22:52:38",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_rich_wall_broad_ashlar_courses-20260806-194840.json",
+   "sha256": "f7d64f9f0d47f448e707f27c2b520bc679539057607a812de0e15c4440fb3032"
+  },
+  "note": "not a fan of this heightmap",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_rich_wall_limewash_broad_undulation-20260806-195302#1": {
+  "at": "2026-08-06T22:51:58",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_rich_wall_limewash_broad_undulation-20260806-195302.json",
+   "sha256": "6454177d2b411a2e6d85f83fb567db1121710d2d90d7b81f0a798634b8fa7e42"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_rich_wall_limewash_broad_undulation-20260806-195302#2": {
+  "at": "2026-08-06T22:52:05",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_rich_wall_limewash_broad_undulation-20260806-195302.json",
+   "sha256": "0577c252849e28b308562d32695e2d06fc5fa067615a70480a762ff81ce814a2"
+  },
+  "score": 2,
+  "tags": [
+   "repeat"
+  ]
+ },
+ "wallPiece-first_stratum_rich_wall_limewash_broad_undulation-20260806-195302#3": {
+  "at": "2026-08-06T22:52:09",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_rich_wall_limewash_broad_undulation-20260806-195302.json",
+   "sha256": "a732aad3f3e32eda36e40ff22873723a4a6f8a09ebec1bff112672e10eb387ed"
   },
   "score": 5,
   "tags": []
