@@ -6,6 +6,7 @@ local config = require("engine.config")
 local geometryImages = require("engine.geometry.images")
 local small_battlers = require("presentation.small_battlers")
 local retroMeshShader = require("presentation.retro_mesh_shader")
+local heightTerrainChunks = require("presentation.height_terrain_chunks")
 
 -- Direction vectors (matching exploration.lua)
 local DIRS = {
@@ -843,6 +844,13 @@ local function releasePreparedStructure(prepared)
             placed.mesh = nil
         end
     end
+    for _, placedGroups in pairs((prepared and prepared.heightTerrainChunks) or {}) do
+        for _, placed in ipairs(placedGroups) do
+            if placed.clippedMesh and placed.clippedMesh.release then placed.clippedMesh:release() end
+            if placed.mesh and placed.mesh.release then placed.mesh:release() end
+            placed.clippedMesh, placed.mesh = nil, nil
+        end
+    end
     for _, handle in ipairs((prepared and prepared.worldEffectHandles) or {}) do
         require("presentation.effekseer").stop(handle)
     end
@@ -852,6 +860,7 @@ local function releasePreparedStructure(prepared)
     end
     if prepared then prepared.dynamicMeshPool = nil end
     if prepared then prepared.modelSurfaces = nil end
+    if prepared then prepared.heightTerrainChunks = nil end
     if prepared then prepared.worldEffectHandles = nil end
 end
 
@@ -1320,8 +1329,16 @@ local function drawWorldSpace(session)
         vertexFallbackSurfaces = 0, verticesInspected = 0,
         heightVerticesInspected = 0, nonHeightVerticesInspected = 0,
         heightSurfacePlacementsVisited = 0, nonHeightPlacementsVisited = 0,
+        heightTerrainChunkSize = 0, heightTerrainChunksVisited = 0,
+        heightTerrainSourcePlacementsVisited = 0, heightTerrainChunkVerticesVisited = 0,
     }
     local profileVariant = session.profile3dVariant or "current"
+    local heightTerrainChunkSize = tonumber(profileVariant:match("^terrain%-chunk%-(%d+)$"))
+    if heightTerrainChunkSize and heightTerrainChunkSize ~= 2
+            and heightTerrainChunkSize ~= 4 and heightTerrainChunkSize ~= 8 then
+        error("profile-3d terrain chunk size must be 2, 4, or 8", 0)
+    end
+    profile.heightTerrainChunkSize = heightTerrainChunkSize or 0
     local function quadVisible(a, b, c, d)
         local minDepth, maxDepth = math.huge, -math.huge
         for _, point in ipairs({ a, b, c, d }) do
@@ -1659,6 +1676,7 @@ local function drawWorldSpace(session)
             if floorHeightSpec then
                 pendingFloorModels[#pendingFloorModels + 1] = {
                     spec = floorHeightSpec, x = x + 0.5, y = y + 0.5,
+                    cellX = x, cellY = y,
                     key = "floor-height:" .. x .. "," .. y .. ":"
                         .. viewport_3d.meshSource(floorHeightSpec),
                 }
@@ -1734,6 +1752,7 @@ local function drawWorldSpace(session)
                 if ceilingHeightSpec then
                     pendingCeilingModels[#pendingCeilingModels + 1] = {
                         spec = ceilingHeightSpec, x = x + 0.5, y = y + 0.5,
+                        cellX = x, cellY = y,
                         key = "ceiling-height:" .. x .. "," .. y .. ":"
                             .. viewport_3d.meshSource(ceilingHeightSpec),
                     }
@@ -1833,6 +1852,28 @@ local function drawWorldSpace(session)
         structure.modelSurfaces[cacheKey] = placed
         return placed
     end
+
+    local function ensureHeightTerrainChunks(kind, placements, chunkSize)
+        structure.heightTerrainChunks = structure.heightTerrainChunks or {}
+        local cacheKey = kind .. ":" .. chunkSize
+        local chunks = structure.heightTerrainChunks[cacheKey]
+        if chunks then return chunks end
+
+        chunks = heightTerrainChunks.build(
+            placements, chunkSize, WORLD_MESH_FORMAT,
+            function(placement)
+                return ensurePlacedModel(placement.spec, placement.key,
+                    placement.x, placement.y, placement.axis or "x")
+            end,
+            function(meshFormat, vertices, texture)
+                local mesh = love.graphics.newMesh(meshFormat, vertices, "triangles", "static")
+                if texture then mesh:setTexture(texture) end
+                return mesh
+            end)
+        structure.heightTerrainChunks[cacheKey] = chunks
+        return chunks
+    end
+
     local function queuePlacedModels(placedGroups)
         -- Keep projection depth positive on the CPU, but leave the final cut
         -- to the GPU's 0.05 near plane. Cutting triangle soup exactly at the
@@ -1847,6 +1888,13 @@ local function drawWorldSpace(session)
                 profile.heightSurfacePlacementsVisited = profile.heightSurfacePlacementsVisited + 1
             else
                 profile.nonHeightPlacementsVisited = profile.nonHeightPlacementsVisited + 1
+            end
+            if placed.terrainChunk then
+                profile.heightTerrainChunksVisited = profile.heightTerrainChunksVisited + 1
+                profile.heightTerrainSourcePlacementsVisited =
+                    profile.heightTerrainSourcePlacementsVisited + (placed.terrainSourcePlacements or 0)
+                profile.heightTerrainChunkVerticesVisited =
+                    profile.heightTerrainChunkVerticesVisited + #(placed.vertices or {})
             end
             local visibilityStarted = love.timer.getTime()
             local anyInFront, anyBehind = false, false
@@ -1925,15 +1973,31 @@ local function drawWorldSpace(session)
             + (love.timer.getTime() - queueStarted) * 1000
     end
 
-    for _, placement in ipairs(pendingFloorModels) do
-        queuePlacedModels(ensurePlacedModel(placement.spec, placement.key,
-            placement.x, placement.y, "x"))
+    local function queuePendingModels(placements, kind)
+        if not heightTerrainChunkSize then
+            for _, placement in ipairs(placements) do
+                queuePlacedModels(ensurePlacedModel(placement.spec, placement.key,
+                    placement.x, placement.y, "x"))
+            end
+            return
+        end
+
+        local heightPlacements = {}
+        for _, placement in ipairs(placements) do
+            if placement.spec and placement.spec.runtimeSurface then
+                heightPlacements[#heightPlacements + 1] = placement
+            else
+                queuePlacedModels(ensurePlacedModel(placement.spec, placement.key,
+                    placement.x, placement.y, "x"))
+            end
+        end
+        if #heightPlacements > 0 then
+            queuePlacedModels(ensureHeightTerrainChunks(kind, heightPlacements, heightTerrainChunkSize))
+        end
     end
 
-    for _, placement in ipairs(pendingCeilingModels) do
-        queuePlacedModels(ensurePlacedModel(placement.spec, placement.key,
-            placement.x, placement.y, "x"))
-    end
+    queuePendingModels(pendingFloorModels, "floor")
+    queuePendingModels(pendingCeilingModels, "ceiling")
 
     for _, face in ipairs(prepareResolvedWallFaces(structure, atlas)) do
         if face.normalX * (cameraX - face.centerX)

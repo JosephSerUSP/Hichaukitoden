@@ -10,6 +10,7 @@ local geometry = require("engine.geometry")
 local plane = require("engine.geometry.plane")
 local images = require("engine.geometry.images")
 local viewport3d = require("presentation.viewport_3d")
+local heightTerrainChunks = require("presentation.height_terrain_chunks")
 
 loader.init()
 
@@ -98,6 +99,65 @@ local reusedHidden, reusedHiddenCount = viewport3d.clipTrianglesToNear({
 }, 0, 0, 1, 0, 0.05, reuseBuffer)
 check(reusedHiddenCount == 0 and #reusedHidden == 0,
     "a reused clip buffer becomes empty when the next triangle is fully hidden")
+
+print("=== Height Terrain Chunk Planning ===")
+
+local chunkTexture = {}
+local otherChunkTexture = {}
+local a1, a2, a3 = { 1, 1 }, { 2, 1 }, { 1, 2 }
+local b1, b2, b3 = { 2, 1 }, { 3, 1 }, { 2, 2 }
+local c1, c2, c3 = { 3, 1 }, { 4, 1 }, { 3, 2 }
+local chunkPlacements = {
+    {
+        cellX = 1, cellY = 1,
+        groups = { { texture = chunkTexture, vertices = { a1, a2, a3 },
+            bounds = { minX = 1, maxX = 2, minY = 1, maxY = 2 } } },
+    },
+    {
+        cellX = 2, cellY = 1,
+        groups = { { texture = chunkTexture, vertices = { b1, b2, b3 },
+            bounds = { minX = 2, maxX = 3, minY = 1, maxY = 2 } } },
+    },
+    {
+        cellX = 3, cellY = 1,
+        groups = { { texture = chunkTexture, vertices = { c1, c2, c3 },
+            bounds = { minX = 3, maxX = 4, minY = 1, maxY = 2 } } },
+    },
+}
+local function compileChunkPlacement(placement) return placement.groups end
+local function fakeChunkMesh(_, vertices, texture)
+    return { vertices = vertices, texture = texture }
+end
+local chunks2 = heightTerrainChunks.build(
+    chunkPlacements, 2, {}, compileChunkPlacement, fakeChunkMesh)
+check(#chunks2 == 2, "2x2 terrain chunking separates the third cell into the next chunk")
+check(chunks2[1].terrainSourcePlacements == 2 and #chunks2[1].vertices == 6,
+    "a terrain chunk aggregates the source placements without dropping triangles")
+check(chunks2[1].vertices[1] == a1 and chunks2[1].vertices[4] == b1,
+    "terrain chunks preserve the original world-vertex tables and ordering")
+check(chunks2[1].bounds.minX == 1 and chunks2[1].bounds.maxX == 3
+        and chunks2[1].bounds.minY == 1 and chunks2[1].bounds.maxY == 2,
+    "terrain chunk bounds conservatively cover every aggregated placement")
+local chunks4 = heightTerrainChunks.build(
+    chunkPlacements, 4, {}, compileChunkPlacement, fakeChunkMesh)
+check(#chunks4 == 1 and chunks4[1].terrainSourcePlacements == 3,
+    "4x4 terrain chunking combines all three fixture placements into one persistent mesh")
+check(heightTerrainChunks.chunkCoordinate(1, 2) == 0
+        and heightTerrainChunks.chunkCoordinate(2, 2) == 0
+        and heightTerrainChunks.chunkCoordinate(3, 2) == 1,
+    "terrain chunk coordinates use stable one-based map-cell boundaries")
+local splitTexturePlacements = {
+    chunkPlacements[1],
+    { cellX = 2, cellY = 1, groups = { { texture = otherChunkTexture,
+        vertices = { b1, b2, b3 }, bounds = { minX = 2, maxX = 3, minY = 1, maxY = 2 } } } },
+}
+local splitTextureChunks = heightTerrainChunks.build(
+    splitTexturePlacements, 4, {}, compileChunkPlacement, fakeChunkMesh)
+check(#splitTextureChunks == 2,
+    "terrain chunks never merge different textures into one mesh")
+check(not pcall(heightTerrainChunks.build, chunkPlacements, 0, {},
+        compileChunkPlacement, fakeChunkMesh),
+    "terrain chunking fails loudly on an invalid chunk size")
 
 -- 128 is the neutral plane; the fixtures are painted flat neutral, so a base
 -- layer alone must contribute exactly zero displacement.
