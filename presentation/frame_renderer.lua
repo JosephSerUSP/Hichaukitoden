@@ -35,6 +35,10 @@ function frame_renderer.draw(scene_host, renderer, session, loader, gameHeight)
     stringPictures.draw("screen")
     imagePictures.draw("top")
     stringPictures.draw("top")
+
+    -- Keep diagnostics above all in-canvas game content. The overlay is off by
+    -- default, which preserves deterministic previews and golden captures.
+    require("presentation.dev_overlay").draw()
 end
 
 return frame_renderer

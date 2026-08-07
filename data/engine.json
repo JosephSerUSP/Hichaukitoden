@@ -365,6 +365,14 @@
       "description": "Append a raw event to the phase's event stream."
     },
     {
+      "token": "api.setFpsToggle(val) / api.getFpsToggle()",
+      "description": "Enable or read the developer FPS overlay; this is presentation state and is not saved."
+    },
+    {
+      "token": "api.setPerfToggle(val) / api.getPerfToggle()",
+      "description": "Enable or read the developer performance overlay; this is presentation state and is not saved."
+    },
+    {
       "token": "math / string / table",
       "description": "Lua stdlib copies (mutations do not leak to the engine)."
     },

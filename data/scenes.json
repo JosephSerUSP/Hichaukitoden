@@ -5859,18 +5859,18 @@
         "id": "developer_list",
         "rect": {
           "x": 4,
-          "y": 4,
+          "y": 3,
           "w": 24,
-          "h": 8
+          "h": 16.5
         },
         "style": "list",
-        "visibleRows": 10,
+        "visibleRows": 12,
         "title": "Developer",
         "content": [
           {
             "type": "list",
             "listId": "config:developerCommands",
-            "formatRight": "{id == 'wireframe' and (v.wireframe and 'ON' or 'OFF') or (id == 'server' and (v.server and 'ON' or 'OFF') or (id == 'phase' and (v.phase and 'ON' or 'OFF') or ''))}",
+            "formatRight": "{(id == 'wireframe' and (v.wireframe and 'ON' or 'OFF')) or (id == 'fps' and (v.fps and 'ON' or 'OFF')) or (id == 'perf' and (v.perf and 'ON' or 'OFF')) or (id == 'server' and (v.server and 'ON' or 'OFF')) or (id == 'phase' and (v.phase and 'ON' or 'OFF')) or ''}",
             "cursor": "v.idx"
           }
         ]
@@ -5904,7 +5904,7 @@
         },
         {
           "cmd": "SCRIPT",
-          "code": "ctx.v.wireframe = api.getWireframe()\nctx.v.server = api.developerServerActive()\nctx.v.phase = api.getPhaseMode()"
+          "code": "ctx.v.wireframe = api.getWireframe()\nctx.v.fps = api.getFpsToggle()\nctx.v.perf = api.getPerfToggle()\nctx.v.server = api.developerServerActive()\nctx.v.phase = api.getPhaseMode()"
         }
       ],
       "on_up": [
@@ -5923,7 +5923,7 @@
       "on_down": [
         {
           "cmd": "IF",
-            "condition": "v.idx < 10",
+            "condition": "v.idx < 12",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -5958,6 +5958,24 @@
           "cmd": "IF",
           "condition": "v._guard == 0 and v.idx == 2",
           "then": [
+            { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
+            { "cmd": "SET_VAR", "name": "fps", "value": "not (v.fps or false)" },
+            { "cmd": "SCRIPT", "code": "api.setFpsToggle(ctx.v.fps)" }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 3",
+          "then": [
+            { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
+            { "cmd": "SET_VAR", "name": "perf", "value": "not (v.perf or false)" },
+            { "cmd": "SCRIPT", "code": "api.setPerfToggle(ctx.v.perf)" }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 4",
+          "then": [
             {
               "cmd": "SET_VAR",
               "name": "_guard",
@@ -5972,7 +5990,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.idx == 3",
+            "condition": "v._guard == 0 and v.idx == 5",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -5991,7 +6009,7 @@
         },
          {
            "cmd": "IF",
-            "condition": "v._guard == 0 and v.idx == 4",
+            "condition": "v._guard == 0 and v.idx == 6",
            "then": [
             {
               "cmd": "SET_VAR",
@@ -6006,7 +6024,7 @@
           },
          {
            "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 5",
+           "condition": "v._guard == 0 and v.idx == 7",
            "then": [
              { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
              { "cmd": "SET_VAR", "name": "phase", "value": "not (v.phase or false)" },
@@ -6015,7 +6033,7 @@
          },
          {
            "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 6",
+           "condition": "v._guard == 0 and v.idx == 8",
            "then": [
              { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
              { "cmd": "SCRIPT", "code": "api.recoverParty()" }
@@ -6023,7 +6041,7 @@
          },
          {
            "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 7",
+           "condition": "v._guard == 0 and v.idx == 9",
            "then": [
              { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
              { "cmd": "SCRIPT", "code": "api.recoverMp()" }
@@ -6031,7 +6049,7 @@
          },
          {
            "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 8",
+           "condition": "v._guard == 0 and v.idx == 10",
            "then": [
              { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
              { "cmd": "SCRIPT", "code": "api.giveAllItems()" }
@@ -6039,7 +6057,7 @@
          },
          {
            "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 9",
+           "condition": "v._guard == 0 and v.idx == 11",
            "then": [
              {
                "cmd": "SET_VAR",
@@ -6054,7 +6072,7 @@
          },
          {
            "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 10",
+           "condition": "v._guard == 0 and v.idx == 12",
            "then": [
              {
                "cmd": "SET_VAR",
@@ -6090,6 +6108,16 @@
           "id": "wireframe",
           "name": "WIREFRAME",
           "help": "Draw the world as triangle edges. Shows what the geometry compiler actually emitted."
+        },
+        {
+          "id": "fps",
+          "name": "SHOW FPS",
+          "help": "Show the current frames-per-second counter."
+        },
+        {
+          "id": "perf",
+          "name": "PERFORMANCE STATS",
+          "help": "Show draw calls, frame time, and Lua memory usage."
         },
         {
           "id": "threed",

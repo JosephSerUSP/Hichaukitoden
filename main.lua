@@ -185,6 +185,18 @@ interpreter.bindPresentation({
     getVictoryStage = function()
         return renderer.getVictoryStage()
     end,
+    setFpsToggle = function(val)
+        require("presentation.dev_overlay").setFpsEnabled(val)
+    end,
+    getFpsToggle = function()
+        return require("presentation.dev_overlay").isFpsEnabled()
+    end,
+    setPerfToggle = function(val)
+        require("presentation.dev_overlay").setPerfEnabled(val)
+    end,
+    getPerfToggle = function()
+        return require("presentation.dev_overlay").isPerfEnabled()
+    end,
     showStringPicture = function(spec)
         require("presentation.string_picture_renderer").show(spec)
     end,

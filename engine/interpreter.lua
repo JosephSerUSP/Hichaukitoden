@@ -2660,6 +2660,21 @@ local function buildScriptApi(ctx)
     function api.getWireframe()
         return require("presentation.viewport_3d").wireframe == true
     end
+    -- Developer overlays are presentation state, not save/session state. Keep
+    -- the engine talking through the presentation seam so validation and other
+    -- headless consumers do not load LOVE rendering modules.
+    function api.setFpsToggle(val)
+        present("setFpsToggle", val and true or false)
+    end
+    function api.getFpsToggle()
+        return present("getFpsToggle") == true
+    end
+    function api.setPerfToggle(val)
+        present("setPerfToggle", val and true or false)
+    end
+    function api.getPerfToggle()
+        return present("getPerfToggle") == true
+    end
     function api.setPhaseMode(val)
         if session.developerMode == true then session.phaseMode = val and true or false end
     end
