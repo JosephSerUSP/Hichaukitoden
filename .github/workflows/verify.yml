@@ -217,14 +217,14 @@ jobs:
         run: |
           $ErrorActionPreference = "Continue"
 
-          Write-Host "--- diagnostics ---"
-          Write-Host "cwd: $(Get-Location)"
-          Write-Host "docs/ENGINE-STATE.md present: $(Test-Path docs/ENGINE-STATE.md)"
-          powershell -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
-          Write-Host "--- engine-state output shape ---"
-          $raw = & $env:LOVEC . engine-state 2>&1
-          Write-Host "lines: $($raw.Count) | has BEGIN: $([bool]($raw -match 'ENGINE STATE BEGIN')) | has END: $([bool]($raw -match 'ENGINE STATE END'))"
-          Write-Host "--- windows powershell 5.1 ---"
+          Write-Host "--- hypothesis: 5.1 turns lovec's stderr into a terminating error under EAP=Stop ---"
+          Write-Host "[5.1 EAP=Stop]"
+          powershell -NoProfile -Command "`$ErrorActionPreference='Stop'; `$o = & lovec . engine-state; Write-Host ('  captured lines: ' + `$o.Count)"
+          Write-Host "  exit: $LASTEXITCODE"
+          Write-Host "[5.1 EAP=Continue]"
+          powershell -NoProfile -Command "`$ErrorActionPreference='Continue'; `$o = & lovec . engine-state; Write-Host ('  captured lines: ' + `$o.Count)"
+          Write-Host "  exit: $LASTEXITCODE"
+          Write-Host "--- windows powershell 5.1 (full script) ---"
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check-state.ps1
           Write-Host "5.1 exit: $LASTEXITCODE"
           $five = $LASTEXITCODE
