@@ -296,8 +296,13 @@ local function processEvent(ev)
             local text = fmt:gsub("{0}", tostring(ev.value))
             local color = conf("battle_screen", "popup", {}).healColor or {0.2, 1, 0.2, 1}
             renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target.hp = math.min(ev.target:getMaxHp(sess()), ev.target.hp + ev.value)
+            local cap = ev.cap or ev.target:getMaxHp(sess())
+            ev.target.hp = math.max(ev.target.hp, math.min(cap, ev.target.hp + ev.value))
         end)
+    elseif ev.type == "hp_clamp" then
+        -- Temporary Max-HP expiry is a non-damage transition. Apply the
+        -- resolved value without a popup, death state, or damage reaction.
+        ev.target.hp = math.min(ev.target.hp, ev.value)
     elseif ev.type == "death" then
         animation_player.onComplete(ev.target, function()
             local fmt = conf("battle_screen", "popup", {}).deadFormat or "DEAD"
@@ -320,7 +325,7 @@ local function processEvent(ev)
             local text = fmt:gsub("{0}", ev.state:upper())
             local color = conf("battle_screen", "popup", {}).stateColor or {0.8, 0.4, 1.0, 1}
             renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target:addState(ev.state)
+            ev.target:addState(ev.state, ev.duration)
         end)
     elseif ev.type == "state_remove" then
         animation_player.onComplete(ev.target, function()
@@ -407,7 +412,8 @@ function battle.advanceLog()
             -- Process all subsequent skipped events immediately
             while v.eventQueueIndex <= #(v.eventsQueue or {}) do
                 local nextEv = v.eventsQueue[v.eventQueueIndex]
-                if nextEv.type == "damage" or nextEv.type == "heal" or nextEv.type == "death" or 
+                if nextEv.type == "damage" or nextEv.type == "heal" or nextEv.type == "hp_clamp" or
+                   nextEv.type == "max_hp_change" or nextEv.type == "death" or
                    nextEv.type == "state_add" or nextEv.type == "state_remove" or nextEv.type == "mp_drain" or
                    nextEv.type == "play_anim" then
                     v.eventQueueIndex = v.eventQueueIndex + 1

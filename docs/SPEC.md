@@ -971,6 +971,18 @@ not blunt authored indirect damage. These are two authored intents, not a
 compatibility shim — the relative path is for actions with an attacker, the
 direct path for authored consequences.
 
+**Combat vitality.** Ordinary recovery stops at effective Max HP and never
+deletes HP that is already above it. A healing effect may explicitly author
+`overheal = true`; its ceiling is `overhealCap`, then
+`system.combat.overhealCap`, then the engine's safe 1.5x fallback. Overheal is
+real current HP, so damage consumes it normally and HP ratios remain unclamped
+above 1. Temporary Max HP is a separate lifetime: an active `PARAM_PLUS maxHp`
+state grants its new capacity as current HP, and expiry clamps excess HP without
+damage, death or hit reactions. Formula/declarative-UI battler views expose
+`maxHpParts.underlying`, `maxHpParts.active`, `maxHpParts.activeModifier`,
+`hpRatio` and `overheal`, so presentation never has to infer these distinctions
+from raw deltas.
+
 **Criticals** roll in `effects.lua` rather than `battle.lua`, so every damaging
 action gets them on one code path and a multi-hit action rolls per hit as the
 design requires. Base rate is 5% (`traits.getRate`'s `CRI` default), multiplier
