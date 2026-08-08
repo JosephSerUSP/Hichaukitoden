@@ -406,6 +406,66 @@ def _offset_inpaint(base, model, prompt, size, timeout, options, first_pass, con
     return _png_bytes(painted)
 
 
+def inpaint_region(base, model, prompt, init_image, mask, options, control=None):
+    """Repaint only the masked region of an image that already exists.
+
+    This is the difference between a "cracked" variant and a differently-cracked
+    picture. Generating the damaged surface from scratch means the model invents
+    both the stone AND the damage, so the cracked tile and the intact tile it sits
+    beside share a prompt but not a material -- different stone colour, different
+    mortar, different wear. Here the untouched region IS the approved albedo,
+    pixel for pixel, and only the fracture is synthesised; the crack is painted
+    knowing exactly what it is breaking.
+
+    `init_image` and `mask` are PIL images. White in the mask is repainted. The
+    caller owns tiling: repainting a region that crosses a wrapping border breaks
+    the wrap unless it is done in offset coordinates too (see _roll_half).
+
+    Returns PNG bytes.
+    """
+    width, height = init_image.size
+    body = {
+        "init_images": [base64.b64encode(_png_bytes(init_image)).decode("ascii")],
+        "mask": base64.b64encode(_png_bytes(mask)).decode("ascii"),
+        "prompt": prompt,
+        "negative_prompt": options.get("negativePrompt", ""),
+        "width": width,
+        "height": height,
+        "steps": options.get("steps", 26),
+        "cfg_scale": options.get("cfgScale", 6.5),
+        "sampler_name": options.get("sampler", "DPM++ 2M"),
+        "seed": options.get("seed", -1),
+        # Not full denoise. 1.0 discards the masked pixels entirely and the crack
+        # stops being informed by the stone it runs through, which is the whole
+        # reason for inpainting rather than regenerating.
+        "denoising_strength": options.get("denoise", 0.85),
+        "mask_blur": options.get("maskBlur", 4),
+        "inpainting_fill": 1,          # start from the original pixels
+        "inpaint_full_res": False,     # repaint in place at real resolution
+        "override_settings": {"sd_model_checkpoint": model},
+        # See the long note in _offset_inpaint: false here permanently repoints
+        # the server's checkpoint and sabotages whatever else is using it.
+        "override_settings_restore_afterwards": True,
+    }
+    if options.get("vae"):
+        body["override_settings"]["sd_vae"] = options["vae"]
+    if control:
+        body["alwayson_scripts"] = {"controlnet": {"args": [control]}}
+    res = requests.post(f"{base}/sdapi/v1/img2img", json=body,
+                        timeout=options.get("timeout", 180))
+    if not res.ok:
+        raise _http("sdapi img2img", res)
+    images = res.json().get("images") or []
+    if not images:
+        raise ProviderError("sdapi img2img returned no image")
+    return base64.b64decode(images[0])
+
+
+def roll_half(image, axes="xy"):
+    """Public half-size roll, so callers can inpaint in offset coordinates."""
+    return _roll_half(image, axes)
+
+
 def controlnet_depth(base, height_map_path, model, weight=0.6):
     """A ControlNet unit conditioning generation on an authored height map.
 
