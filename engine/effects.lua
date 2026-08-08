@@ -115,6 +115,8 @@ function effects.apply(effectData, a, b, session, context)
         local beforeMax = b and traits.getParam(b, "maxHp", session) or 0
         local events = core.apply(effectData, a, b, session, context)
         if b and beforeHp > beforeMax and b.hp < beforeHp then b.hp = beforeHp end
+        local healEv = findEvent(events, "heal", b)
+        if b and healEv then healEv.value = math.max(0, b.hp - beforeHp) end
         return events
     end
 

@@ -133,6 +133,9 @@ do
     local maxEv = hasEvent(evs, "max_hp_change")
     check(maxEv and maxEv.value == 25 and maxEv.hpGranted == 25,
         "state application emits a structured Max-HP transition")
+    local stateEv = hasEvent(evs, "state_add")
+    check(stateEv and stateEv.duration == 1,
+        "state-add events preserve an authored duration for presentation replay")
 
     local tickEvents = interpreter.runImmediate({ { cmd = "STATE_TICKS" } }, {
         session = sess, loader = sess.loader, party = sess.party, enemies = {}, events = {},
@@ -143,6 +146,20 @@ do
         "expiry exposes Max-HP loss and the non-damage HP clamp as structured events")
     check(not hasEvent(tickEvents, "damage") and not hasEvent(tickEvents, "death"),
         "Max-HP expiry clamp emits neither damage nor death")
+end
+
+--------------------------------------------- permanent growth + Overheal --
+do
+    local sess, b = fresh(1.5)
+    local maxHp = traits.getParam(b, "maxHp", sess)
+    b.hp = maxHp + 20
+    local beforeHp = b.hp
+    local evs = effects.apply({ type = "maxHp", value = 5 }, b, b, sess)
+    local healEv = hasEvent(evs, "heal")
+    check(b.hp == beforeHp,
+        "permanent Max-HP growth preserves existing Overheal")
+    check(healEv and healEv.value == 0,
+        "permanent Max-HP growth reports only HP actually granted while Overhealed")
 end
 
 ---------------------------------------------------------- composition --

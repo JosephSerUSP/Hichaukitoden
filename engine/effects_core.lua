@@ -497,7 +497,8 @@ function effects.apply(effectData, a, b, session, context)
             table.insert(events, {
                 type = "state_add",
                 target = b,
-                state = effectData.status
+                state = effectData.status,
+                duration = effectData.duration,
             })
         end
 

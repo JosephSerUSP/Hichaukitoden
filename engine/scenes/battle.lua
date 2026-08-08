@@ -325,7 +325,7 @@ local function processEvent(ev)
             local text = fmt:gsub("{0}", ev.state:upper())
             local color = conf("battle_screen", "popup", {}).stateColor or {0.8, 0.4, 1.0, 1}
             renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target:addState(ev.state)
+            ev.target:addState(ev.state, ev.duration)
         end)
     elseif ev.type == "state_remove" then
         animation_player.onComplete(ev.target, function()
