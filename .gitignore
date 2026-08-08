@@ -2,6 +2,9 @@
 # Local campaign selection pointer (per-machine; written by the title selector / editor)
 campaign.json
 
+# Local Codex review worktrees
+.codex-work-*/
+
 # Player save files (per-machine; written by engine/savegame.lua)
 saves/
 screenshots/
