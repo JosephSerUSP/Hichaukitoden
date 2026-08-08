@@ -28,10 +28,17 @@ local hpRow = item_presentation.enrich({ id = hpTonic.id, name = hpTonic.name },
 check(hpRow.model == "assets/models/items/bottle_family__basis.obj",
     "Item scene: valid model path 'bottle_family__basis.obj' enriched on HP Tonic row")
 
-local celestialFossil = loader.getItem(53) -- Celestial Fossil (no model field)
-local cfRow = item_presentation.enrich({ id = celestialFossil.id, name = celestialFossil.name }, celestialFossil, loader)
+-- Derived rather than a hard-coded id: fabrication batches keep assigning the
+-- next block of items, so naming one here goes stale. See the same reasoning in
+-- tests/test_item_model_assignments.lua.
+local unmodelled
+for _, item in ipairs(loader.items or {}) do
+    if item.model == nil then unmodelled = item break end
+end
+check(unmodelled ~= nil, "At least one item still omits 'model' (fallback path stays exercised)")
+local cfRow = item_presentation.enrich({ id = unmodelled.id, name = unmodelled.name }, unmodelled, loader)
 check(cfRow.model == "",
-    "Missing-model fallback: Celestial Fossil has empty model field on enriched row")
+    "Missing-model fallback: " .. unmodelled.name .. " has empty model field on enriched row")
 
 -------------------------------------------------- 2. Fallback resolution tests --
 

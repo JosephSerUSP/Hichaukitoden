@@ -24,7 +24,7 @@ def manacle():
     m.box((0,-.73,0),(.46,.25,.32),"wrought_iron"); m.box((0,-.87,.18),(.22,.08,.08),"ritual_gold"); m.center(); return m
 
 def weight():
-    m=Mesh("adamant_weight"); m.diamond((0,-.10,0),.58,1.05,"wrought_iron",8); m.box((0,.48,0),(.44,.22,.34),"ritual_gold"); m.prism_between((-.16,.56,0),(.16,.56,0),.09,.09,6,"wrought_iron"); m.prism_between((.16,.56,0),(.25,.76,0),.09,.075,6,"wrought_iron"); m.prism_betweeen((.25,.76,0),(-.25,.76,0),.075,.075,6,"wrought_iron"); m.prism_betwen((-.25,.76,0),(-.16,.56,0),.075,.09,6,"wrought_iron"); m.box((0,-.12,.59),(.12,.50,.05),"ritual_gold"); m.center(); return m
+    m=Mesh("adamant_weight"); m.diamond((0,-.10,0),.58,1.05,"wrought_iron",8); m.box((0,.48,0),(.44,.22,.34),"ritual_gold"); m.prism_between((-.16,.56,0),(.16,.56,0),.09,.09,6,"wrought_iron"); m.prism_between((.16,.56,0),(.25,.76,0),.09,.075,6,"wrought_iron"); m.prism_between((.25,.76,0),(-.25,.76,0),.075,.075,6,"wrought_iron"); m.prism_between((-.25,.76,0),(-.16,.56,0),.075,.09,6,"wrought_iron"); m.box((0,-.12,.59),(.12,.50,.05),"ritual_gold"); m.center(); return m
 
 def knife():
     m=Mesh("iron_knife"); sword(m,length_=2.15,half_width=.20,thickness=.10,guard=.48,grip=.55,point=.32,shoulder=.02); m.center(); return m

@@ -105,13 +105,19 @@ end
 
 -------------------------------------------------- 2. Optional-model behavior --
 
-local UNASSIGNED_IDS = { 53, 54, 55, 56 }
-for _, id in ipairs(UNASSIGNED_IDS) do
-    local item = loader.getItem(id)
-    check(item ~= nil, "Unassigned Item ID " .. id .. " exists in database")
-    if item then
-        check(item.model == nil, "Item ID " .. id .. " (" .. item.name .. ") omits 'model' field")
-    end
+-- Derived, not hard-coded: each fabrication batch assigns the next contiguous
+-- block of ids, so a literal list here goes stale the moment one lands. What
+-- matters is that an item without a `model` field stays legal and reaches the
+-- fallback, not which ids happen to be unassigned today.
+local unassigned = {}
+for _, item in ipairs(loader.items or {}) do
+    if item.model == nil then unassigned[#unassigned + 1] = item end
+end
+
+check(#unassigned > 0, "At least one item still omits 'model' (fallback path stays exercised)")
+for i = 1, math.min(4, #unassigned) do
+    local item = unassigned[i]
+    check(item.model == nil, "Item ID " .. item.id .. " (" .. item.name .. ") omits 'model' field")
 end
 
 for _, item in ipairs(loader.items or {}) do
@@ -143,11 +149,13 @@ local qbModel, qbPath, qbFb = item_model_view.resolveModel(loader.getItem(49).mo
 check(qbModel ~= nil and qbPath == "assets/models/items/qilin_bell.obj" and qbFb == false,
     "Qilin Bell (ID 49) resolves real model rather than fallback")
 
--- Celestial Fossil (Unmatched Item)
-local cfItem = loader.getItem(53)
-local cfModel, cfPath, cfFb = item_model_view.resolveModel(cfItem.model)
+-- First still-unassigned item: the fallback must remain reachable through
+-- ordinary viewer behavior, whichever id that happens to be.
+local cfItem = unassigned[1]
+local cfModel, cfPath, cfFb = item_model_view.resolveModel(cfItem and cfItem.model)
 check(cfModel ~= nil and cfPath == item_model_view.FALLBACK_PATH and cfFb == true,
-    "Celestial Fossil (ID 53) resolves fallback placeholder through normal viewer behavior")
+    (cfItem and cfItem.name or "?") .. " (ID " .. tostring(cfItem and cfItem.id)
+        .. ") resolves fallback placeholder through normal viewer behavior")
 
 print("Item model assignment tests completed: " .. passed .. " passed, " .. failed .. " failed")
 if failed > 0 then error("test_item_model_assignments failed", 0) end

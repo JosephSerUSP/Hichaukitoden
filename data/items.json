@@ -1087,7 +1087,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/celestial_fossil.obj"
   },
   {
     "id": 54,
@@ -1102,7 +1103,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "poison"
+    "iconPalette": "poison",
+    "model": "assets/models/items/blackroot.obj"
   },
   {
     "id": 55,
@@ -1117,7 +1119,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "ruby"
+    "iconPalette": "ruby",
+    "model": "assets/models/items/molten_manacle.obj"
   },
   {
     "id": 56,
@@ -1132,7 +1135,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/adamant_weight.obj"
   },
   {
     "name": "Iron Knife",
@@ -1156,7 +1160,8 @@
       ]
     },
     "id": 57,
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/iron_knife.obj"
   },
   {
     "name": "Steel Sword",
@@ -1180,7 +1185,8 @@
       ]
     },
     "id": 58,
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/steel_sword.obj"
   },
   {
     "name": "Knight Sword",
@@ -1204,7 +1210,8 @@
       ]
     },
     "id": 59,
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/knight_sword.obj"
   },
   {
     "name": "Greatsword",
@@ -1228,7 +1235,8 @@
       ]
     },
     "id": 60,
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/greatsword.obj"
   },
   {
     "name": "Adamant Blade",
@@ -1252,7 +1260,8 @@
       ]
     },
     "id": 61,
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/adamant_blade.obj"
   },
   {
     "name": "Hazel Wand",
@@ -1276,7 +1285,8 @@
       ]
     },
     "id": 62,
-    "iconPalette": "leather"
+    "iconPalette": "leather",
+    "model": "assets/models/items/hazel_wand.obj"
   },
   {
     "name": "Silver Rod",
