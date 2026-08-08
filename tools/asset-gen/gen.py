@@ -555,8 +555,9 @@ def _height_map_manifests():
 
 # Bumped when a change makes every previously built context preview wrong as a
 # class, not merely unvouched-for. Build 2: the paste lattice is derived from
-# the tileset tile size instead of assuming a 4x4 atlas.
-CONTEXT_PREVIEW_BUILD = 2
+# the tileset tile size instead of assuming a 4x4 atlas. Build 3: cracked runs
+# distinguish the source engine height map from their crack-only ControlNet map.
+CONTEXT_PREVIEW_BUILD = 3
 
 TILESET_DATA = "data/tilesets.json"
 SURFACE_KEY = {"wall": "walls", "floor": "floors", "ceiling": "ceilings"}
@@ -674,7 +675,8 @@ def _preview_surface(manifest, context):
     preview can never be spotted, so neither computes it for itself.
     """
     run_height = (manifest.get("provider") or {}).get("heightControl")
-    return _height_map_surface(run_height) or context.get("defaultSurface")
+    return (manifest.get("surface") or _height_map_surface(run_height)
+            or context.get("defaultSurface"))
 
 
 def _preview_is_stale(variant, want):

@@ -441,7 +441,12 @@ def inpaint_region(base, model, prompt, init_image, mask, options, control=None)
         "denoising_strength": options.get("denoise", 0.85),
         "mask_blur": options.get("maskBlur", 4),
         "inpainting_fill": 1,          # start from the original pixels
-        "inpaint_full_res": False,     # repaint in place at real resolution
+        # Crop the diffusion pass to the mask plus a small context pad. With
+        # this false, Forge round-trips the entire tile through the VAE even
+        # when the mask is local, which changes existing material shading and
+        # feature occlusion outside the fracture.
+        "inpaint_full_res": options.get("inpaintFullRes", True),
+        "inpaint_full_res_padding": options.get("inpaintFullResPadding", 32),
         "override_settings": {"sd_model_checkpoint": model},
         # See the long note in _offset_inpaint: false here permanently repoints
         # the server's checkpoint and sabotages whatever else is using it.

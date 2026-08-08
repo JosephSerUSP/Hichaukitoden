@@ -6714,5 +6714,138 @@
     "sacrificeRewards": [],
     "portrait": "cockatrice",
     "bigBattler": "cockatrice"
+  },
+  {
+    "id": 66,
+    "name": "Professor",
+    "favoriteFoods": [
+      179,
+      182,
+      181
+    ],
+    "level": 1,
+    "role": "Caster",
+    "smallBattler": "professor",
+    "passives": [],
+    "elements": [
+      "Black"
+    ],
+    "skills": [
+      "professorQuery",
+      "lv3Flare",
+      "lv5Death"
+    ],
+    "flavor": "Speaks only in questions. The answers are always correct.",
+    "expGrowth": 4,
+    "gold": 18,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "The figure does not look up from its notes. 'You wish to accompany me?'"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Recruit Professor",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "'Very well. Carry your own weight.'"
+              },
+              {
+                "cmd": "OPEN_RECRUIT",
+                "actorId": 66,
+                "level": 10
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "It resumes writing. You were never here."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "isEvolved": false,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 2,
+        "chance": 0.15
+      }
+    ],
+    "unlocked": false,
+    "tier": 2,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 2,
+        "chance": 0.6,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Euclid",
+      "Pascal",
+      "Fermat",
+      "Axiom",
+      "Modulo",
+      "Cipher",
+      "Lemma",
+      "Quinton"
+    ],
+    "baseParams": {
+      "maxHp": 55,
+      "atk": 14,
+      "def": 12,
+      "mat": 20,
+      "mdf": 18,
+      "mpd": 2,
+      "mxa": 3,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 28,
+        "atk": 22,
+        "def": 18,
+        "mat": 40,
+        "mdf": 32
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 40,
+        "atk": 30,
+        "def": 26,
+        "mat": 58,
+        "mdf": 46
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 46,
+        "atk": 35,
+        "def": 30,
+        "mat": 65,
+        "mdf": 52
+      }
+    ],
+    "portrait": "professor",
+    "bigBattler": "professor"
   }
 ]

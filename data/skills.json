@@ -832,5 +832,56 @@
       }
     ],
     "cooldown": 4
+  },
+  "professorQuery": {
+    "id": "professorQuery",
+    "name": "?????",
+    "target": "enemy-any",
+    "element": "Black",
+    "icon": 5,
+    "description": "[Enemy] Direct attack. Deals 8× damage if the target's level matches Professor's.",
+    "effects": [
+      {
+        "type": "hp_damage",
+        "formula": "(b.level == a.level) and a.atk * 8 or a.atk"
+      }
+    ],
+    "cooldown": 1
+  },
+  "lv3Flare": {
+    "id": "lv3Flare",
+    "name": "Lv.3 Flare",
+    "target": "enemy-any",
+    "element": "Black",
+    "icon": 5,
+    "description": "[Enemy] Heavy magic damage. Full power only against levels divisible by 3.",
+    "effects": [
+      {
+        "type": "hp_damage",
+        "formula": "b.level % 3 == 0 and a.mat * 2.8 or 1"
+      }
+    ],
+    "charges": "2 + b.base.mdf / 12",
+    "overcast": {
+      "mp": 300
+    }
+  },
+  "lv5Death": {
+    "id": "lv5Death",
+    "name": "Lv.5 Death",
+    "target": "enemy-any",
+    "element": "Black",
+    "icon": 5,
+    "description": "[Enemy] Annihilates a target whose level is divisible by 5. Harmless otherwise.",
+    "effects": [
+      {
+        "type": "hp_damage",
+        "formula": "b.level % 5 == 0 and b.maxHp * 20 or 1"
+      }
+    ],
+    "charges": "1 + b.base.mdf / 16",
+    "overcast": {
+      "mp": 450
+    }
   }
 }
