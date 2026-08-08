@@ -532,9 +532,31 @@ def cmd_tilecheck(args):
     return 0
 
 
-HEIGHT_MAP_MANIFESTS = [
-    "assets/geometry/1_blender_depth_maps/manifest.json",
-]
+def _height_map_manifests():
+    """Every height-map manifest under assets/geometry, newest root last.
+
+    Discovered rather than listed. This was a single hardcoded path to the
+    Blender manifest, so the whole 3_authored_surface_maps family -- the
+    first-stratum batches and their follow-ups -- was invisible to it, and every
+    ceiling map in those roots fell back to the class default surface. For
+    texturePiece that default is `floor`, so ceiling ribs and coffers were
+    previewed as pavement: precisely the failure this lookup exists to prevent.
+
+    Sorted so the answer is deterministic, and a new batch root is found by
+    existing rather than by being remembered.
+    """
+    root = os.path.join(classes.ROOT, "assets", "geometry")
+    found = []
+    for current, _dirs, files in os.walk(root):
+        if "manifest.json" in files:
+            found.append(os.path.relpath(os.path.join(current, "manifest.json"),
+                                         classes.ROOT).replace("\\", "/"))
+    return sorted(found)
+
+# Bumped when a change makes every previously built context preview wrong as a
+# class, not merely unvouched-for. Build 2: the paste lattice is derived from
+# the tileset tile size instead of assuming a 4x4 atlas.
+CONTEXT_PREVIEW_BUILD = 2
 
 TILESET_DATA = "data/tilesets.json"
 SURFACE_KEY = {"wall": "walls", "floor": "floors", "ceiling": "ceilings"}
@@ -572,6 +594,26 @@ def _surface_cells(tileset_id, surface):
     return cells
 
 
+def _atlas_tile_size(tileset_id):
+    """One tile's pixel size, from the tileset that will actually sample it.
+
+    Read rather than inferred. The engine addresses an atlas in tiles, so the
+    tile size is the only thing that makes a cell coordinate mean anything; the
+    number of columns is a consequence of it, not a constant.
+    """
+    default = (64, 64)
+    if not tileset_id:
+        return default
+    try:
+        with open(os.path.join(classes.ROOT, TILESET_DATA), "r", encoding="utf-8") as handle:
+            tilesets = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return default
+    entry = tilesets.get(tileset_id) or {}
+    return (int(entry.get("tileWidth") or default[0]),
+            int(entry.get("tileHeight") or default[1]))
+
+
 def _height_map_surface(height_path):
     """Which surface a height map was authored for, from its own manifest.
 
@@ -582,7 +624,7 @@ def _height_map_surface(height_path):
     if not height_path:
         return None
     want = os.path.splitext(os.path.basename(height_path))[0]
-    for rel in HEIGHT_MAP_MANIFESTS:
+    for rel in _height_map_manifests():
         try:
             with open(os.path.join(classes.ROOT, rel), "r", encoding="utf-8") as handle:
                 for record in json.load(handle).get("maps") or []:
@@ -647,9 +689,20 @@ def _preview_is_stale(variant, want):
     For those, the surface is recovered from the label the preview already
     carries -- each surface words it distinctly -- and only a genuine
     disagreement counts.
+
+    The build stamp is the exception to that conservatism, and it is not a
+    guess: every preview built before build 2 pasted the candidate on a lattice
+    derived from `width // 4` while the engine sampled the atlas in real tiles,
+    so on the 128x128 base every one of them put the candidate somewhere the
+    surface under test does not read. Those are provably wrong as a class, and
+    the recorded surface cannot reveal it because both sides agree on the
+    surface and disagree only about where it lives. Rebuilt lazily, as each item
+    is next looked at, rather than in one sweep.
     """
     if not want:
         return False
+    if variant.get("contextBuild", 1) < CONTEXT_PREVIEW_BUILD:
+        return True
     recorded = variant.get("contextSurface")
     if recorded is not None:
         return recorded != want
@@ -689,11 +742,30 @@ def _context_preview(run_path, manifest, variant):
         atlas = (Image.new("RGBA", source.size, ImageColor.getrgb(neutral))
                  if neutral else source)
         tile = Image.open(candidate_path).convert("RGBA")
-        cell_w, cell_h = source.width // 4, source.height // 4
+        # The TILE SIZE decides the lattice, never a guess about the grid shape.
+        # This used to be `source.width // 4`, which assumed every atlas is 4x4.
+        # dungeon_001.png is 128x128 -- 2x2 tiles of 64px -- so the candidate was
+        # resized to 32px and pasted on a 32px lattice while the engine read the
+        # same file as 64px tiles. A wall at row 1 was written at y=32 and sampled
+        # from y=64: the wall got flat neutral (black once lit) and the candidate's
+        # patch fell inside the quadrant the CEILING samples. That is the whole
+        # "wall heightfield is right but the albedo is on the ceiling" report.
+        cell_w, cell_h = _atlas_tile_size(context.get("tileset"))
+        if source.width % cell_w or source.height % cell_h:
+            raise RuntimeError(
+                f"atlas {source.width}x{source.height} is not a whole number of "
+                f"{cell_w}x{cell_h} tiles")
         tile = tile.resize((cell_w, cell_h), Image.Resampling.NEAREST)
+        columns, rows = source.width // cell_w, source.height // cell_h
         cells = (_surface_cells(context.get("tileset"), surface)
                  or [tuple(context.get("cell", [1, 1]))])
         for cell_x, cell_y in cells:
+            # Out of range means the tileset and the base image disagree; pasting
+            # anyway silently drops the candidate outside the visible atlas.
+            if not (0 <= cell_x < columns and 0 <= cell_y < rows):
+                raise RuntimeError(
+                    f"{surface} cell ({cell_x},{cell_y}) is outside the "
+                    f"{columns}x{rows} tile atlas {context.get('base')}")
             atlas.paste(tile, (cell_x * cell_w, cell_y * cell_h))
         atlas.save(atlas_path)
         # A cell the candidate is provably NOT in, for the two surfaces not under
@@ -701,8 +773,7 @@ def _context_preview(run_path, manifest, variant):
         # whole point: the engine used to hardcode a wall cell that disagreed with
         # this paste, so the candidate was sampled from a cell it never occupied.
         painted = set(cells)
-        grid = source.width // cell_w
-        spare = next(((x, y) for y in range(grid) for x in range(grid)
+        spare = next(((x, y) for y in range(rows) for x in range(columns)
                       if (x, y) not in painted), None)
         if spare is None:
             raise RuntimeError("candidate covers every atlas cell; no neutral cell left")
@@ -754,6 +825,7 @@ def _context_preview(run_path, manifest, variant):
         # A preview is only reusable if the surface it was painted on is still
         # the surface this run resolves to; see _add_context_previews.
         variant["contextSurface"] = surface
+        variant["contextBuild"] = CONTEXT_PREVIEW_BUILD
     except Exception as err:
         variant["contextError"] = str(err)
 
