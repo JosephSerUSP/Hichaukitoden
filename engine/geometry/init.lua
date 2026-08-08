@@ -18,6 +18,7 @@ local plane = require("engine.geometry.plane")
 local shell = require("engine.geometry.shell")
 local radial = require("engine.geometry.radial")
 local mesh = require("presentation.mesh")
+local buildProfiler = require("engine.map_build_profiler")
 
 local geometry = {}
 
@@ -170,7 +171,13 @@ end
 function geometry.load(assetPaths)
     if type(assetPaths) == "string" then assetPaths = { assetPaths } end
     local key = geometry.compositionKey(assetPaths)
-    if compiled[key] then return compiled[key] end
+    if compiled[key] then
+        buildProfiler.cache("geometry.compiled", true)
+        return compiled[key]
+    end
+    buildProfiler.cache("geometry.compiled", false)
+    buildProfiler.add("geometry.uniqueCompiles", 1)
+    local compileSpan = buildProfiler.span("geometry.compile.total", "aggregate")
 
     local specs = {}
     for index, assetPath in ipairs(assetPaths) do
@@ -227,6 +234,9 @@ function geometry.load(assetPaths)
     model.assetPath = assetPaths[1]
     model.assetPaths = assetPaths
     compiled[key] = model
+    buildProfiler.add("geometry.finalVertices", model.vertexCount or 0)
+    buildProfiler.add("geometry.finalTriangles", math.floor((model.vertexCount or 0) / 3))
+    compileSpan()
     return model
 end
 
@@ -244,7 +254,13 @@ function geometry.loadAtlasSurface(cacheKey, spec, heightData, texture, uv)
     end
     local key = "atlas:" .. tostring(cacheKey) .. "|" ..
         require("engine.geometry.quality").key()
-    if compiled[key] then return compiled[key] end
+    if compiled[key] then
+        buildProfiler.cache("geometry.compiled", true)
+        return compiled[key]
+    end
+    buildProfiler.cache("geometry.compiled", false)
+    buildProfiler.add("geometry.uniqueCompiles", 1)
+    local compileSpan = buildProfiler.span("geometry.compile.total", "aggregate")
     local layers = { {
         data = heightData,
         scale = spec.heightScale,
@@ -259,6 +275,9 @@ function geometry.loadAtlasSurface(cacheKey, spec, heightData, texture, uv)
     model.assetPath = cacheKey
     model.assetPaths = { cacheKey }
     compiled[key] = model
+    buildProfiler.add("geometry.finalVertices", model.vertexCount or 0)
+    buildProfiler.add("geometry.finalTriangles", math.floor((model.vertexCount or 0) / 3))
+    compileSpan()
     return model
 end
 

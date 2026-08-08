@@ -17,6 +17,7 @@ local mesh = require("presentation.mesh")
 local images = require("engine.geometry.images")
 local decimate = require("engine.geometry.decimate")
 local quality = require("engine.geometry.quality")
+local buildProfiler = require("engine.map_build_profiler")
 
 local plane = {}
 
@@ -135,6 +136,7 @@ function plane.build(spec, layers, uv)
 
     -- Sample once per intersection rather than per triangle corner: adjacent
     -- quads must agree exactly or the surface develops seams.
+    local sampleSpan = buildProfiler.span("geometry.denseSampling", "cpu")
     local grid, deepest = {}, math.huge
     for row = 0, rows do
         grid[row] = {}
@@ -153,6 +155,7 @@ function plane.build(spec, layers, uv)
             grid[row][column] = { x, y, z, tu, tv }
         end
     end
+    sampleSpan()
     -- A recess cuts INTO the wall's own volume, which is fine -- a base-wall
     -- surface suppresses the atlas tile behind it. What is not fine is cutting
     -- clean through: past half a cell the cavity emerges inside whatever is on
@@ -167,6 +170,7 @@ function plane.build(spec, layers, uv)
 
     -- Indexed, because decimation collapses shared vertices; the mesh builder
     -- takes the soup afterwards.
+    local topologySpan = buildProfiler.span("geometry.denseTopology", "cpu")
     local dense = { vertices = {}, faces = {} }
     local indexOf = {}
     for row = 0, rows do
@@ -191,6 +195,10 @@ function plane.build(spec, layers, uv)
             end
         end
     end
+
+    topologySpan()
+    buildProfiler.add("geometry.denseVertices", #dense.vertices)
+    buildProfiler.add("geometry.denseTriangles", #dense.faces)
 
     -- Seam bookkeeping. A plane is a TILE: the mesh is instanced once per cell,
     -- so its own left border sits against a copy of its own right border. The
@@ -232,9 +240,14 @@ function plane.build(spec, layers, uv)
         for column = 0, columns do seam(at(0, column), at(rows, column), "v") end
     end
 
+    local decimateSpan = buildProfiler.span("geometry.qemDecimation", "cpu")
     local reduced = decimate.run(dense, quality.budget(spec.triangleBudget),
         quality.maxError(), { border = border, locked = locked, mirror = mirror })
+    decimateSpan()
+    buildProfiler.add("geometry.reducedVertices", #reduced.vertices)
+    buildProfiler.add("geometry.reducedTriangles", #reduced.faces)
 
+    local finalizeCpuSpan = buildProfiler.span("geometry.localFinalizeCpu", "cpu")
     local flip = SURFACES[spec.surface].flip
     for _, face in ipairs(reduced.faces) do
         local p, q, r = reduced.vertices[face[1]], reduced.vertices[face[2]], reduced.vertices[face[3]]
@@ -312,7 +325,9 @@ function plane.build(spec, layers, uv)
             builder:triangle(a, c, d)
         end
     end
-    return builder:build()
+    local built = builder:build()
+    finalizeCpuSpan()
+    return built
 end
 
 return plane

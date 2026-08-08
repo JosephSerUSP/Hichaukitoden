@@ -98,6 +98,11 @@ local profile3DMapId = nil
 local profile3DFrames = nil
 local profile3DVariant = nil
 local profile3DMotion = nil
+local isProfileMapBuildMode = false
+local profileMapBuildMapId = nil
+local profileMapBuildDensity = nil
+local profileMapBuildSamples = nil
+local profileMapBuildScenario = nil
 local isPreviewFogMode = false
 local previewFogSpec = nil
 local previewFogMapId = nil
@@ -409,6 +414,19 @@ function love.load(arg)
                     i = i + 1
                 end
                 i = i + 3
+            elseif val == "profile-map-build" then
+                isProfileMapBuildMode = true
+                profileMapBuildMapId = arg[i + 1]
+                profileMapBuildDensity = arg[i + 2]
+                i = i + 2
+                if arg[i + 1] and tonumber(arg[i + 1]) then
+                    profileMapBuildSamples = arg[i + 1]
+                    i = i + 1
+                end
+                if arg[i + 1] == "fresh" or arg[i + 1] == "restore" then
+                    profileMapBuildScenario = arg[i + 1]
+                    i = i + 1
+                end
             elseif val == "savetest" then
                 isSaveTestMode = true
             elseif val == "unittest" then
@@ -469,7 +487,7 @@ function love.load(arg)
             "test_growth", "test_progress", "test_promotion", "test_transform",
             "test_developer_mode", "test_map_transfer", "test_battle_commands",
             "test_troops", "test_early_balance", "test_datalog", "test_dock",
-            "test_geometry", "test_icons", "test_item_display",
+            "test_geometry", "test_map_build_profiler", "test_icons", "test_item_display",
             "test_item_model_view", "test_item_model_assignments",
             "test_reachability", "test_formation", "test_chest_3d",
         }) do
@@ -578,6 +596,14 @@ function love.load(arg)
     if isPreviewGeometryMode then
         loader.init(cliCampaignRoot)
         cli_tools.runPreviewGeometry(previewGeometryAsset, loader, previewGeometryOverlay)
+        love.event.quit(0)
+        return
+    end
+
+    if isProfileMapBuildMode then
+        loader.init(cliCampaignRoot)
+        cli_tools.runProfileMapBuild(profileMapBuildMapId or 1,
+            profileMapBuildDensity, profileMapBuildSamples, profileMapBuildScenario, loader)
         love.event.quit(0)
         return
     end
