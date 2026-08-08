@@ -1,0 +1,107 @@
+{
+  "manifestKind": "authored_height_batch",
+  "manifestVersion": 1,
+  "batchId": "first_stratum_fractured_baselines_20260807",
+  "source": "tools/asset-gen/build_fractured_baselines_20260807.py",
+  "method": "deterministic analytic fields, periodic Voronoi, distance-transform fixture masks",
+  "convention": "RGBA grayscale; 128 neutral; alpha is geometric influence",
+  "maps": [
+    {
+      "preset": "ceiling_coffers_fractured",
+      "surface": "ceiling",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.08,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_fractured/height/ceiling_coffers_fractured.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.51469,
+      "signedMax": 0.29022,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Wide coffers carrying a tiling fracture network; replaces the failed hairline ceiling fixture."
+    },
+    {
+      "preset": "wall_ashlar_fractured",
+      "surface": "wall",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.13,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_fractured/height/wall_ashlar_fractured.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.97935,
+      "signedMax": 0.36286,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Ashlar courses broken by a tiling fracture network, as a wall variant."
+    },
+    {
+      "preset": "wall_limewash_fractured",
+      "surface": "wall",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.1,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_fractured/height/wall_limewash_fractured.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.37467,
+      "signedMax": 0.09727,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Limewash render with tiling crazing; shallow and dense rather than broken."
+    },
+    {
+      "preset": "floor_flagstones_fractured",
+      "surface": "floor",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.11,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_fractured/height/floor_flagstones_fractured.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.6706,
+      "signedMax": 0.3551,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Flagstone paving split by a tiling fracture network."
+    }
+  ],
+  "reviewBasis": "08-07 owner review: fissure-as-fixture scored 2.0 at every depth weight tried; a fracture belongs in the material, not on it."
+}
