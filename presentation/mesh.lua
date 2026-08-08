@@ -15,6 +15,7 @@
 -- Vertices are flat 12-float records in world axes (Z up, one unit = one map
 -- cell): x, y, z, u, v, nx, ny, nz, r, g, b, a.
 local mesh = {}
+local buildProfiler = require("engine.map_build_profiler")
 
 mesh.FORMAT = {
     { "VertexPosition", "float", 3 },
@@ -48,12 +49,18 @@ end
 -- Nearest-filtered and shared, so an atlas used by several models -- which is
 -- the normal case for image-authored geometry -- is uploaded once.
 function mesh.texture(path)
-    if textureCache[path] then return textureCache[path] end
+    if textureCache[path] then
+        buildProfiler.cache("source.texture", true)
+        return textureCache[path]
+    end
+    buildProfiler.cache("source.texture", false)
     if not love.filesystem.getInfo(path) then
         error("mesh texture missing: " .. path, 0)
     end
+    local textureSpan = buildProfiler.span("source.textureAcquire", "graphics")
     local image = love.graphics.newImage(path)
     image:setFilter("nearest", "nearest")
+    textureSpan()
     textureCache[path] = image
     return image
 end
@@ -133,7 +140,9 @@ end
 function mesh.finalize(model, materials, base)
     for _, group in ipairs(model.groups) do
         local material = (materials or {})[group.material] or { color = { 1, 1, 1, 1 } }
+        local gpuSpan = buildProfiler.span("geometry.sourceGpuMeshCreate", "graphics")
         group.mesh = love.graphics.newMesh(mesh.FORMAT, group.vertices, "triangles", "static")
+        gpuSpan()
         group.color = material.color
         if material.image then
             group.texture = material.image

@@ -5,15 +5,22 @@
 -- routinely share one atlas, and a validate pass would otherwise decode the
 -- same PNG many times.
 local images = {}
+local buildProfiler = require("engine.map_build_profiler")
 
 local cache = {}
 
 function images.data(path)
-    if cache[path] then return cache[path] end
+    if cache[path] then
+        buildProfiler.cache("source.imageData", true)
+        return cache[path]
+    end
+    buildProfiler.cache("source.imageData", false)
     if not love.filesystem.getInfo(path) then
         error("geometry image missing: " .. path, 0)
     end
+    local decodeSpan = buildProfiler.span("source.imageDecode", "cpu")
     local ok, data = pcall(love.image.newImageData, path)
+    decodeSpan()
     if not ok then error("geometry image unreadable: " .. path, 0) end
     cache[path] = data
     return data

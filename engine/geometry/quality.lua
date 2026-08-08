@@ -49,12 +49,10 @@ end
 
 function quality.setDensity(value)
     densityOverride = value and math.max(0.05, math.min(4.0, value)) or nil
-    require("engine.geometry").forget()
 end
 
 function quality.setMaxError(value)
     errorOverride = value and math.max(0.0, value) or nil
-    require("engine.geometry").forget()
 end
 
 -- The presets the developer menu cycles through. Named rather than numeric
@@ -82,7 +80,6 @@ function quality.applyPreset(index)
     if not preset then return nil end
     densityOverride = preset.density
     errorOverride = preset.maxError
-    require("engine.geometry").forget()
     return preset
 end
 

@@ -5,6 +5,7 @@ local lighting = require("engine.lighting")
 local loader = require("data.loader")
 local fixturePredicates = require("engine.fixture_predicates")
 local tilesetResolver = require("engine.tileset_resolver")
+local buildProfiler = require("engine.map_build_profiler")
 
 local exploration = {}
 
@@ -217,6 +218,7 @@ end
 -- fixtures that are each individually safe but jointly a cut are caught too --
 -- the second one is tested against a map that already contains the first.
 function exploration.injectTilesetFeatures(grid, mapData, generatedZones, spawnCell)
+    local profileSpan = buildProfiler.span("gameplay.featureInjection.detail", "detail")
     local tilesetDef = tilesetResolver.resolve(loader, mapData)
     local featureList = (tilesetDef and tilesetDef.features) or {}
     local prefabById = {}
@@ -369,6 +371,9 @@ function exploration.injectTilesetFeatures(grid, mapData, generatedZones, spawnC
             end
         end
     end
+    profileSpan()
+    buildProfiler.add("gameplay.featuresPlaced", #generated)
+    buildProfiler.add("gameplay.generatedLights", #lights)
     return generated, lights
 end
 
@@ -879,6 +884,7 @@ local arrivalBeside = exploration.arrivalBeside
 -- transfer command: entrance when descending, exit when climbing, and resume
 -- for a temporary town portal.
 function exploration.loadMap(session, mapIdx, opts)
+    local profileLoad = buildProfiler.span("gameplay.loadMap.total", "aggregate")
     opts = opts or {}
     local rawMapData = session.loader.maps[mapIdx]
     -- A transfer to a map that does not exist used to load an empty table and
@@ -921,6 +927,7 @@ function exploration.loadMap(session, mapIdx, opts)
     local grid, startX, startY, startDir
     if mapData.safe then
         -- Load fixed town layout
+        local profileGrid = buildProfiler.span("gameplay.authoredGrid", "cpu")
         grid = {}
         for y, rowStr in ipairs(mapData.layout) do
             grid[y] = {}
@@ -932,6 +939,7 @@ function exploration.loadMap(session, mapIdx, opts)
         -- (Town) retain the campaign-wide system spawn as their fallback.
         -- Both schemas store zero-indexed coordinates; the runtime grid is
         -- one-indexed.
+        profileGrid()
         local systemSpawn = session.loader.system and session.loader.system.spawn or {}
         local authoredSpawn = mapData.spawn or systemSpawn
         local startXDef = authoredSpawn.x ~= nil and authoredSpawn.x or 10
@@ -943,21 +951,26 @@ function exploration.loadMap(session, mapIdx, opts)
         -- maps. Without this, wall fixtures configured in a tileset never
         -- appeared while testing a town.
         session.generatedZones = {}
+        local profileFeatures = buildProfiler.span("gameplay.authoredFeatureInjection", "cpu")
         session.generatedFeatures, session.generatedLightObjects =
             exploration.injectTilesetFeatures(grid, mapData, session.generatedZones,
                 { x = authoredSpawn.x, y = authoredSpawn.y })
+        profileFeatures()
         session.fixtureBlockIndex = nil
         if not mapData.light then
             local lightSources = {}
             for _, source in ipairs(mapData.lightObjects or {}) do table.insert(lightSources, source) end
             for _, source in ipairs(session.generatedLightObjects) do table.insert(lightSources, source) end
             if #lightSources > 0 then
+                local profileLight = buildProfiler.span("gameplay.lightingBake", "cpu")
                 session.currentMapData.runtimeLight = lighting.bake(grid, lightSources)
+                profileLight()
             end
         end
     else
         local saved = session.mapStates and session.mapStates[mapIdx]
         if saved then
+            local profileRestore = buildProfiler.span("gameplay.savedMapRestore", "cpu")
             grid = saved.mapGrid
             session.currentMapData.events = saved.events
             session.generatedFeatures = saved.generatedFeatures
@@ -970,9 +983,11 @@ function exploration.loadMap(session, mapIdx, opts)
             session.currentMapData.exitX = saved.exitX
             session.currentMapData.exitY = saved.exitY
             session.visitedGrid = saved.visitedGrid
+            profileRestore()
         else
             local entranceX, entranceY, exitX, exitY, generatedEvents,
                 generatedFeatures, generatedLights, generatedZones
+            local profileGeneration = buildProfiler.span("gameplay.proceduralGeneration", "cpu")
             grid, entranceX, entranceY, exitX, exitY, generatedEvents,
                 generatedFeatures, generatedLights, generatedZones =
                 -- `opts.seed` pins the layout. Play never passes one and gets a
@@ -981,12 +996,15 @@ function exploration.loadMap(session, mapIdx, opts)
                 -- different dungeon on every run -- a severing regression that
                 -- only some layouts expose must fail the same way every time.
                 exploration.generateDungeon(mapData, opts.seed or (os.time() + mapIdx), session)
+            profileGeneration()
             session.currentMapData.events = generatedEvents
             session.generatedFeatures = generatedFeatures
             session.fixtureBlockIndex = nil
             session.generatedLightObjects = generatedLights
             session.generatedZones = generatedZones
+            local profileLight = buildProfiler.span("gameplay.lightingBake", "cpu")
             session.currentMapData.runtimeLight = lighting.bake(grid, generatedLights)
+            profileLight()
             session.currentMapData.entranceX = entranceX
             session.currentMapData.entranceY = entranceY
             session.currentMapData.exitX = exitX
@@ -1026,13 +1044,19 @@ function exploration.loadMap(session, mapIdx, opts)
             local lightSources = {}
             for _, source in ipairs(mapData.lightObjects or {}) do table.insert(lightSources, source) end
             for _, source in ipairs(session.generatedLightObjects or {}) do table.insert(lightSources, source) end
+            local profileAmbient = buildProfiler.span("gameplay.ambientLightingRebake", "detail")
             session.currentMapData.runtimeLight =
                 lighting.bake(grid, lightSources, presentationOverride.ambient)
+            profileAmbient()
         end
     end
     if not isSafeMap then
         exploration.revealFog(session)
     end
+    buildProfiler.set("gameplay.mapWidth", grid[1] and #grid[1] or 0)
+    buildProfiler.set("gameplay.mapHeight", #grid)
+    buildProfiler.set("gameplay.safeMap", isSafeMap and 1 or 0)
+    profileLoad()
 end
 
 function exploration.revealFog(session)

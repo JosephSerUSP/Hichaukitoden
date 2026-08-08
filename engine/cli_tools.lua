@@ -1183,6 +1183,193 @@ function cli.runPreviewGeometry(assetPath, loader, overlayPath)
     print("GEOMETRY PREVIEW END")
 end
 
+-- Deterministic map-build profiler for issue #161. This exercises the REAL
+-- exploration + viewport path; instrumentation lives at subsystem ownership
+-- boundaries, so the harness does not reproduce map or geometry work itself.
+--
+-- Usage:
+--   lovec . profile-map-build <map[,map...]> <density[,density...]> [samples] [fresh|restore]
+--
+-- A comma-separated sequence stays inside ONE process and ONE session per
+-- repetition. That is intentional: `8,12,8 1` measures A/B/A cache survival,
+-- while `8 1,4,1` measures the current quality-change lifecycle. A single
+-- density applies to every map in a map sequence and vice versa.
+--
+-- `fresh` (default) creates a new GameSession per repetition. Process-global
+-- source caches stay warm after the first step, while destination structures
+-- follow their real one-session lifecycle. `restore` reuses the session across
+-- repetitions too, exposing saved-map restoration where applicable.
+function cli.runProfileMapBuild(mapId, density, sampleCount, scenario, loader)
+    local json = require("data.json")
+    local exploration = require("engine.exploration")
+    local viewport_3d = require("presentation.viewport_3d")
+    local quality = require("engine.geometry.quality")
+    local profiler = require("engine.map_build_profiler")
+
+    local function csv(value)
+        local out = {}
+        for part in tostring(value or ""):gmatch("[^,]+") do out[#out + 1] = part end
+        return out
+    end
+    local mapIds = csv(mapId)
+    local densityValues = csv(density)
+    if #mapIds == 0 then mapIds = { "1" } end
+    if #densityValues == 0 then densityValues = { tostring(quality.density()) } end
+    if #mapIds > 1 and #densityValues > 1 and #mapIds ~= #densityValues then
+        error("profile-map-build map and density sequences must have equal lengths, or one side must be singular", 0)
+    end
+    local stepCount = math.max(#mapIds, #densityValues)
+    local steps = {}
+    for stepIndex = 1, stepCount do
+        local stepMapId = mapIds[#mapIds == 1 and 1 or stepIndex]
+        local stepDensity = tonumber(densityValues[#densityValues == 1 and 1 or stepIndex])
+        if not stepDensity then error("invalid geometry density: " .. tostring(densityValues[stepIndex]), 0) end
+        local mapIdx
+        for idx, map in ipairs(loader.maps or {}) do
+            if tostring(map.id) == tostring(stepMapId) then mapIdx = idx break end
+        end
+        if not mapIdx then error("map not found: " .. tostring(stepMapId), 0) end
+        steps[stepIndex] = { mapId = stepMapId, mapIdx = mapIdx, density = stepDensity }
+    end
+
+    sampleCount = math.max(1, math.floor(tonumber(sampleCount) or 5))
+    scenario = scenario or "fresh"
+    if scenario ~= "fresh" and scenario ~= "restore" then
+        error("profile-map-build scenario must be 'fresh' or 'restore'", 0)
+    end
+
+    -- Clear source caches exactly once before the first measured step. Later
+    -- density changes call the real setter only when the value actually changes;
+    -- this is what makes 1->4->1 expose today's whole-cache invalidation policy.
+    local activeDensity = steps[1].density
+    quality.setDensity(activeDensity)
+    viewport_3d.init()
+    local canvas = love.graphics.newCanvas(256, 240)
+    local sharedSession = scenario == "restore" and makeHarnessSession(loader) or nil
+    local samples = {}
+    local globalStep = 0
+
+    local function measureScalar(rows, key)
+        local values = {}
+        for _, row in ipairs(rows) do values[#values + 1] = row[key] or 0 end
+        table.sort(values)
+        local n = #values
+        local total = 0
+        for _, value in ipairs(values) do total = total + value end
+        local function pct(p)
+            return values[math.max(1, math.min(n, math.ceil(n * p)))]
+        end
+        return {
+            meanMs = total / math.max(1, n), medianMs = pct(0.50),
+            p95Ms = pct(0.95), maxMs = values[n] or 0,
+        }
+    end
+
+    for repetition = 1, sampleCount do
+        local repetitionSession = sharedSession or makeHarnessSession(loader)
+        for sequenceIndex, step in ipairs(steps) do
+            globalStep = globalStep + 1
+            if math.abs(step.density - activeDensity) > 1e-9 then
+                quality.setDensity(step.density)
+                activeDensity = step.density
+            end
+
+            profiler.begin({
+                mapId = step.mapId, mapIndex = step.mapIdx, density = step.density,
+                repetition = repetition, sequenceIndex = sequenceIndex,
+                sequenceLength = stepCount, scenario = scenario,
+                firstProcessStep = globalStep == 1,
+            })
+
+            local loadStarted = love.timer.getTime()
+            local originalTime = os.time
+            os.time = function() return 1735689600 end
+            local okLoad, loadErr = pcall(exploration.loadMap, repetitionSession, step.mapIdx,
+                { seed = 1735689600 + step.mapIdx })
+            os.time = originalTime
+            if not okLoad then profiler.stop(); error(loadErr, 0) end
+            local loadMapMs = (love.timer.getTime() - loadStarted) * 1000
+            positionAtClearCorridor(repetitionSession)
+
+            love.graphics.setCanvas({ canvas, depth = true, stencil = true })
+            love.graphics.clear(0, 0, 0, 1, true, true)
+            local firstDrawStarted = love.timer.getTime()
+            viewport_3d.draw(repetitionSession)
+            love.graphics.flushBatch()
+            local firstDrawMs = (love.timer.getTime() - firstDrawStarted) * 1000
+            -- Harness camera placement happens between load and draw but is not
+            -- part of a real transfer. Compose the two measured ownership spans
+            -- so the reported visible hitch cannot include profiler setup work.
+            local loadToFirstUsableMs = loadMapMs + firstDrawMs
+
+            -- A second settled frame is deliberately separate from the visible
+            -- hitch. Its job is to expose lazy work that leaked past frame 1 and
+            -- provide the steady-state control for the same destination.
+            love.graphics.clear(0, 0, 0, 1, true, true)
+            local settledStarted = love.timer.getTime()
+            viewport_3d.draw(repetitionSession)
+            love.graphics.flushBatch()
+            local settledDrawMs = (love.timer.getTime() - settledStarted) * 1000
+            love.graphics.setCanvas()
+
+            local frameStats = viewport_3d.getLastFrameStats() or {}
+            samples[#samples + 1] = profiler.snapshot({
+                loadMapMs = loadMapMs,
+                firstDrawMs = firstDrawMs,
+                settledDrawMs = settledDrawMs,
+                loadToFirstUsableMs = loadToFirstUsableMs,
+                frameProfile = frameStats.profile,
+            })
+            profiler.stop()
+            -- Do NOT invalidate here: A/B/A is specifically testing the real
+            -- one-session prepared-structure lifecycle. loadMap/presentation
+            -- revisions decide what survives, just as they do in play.
+            collectgarbage("collect")
+        end
+        if not sharedSession then viewport_3d.invalidateStructure(repetitionSession) end
+    end
+    if sharedSession then viewport_3d.invalidateStructure(sharedSession) end
+
+    local perSequenceStep = {}
+    for sequenceIndex, step in ipairs(steps) do
+        local rows = {}
+        for _, sample in ipairs(samples) do
+            if sample.metadata.sequenceIndex == sequenceIndex then rows[#rows + 1] = sample end
+        end
+        perSequenceStep[sequenceIndex] = {
+            mapId = step.mapId, density = step.density,
+            loadMap = measureScalar(rows, "loadMapMs"),
+            firstDraw = measureScalar(rows, "firstDrawMs"),
+            settledDraw = measureScalar(rows, "settledDrawMs"),
+            loadToFirstUsable = measureScalar(rows, "loadToFirstUsableMs"),
+        }
+    end
+
+    local payload = {
+        mapSequence = mapIds,
+        densitySequence = densityValues,
+        repetitions = sampleCount,
+        scenario = scenario,
+        lifecycle = stepCount > 1
+            and "sequence steps share one process/session per repetition; source and prepared caches follow real transitions"
+            or (scenario == "fresh"
+                and "step 1 cold source; later repetitions warm process-global source + fresh session"
+                or "step 1 cold; later repetitions warm source + saved-map restoration where applicable"),
+        distribution = {
+            loadMap = measureScalar(samples, "loadMapMs"),
+            firstDraw = measureScalar(samples, "firstDrawMs"),
+            settledDraw = measureScalar(samples, "settledDrawMs"),
+            loadToFirstUsable = measureScalar(samples, "loadToFirstUsableMs"),
+        },
+        perSequenceStep = perSequenceStep,
+        sampleResults = samples,
+        projectionNote = "CPU projections scale only non-overlapping spans explicitly bucketed as CPU; graphics/API spans stay fixed. They are estimates, not hardware promises.",
+    }
+    print("PROFILE MAP BUILD BEGIN")
+    print(json.encode(payload))
+    print("PROFILE MAP BUILD END")
+end
+
 -- Deterministic headless 3D renderer profile. `flush` makes each sample include
 -- command submission instead of measuring only Lua-side queue construction.
 function cli.runProfile3D(mapId, frameCount, loader, variant, motionPattern)
