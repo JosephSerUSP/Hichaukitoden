@@ -1634,12 +1634,12 @@ local function resolveTarget(spec, party, enemies)
     return battler
 end
 
-local function buildBattler(loader, vSession, actorId, level, hp)
-    local actorData = loader.getActor(actorId)
-    if not actorData then
-        error("golden fixture: no actor with id " .. tostring(actorId), 0)
+local function buildBattler(loader, vSession, unitId, level, hp)
+    local unitData = loader.getUnit(unitId)
+    if not unitData then
+        error("golden fixture: no Unit with id " .. tostring(unitId), 0)
     end
-    local b = session.Battler.new(actorData, level)
+    local b = session.Battler.new(unitData, level)
     b.hp = hp or b:getMaxHp(vSession)
     return b
 end
@@ -1648,8 +1648,8 @@ local function runEncounter(loader, encounter, defaultLevel)
     local level = encounter.level or defaultLevel
     local vSession = session.GameSession.new(loader)
     vSession.party = {}
-    for _, actorId in ipairs(encounter.party or {}) do
-        table.insert(vSession.party, buildBattler(loader, vSession, actorId, level))
+    for _, unitId in ipairs(encounter.party or {}) do
+        table.insert(vSession.party, buildBattler(loader, vSession, unitId, level))
     end
 
     local enemies = {}

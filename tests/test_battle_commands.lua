@@ -26,12 +26,12 @@ local function join(t) return table.concat(t, ",") end
 
 -- An ordinary creature authors nothing and gets the default set, in the order
 -- the registry declares -- which is the order the menu has always had.
-local ordinary = sessionModule.Battler.new(loader.getActor(3), 1)
+local ordinary = sessionModule.Battler.new(loader.getUnit("skeleton"), 1)
 check(join(ids(ordinary)) == "attack,skill,defend,item,flee",
     "a creature that authors no list gets the default set, in menu order")
 
 -- The Egg: the whole of "an Egg can do nothing else" is one authored list.
-local egg = sessionModule.Battler.new(loader.getActor(15), 1)
+local egg = sessionModule.Battler.new(loader.getUnit("egg"), 1)
 check(join(ids(egg)) == "wait", "an Egg can only wait")
 
 -- Registry order wins over the order an actor happens to list them in, so the
@@ -77,7 +77,7 @@ check(escapeEffect ~= nil, "the Flee skill escapes by declaring an effect, not b
 
 local sess = sessionModule.GameSession.new(loader)
 sess:initializeStartingParty()
-local enemy = sessionModule.Battler.new(loader.getActor(3), 1)
+local enemy = sessionModule.Battler.new(loader.getUnit("skeleton"), 1)
 local arena = battle.Battle.new(sess, { enemy })
 local actor = sess.party[1]
 

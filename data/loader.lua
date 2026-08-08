@@ -94,7 +94,13 @@ function loader.init(root)
         print("[loader] active campaign root: " .. loader.root)
     end
     local function J(name) return load_json(loader.root .. "/" .. name) end
-    loader.actors = J("actors.json")
+
+    -- #147 terminology seam: authored combat-capable definitions are Units.
+    -- The physical file remains actors.json until its independent storage/ID
+    -- migration; `actors` is a compatibility alias, not a second collection.
+    loader.units = J("actors.json")
+    loader.actors = loader.units
+
     loader.elements = J("elements.json")
     loader.items = J("items.json")
     loader.maps, loader.mapsStorage = collection_loader.load(loader.root, "maps")
@@ -142,11 +148,22 @@ function loader.init(root)
     loader.iconPalettes = J("iconPalettes.json")
     loader.iconKeyProfiles = J("iconKeyProfiles.json")
 
-    -- Create lookup indices for scalability
-    loader.actorsById = {}
-    for _, actor in ipairs(loader.actors) do
-        loader.actorsById[actor.id] = actor
+    -- Canonical Unit lookup. Unit identity is symbolic-only: numeric IDs were
+    -- removed atomically in issue #147 and are not a compatibility surface.
+    loader.unitsById = {}
+    for index, unit in ipairs(loader.units) do
+        if type(unit.id) ~= "string" or unit.id == "" then
+            error("authored unit at actors.json[" .. tostring(index)
+                .. "] must have a non-empty symbolic string id")
+        end
+        if loader.unitsById[unit.id] then
+            error("duplicate authored unit id: " .. tostring(unit.id))
+        end
+        loader.unitsById[unit.id] = unit
     end
+    -- Compatibility alias during terminology migration. Both names point at
+    -- the same table; Actor is not a second authored resource type.
+    loader.actorsById = loader.unitsById
 
     loader.itemsById = {}
     for _, item in ipairs(loader.items) do
@@ -170,19 +187,28 @@ function loader.getMapIndex(id)
     return loader.mapsById[tostring(id)]
 end
 
--- Helpers to find items/skills by ID (O(1) lookups)
-function loader.getActor(id)
-    return loader.actorsById[id]
+-- Authored combat-capable definitions are Units. This is the canonical lookup
+-- API even while the backing file and many compatibility call sites still say
+-- Actor. Allegiance is deliberately absent from this lookup.
+function loader.getUnit(id)
+    return loader.unitsById and loader.unitsById[id]
 end
 
--- Finds an actor by its role (e.g. "Summoner") instead of a numeric id, for
--- the handful of actors the engine references structurally rather than by
--- content-catalog id.
-function loader.getActorByRole(role)
-    for _, actor in ipairs(loader.actors) do
-        if actor.role == role then return actor end
+function loader.getUnitByRole(role)
+    for _, unit in ipairs(loader.units or {}) do
+        if unit.role == role then return unit end
     end
     return nil
+end
+
+-- Legacy API aliases. Keep these until the runtime terminology cleanup reaches
+-- every call site; they must never diverge from the Unit registry.
+function loader.getActor(id)
+    return loader.getUnit(id)
+end
+
+function loader.getActorByRole(role)
+    return loader.getUnitByRole(role)
 end
 
 function loader.getItem(id)

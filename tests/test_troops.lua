@@ -32,7 +32,7 @@ local function evalNum(expr)
 end
 
 -- A named slot is exactly one enemy, at the level the slot says.
-local fixed = { members = { { actor = 3, level = 7 } } }
+local fixed = { members = { { actor = "skeleton", level = 7 } } }
 local built = troop.build(fixed, ctx, evalNum)
 check(#built == 1, "a named slot builds exactly one enemy")
 check(built[1] and built[1].level == 7, "at the level the slot authored")
@@ -41,13 +41,13 @@ check(built[1] and built[1].hp == built[1]:getMaxHp(sess), "and it enters at ful
 -- A slot that authors no level leaves the actor at its own, rather than
 -- inventing one. (Carried over from test_encounter_levels.lua, which tested
 -- this through the map-encounter path that troops replaced.)
-local defaulted = troop.build({ members = { { actor = 3 } } }, ctx, evalNum)
-check(defaulted[1] and defaulted[1].level == loader.getActor(3).level,
+local defaulted = troop.build({ members = { { actor = "skeleton" } } }, ctx, evalNum)
+check(defaulted[1] and defaulted[1].level == loader.getUnit("skeleton").level,
     "a slot with no level uses the actor's authored default")
 
 -- A pool slot rolls its count. Repeated because the count is a random range.
 local pooled = {
-    members = { { pool = { { actor = 3, weight = 1 }, { actor = 9, weight = 1 } },
+    members = { { pool = { { actor = "skeleton", weight = 1 }, { actor = "imp", weight = 1 } },
         count = "random(1, 3)", levelMin = 2, levelMax = 4 } },
 }
 local sizes, levelsInRange = {}, true
@@ -66,15 +66,15 @@ check(levelsInRange, "pooled enemies respect the slot's level range")
 -- variable escort. This is the reason members is a list of slots.
 local mixed = {
     members = {
-        { actor = 33, level = 20 },
-        { pool = { { actor = 9, weight = 1 } }, count = "random(0, 2)" },
+        { actor = "diablos", level = 20 },
+        { pool = { { actor = "imp", weight = 1 } }, count = "random(0, 2)" },
     },
 }
 local sawEscortSizes = {}
 for _ = 1, 60 do
     local group = troop.build(mixed, ctx, evalNum)
     sawEscortSizes[#group - 1] = true
-    if group[1].actorData.id ~= 33 then
+    if group[1].actorData.id ~= "diablos" then
         failed = failed + 1
         print("  [FAIL] the boss is not first")
         break
@@ -91,20 +91,20 @@ loader.troops.base.events = {
     { id = "strain", at = "round_end", commands = {} },
     { id = "ambush", at = "battle_start", commands = {} },
 }
-local plain = { members = { { actor = 3 } } }
+local plain = { members = { { actor = "skeleton" } } }
 local ids = {}
 for _, ev in ipairs(troop.eventsFor(plain, loader)) do table.insert(ids, ev.id) end
 check(table.concat(ids, ",") == "strain,ambush", "a troop inherits the base troop's events")
 
-local suppressing = { members = { { actor = 3 } }, suppress = { "strain" } }
+local suppressing = { members = { { actor = "skeleton" } }, suppress = { "strain" } }
 ids = {}
 for _, ev in ipairs(troop.eventsFor(suppressing, loader)) do table.insert(ids, ev.id) end
 check(table.concat(ids, ",") == "ambush", "and can suppress one by id, keeping the rest")
 
-local opted = { members = { { actor = 3 } }, inherits = false }
+local opted = { members = { { actor = "skeleton" } }, inherits = false }
 check(#troop.eventsFor(opted, loader) == 0, "or opt out of the base troop entirely")
 
-local own = { members = { { actor = 3 } }, events = { { id = "roar", at = "round_start" } } }
+local own = { members = { { actor = "skeleton" } }, events = { { id = "roar", at = "round_start" } } }
 ids = {}
 for _, ev in ipairs(troop.eventsFor(own, loader)) do table.insert(ids, ev.id) end
 check(table.concat(ids, ",") == "strain,ambush,roar",
@@ -183,9 +183,9 @@ local function strainCost(troopData)
     return before - s.mp
 end
 
-local charged = strainCost({ id = "noisy", members = { { actor = 3 } } })
+local charged = strainCost({ id = "noisy", members = { { actor = "skeleton" } } })
 check(charged > 0, "an ordinary troop is charged Strain in a long fight")
-check(strainCost({ id = "quiet", members = { { actor = 3 } }, suppress = { "strain" } }) == 0,
+check(strainCost({ id = "quiet", members = { { actor = "skeleton" } }, suppress = { "strain" } }) == 0,
     "and a troop that suppresses it is not")
 
 -- round_start and after_action were declared as phases before anything called
@@ -197,9 +197,9 @@ local function roundWith(events, hp)
     local s = sessionModule.GameSession.new(loader)
     s:initializeStartingParty()
     s.currentMapData = { safe = true }
-    local enemy = sessionModule.Battler.new(loader.getActor(3), 1)
+    local enemy = sessionModule.Battler.new(loader.getUnit("skeleton"), 1)
     local b = battleSystem.Battle.new(s, { enemy })
-    b.troop = { id = "probe", members = { { actor = 3 } }, inherits = false, events = events }
+    b.troop = { id = "probe", members = { { actor = "skeleton" } }, inherits = false, events = events }
     if hp then enemy.hp = math.max(1, math.floor(enemy:getMaxHp(s) * hp)) end
     local seen = {}
     for _, ev in ipairs(b:resolveRound({}) or {}) do

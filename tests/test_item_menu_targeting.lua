@@ -60,8 +60,8 @@ end)
 test("USE_ITEM command handles target: 'none' items without single-target selection (recruits exactly 1 with random name)", function()
     local sess = session.GameSession.new(loader)
     sess:addItem(11, 1) -- Mystic Egg (id 11)
-    local hero = session.Battler.new(loader.getActor(1), 1)
-    sess.party = { hero, session.Battler.new(loader.getActor(2), 1) }
+    local hero = session.Battler.new(loader.getUnit("pixie"), 1)
+    sess.party = { hero, session.Battler.new(loader.getUnit("high_pixie"), 1) }
 
     local ctx = {
         session = sess,
@@ -78,7 +78,7 @@ test("USE_ITEM command handles target: 'none' items without single-target select
     assert(#sess.party == 3, "Party count should increase from 2 to 3 (recruiting exactly 1 creature, not 4)")
 
     local eggBattler = sess.party[3]
-    assert(eggBattler and eggBattler.actorData.id == 15, "Recruited creature should be Egg actor (id 15)")
+    assert(eggBattler and eggBattler.actorData.id == "egg", "Recruited creature should be Egg actor (id 15)")
     local namesSet = {}
     for _, n in ipairs(eggBattler.actorData.names or {}) do namesSet[n] = true end
     assert(namesSet[eggBattler.name] == true, "Recruited Egg should receive a random name from names list, got: " .. tostring(eggBattler.name))

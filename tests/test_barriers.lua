@@ -16,7 +16,7 @@ end
 loader.init()
 local function rig()
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 1)
+    local b = sess:recruitActor("skeleton", 1)
     local data = {}
     for k, v in pairs(b.actorData) do data[k] = v end
     data.traits, data.elements = {}, {}

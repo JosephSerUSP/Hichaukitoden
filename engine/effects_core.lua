@@ -682,12 +682,12 @@ function effects.apply(effectData, a, b, session, context)
     -- is historical -- it is a plain "recruit this actor" effect, `level`
     -- optional (defaults to the actor's own).
     elseif effectData.type == "recruit_egg" then
-        local actorId = effectData.value or effectData.actorId
-        local battler, slotType = session:recruitActor(actorId, effectData.level)
+        local unitId = effectData.value or effectData.actorId
+        local battler, slotType = session:recruitActor(unitId, effectData.level)
         if not battler then
             table.insert(events, {
                 type = "text",
-                text = "[effect] recruit_egg: cannot recruit '" .. tostring(actorId)
+                text = "[effect] recruit_egg: cannot recruit '" .. tostring(unitId)
                     .. "' (" .. tostring(slotType) .. ")"
             })
         else

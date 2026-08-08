@@ -80,7 +80,7 @@ check(rosterWindows.capacity_reserve
 -- bracketed by empty rows, rather than being packed or followed by phantom
 -- slots beyond MAX_RESERVE_SIZE. The swap indicator consumes the same authored
 -- slot index, so preserving this row shape pins its source/target geometry too.
-local reserveActor = loader.actors and loader.actors[1]
+local reserveActor = loader.getUnit and loader.getUnit("pixie")
 if reserveActor then
     sess.reserve[3] = sess:createPersistentBattler(reserveActor, reserveActor.level or 1,
         { name = "Capacity Test" })

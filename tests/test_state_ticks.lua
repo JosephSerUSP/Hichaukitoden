@@ -54,7 +54,7 @@ end
 local function fresh(cap)
     local ldr = testLoader(cap)
     local sess = sessionModule.GameSession.new(ldr)
-    local b = sess:recruitActor(3, 5)
+    local b = sess:recruitActor("skeleton", 5)
     return sess, b
 end
 

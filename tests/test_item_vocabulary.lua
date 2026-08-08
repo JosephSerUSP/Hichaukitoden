@@ -33,7 +33,7 @@ loader.init()
 
 local function freshBattler()
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 5) -- Skeleton, level 5
+    local b = sess:recruitActor("skeleton", 5) -- Skeleton, level 5
     return sess, b
 end
 
@@ -308,8 +308,8 @@ end
 do
     local sess = sessionModule.GameSession.new(loader)
     sess.party = {}
-    local a = sess:recruitActor(3, 4)
-    local b = sess:recruitActor(10, 4)
+    local a = sess:recruitActor("skeleton", 4)
+    local b = sess:recruitActor("golem", 4)
     a.hp = 1
     b.hp = 1
     sess.mp = sess.maxMp - 1000

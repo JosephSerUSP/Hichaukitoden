@@ -27,7 +27,7 @@ end
 -- session, the battler, and the events REAP_FALLEN emitted.
 local function reapWith(equipItemId, passiveId)
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 5) -- Skeleton, level 5
+    local b = sess:recruitActor("skeleton", 5) -- Skeleton, level 5
     if not b then return nil end
     if passiveId then b.passives = { passiveId } end
     if equipItemId then
@@ -136,7 +136,7 @@ end
 -- 6. Priority: a free relic saves the creature before a consumable breaks.
 do
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 5)
+    local b = sess:recruitActor("skeleton", 5)
     b.passives = { "rebirth" }
     b.equipment[3] = loader.getItem(42) -- Warding Charm too
     b.hp = 0
@@ -162,7 +162,7 @@ end
 -- 8. learn_skill: teaches once, reports when already known.
 do
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 3)
+    local b = sess:recruitActor("skeleton", 3)
     local before = #b.skills
     effects.apply({ type = "learn_skill", skill = "windBlade" }, b, b, sess)
     local learned = false
@@ -177,7 +177,7 @@ end
 -- 9. param_plus: permanent stat gain, folded into stat reads.
 do
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 3)
+    local b = sess:recruitActor("skeleton", 3)
     local atkBefore = traits.getParam(b, "atk", sess)
     effects.apply({ type = "param_plus", param = "atk", value = 2 }, b, b, sess)
     check(traits.getParam(b, "atk", sess) == atkBefore + 2,
@@ -192,7 +192,7 @@ end
 do
     local usability = require("engine.usability")
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 3)
+    local b = sess:recruitActor("skeleton", 3)
     local tome = loader.getItem(45)
     local ok = usability.canUseItem(tome, b, { session = sess, isField = true })
     check(ok == true, "skillbook is usable on a creature that lacks the skill")
@@ -245,7 +245,7 @@ do
     check(b.hp == maxHp, "MOVE_HEAL never overheals past maxHp")
 
     -- A creature without the trait is untouched by the same step.
-    local plain = sess:recruitActor(3, 3) -- Skeleton, no MOVE_HEAL
+    local plain = sess:recruitActor("skeleton", 3) -- Skeleton, no MOVE_HEAL
     plain.hp = 1
     flow.run("exploration.step", { session = sess })
     check(plain.hp == 1, "exploration.step leaves non-carriers alone")
@@ -262,7 +262,7 @@ do
     -- Nurse (symbiosis) in slot 1, a plain Skeleton beside it in slot 2.
     local sess = sessionModule.GameSession.new(loader)
     local nurse = sess:recruitActor(idOf("Nurse"), 3)
-    local mate = sess:recruitActor(3, 3)
+    local mate = sess:recruitActor("skeleton", 3)
     mate.hp = 1
     sess.mapSafe = true -- keep MP drain/exhaustion out of this assertion
     flow.run("battle.round_end", { session = sess, party = sess.party })
@@ -273,7 +273,7 @@ do
     -- Larva (parasite) drains its neighbour instead.
     local sess2 = sessionModule.GameSession.new(loader)
     local larva = sess2:recruitActor(idOf("Larva"), 3)
-    local victim = sess2:recruitActor(3, 3)
+    local victim = sess2:recruitActor("skeleton", 3)
     sess2.mapSafe = true
     local before = victim.hp
     flow.run("battle.round_end", { session = sess2, party = sess2.party })
@@ -293,21 +293,21 @@ end
 -- 14. recruit_egg: the hatching item adds a creature (party, then reserve).
 do
     local sess = sessionModule.GameSession.new(loader)
-    local dummy = sess:recruitActor(3, 1)
+    local dummy = sess:recruitActor("skeleton", 1)
     local before = #sess.party
     local evs = effects.apply({
-        type = "recruit_egg", value = 15, provenance = "dungeon_angel"
+        type = "recruit_egg", value = "egg", provenance = "dungeon_angel"
     }, dummy, dummy, sess)
     check(#sess.party == before + 1, "recruit_egg recruits into a free party slot")
     local hatched = sess.party[#sess.party]
-    check(hatched and hatched.id == 15, "recruit_egg recruits the actor named by `value`")
+    check(hatched and hatched.id == "egg", "recruit_egg recruits the Unit named by `value`")
     check(hatched and hatched.provenance == "dungeon_angel",
         "recruit_egg fixes the authored hatch provenance on the instance")
     local sawRecruit = false
     for _, ev in ipairs(evs) do if ev.type == "recruit" then sawRecruit = true end end
     check(sawRecruit, "recruit_egg emits a recruit event for presentation")
 
-    local evs2 = effects.apply({ type = "recruit_egg", value = 99999 }, dummy, dummy, sess)
+    local evs2 = effects.apply({ type = "recruit_egg", value = "missing_unit" }, dummy, dummy, sess)
     check(evs2[1] and evs2[1].type == "text" and evs2[1].text:match("cannot recruit"),
         "recruit_egg reports an unknown actor instead of failing silently")
 end
@@ -320,7 +320,7 @@ do
         for _, a in ipairs(loader.actors) do if a.name == name then return a.id end end
     end
     local scholar = sess:recruitActor(idOf("Candle"), 3)
-    local plain = sess:recruitActor(3, 3)
+    local plain = sess:recruitActor("skeleton", 3)
     local sxp, pxp = scholar.exp, plain.exp
     -- At runtime a common event compiles to a dialogue graph: interactive
     -- commands (TEXT) render, the rest run through runImmediate. Mirror that
@@ -459,7 +459,7 @@ do
     local plainEvent = { meta = { tier = 1 } }
 
     local blind = sessionModule.GameSession.new(loader)
-    blind:recruitActor(3, 3) -- Skeleton: no senses
+    blind:recruitActor("skeleton", 3) -- Skeleton: no senses
     check(not detection.isRevealed(blind, trapEasy),
         "a party with no senses notices nothing")
 
@@ -549,7 +549,7 @@ do
     local animation_player = require("presentation.animation_player")
     local flow = require("engine.flow")
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 3)
+    local b = sess:recruitActor("skeleton", 3)
 
     -- No states: nothing drawn, nothing playing.
     check(actor_status.drawStateIcon(b, 0, 0, sess) == 0,
@@ -585,7 +585,7 @@ do
     b:removeState("dead")
 
     -- Wards become a real state, mirrored from the trait by SYNC_TRAIT_STATE.
-    local warded = sess:recruitActor(3, 3)
+    local warded = sess:recruitActor("skeleton", 3)
     warded.equipment[3] = loader.getItem(42) -- Warding Charm (ON_PERMADEATH)
     flow.run("exploration.step", { session = sess, party = sess.party })
     local hasWarded = false
@@ -608,7 +608,7 @@ do
     local animation_player = require("presentation.animation_player")
     local renderer = require("presentation.renderer")
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 3)
+    local b = sess:recruitActor("skeleton", 3)
     renderer.init(sess)
 
     local function greenPixels()
@@ -643,7 +643,7 @@ do
     local exploration = require("engine.exploration")
     local formula = require("engine.formula")
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 4) -- Skeleton
+    local b = sess:recruitActor("skeleton", 4) -- Skeleton
 
     check(b.history and b.history.species == "Skeleton" and b.history.expeditions == 0,
         "a new creature starts with an empty history and its origin species")
@@ -678,7 +678,7 @@ do
 
     -- Promotion carries history, stat-ups and learned skills across forms.
     local sess2 = sessionModule.GameSession.new(loader)
-    local pixie = sess2:recruitActor(1, 6) -- Pixie, at its evolution threshold
+    local pixie = sess2:recruitActor("pixie", 6) -- Pixie, at its evolution threshold
     pixie.history.battles = 7
     effects.apply({ type = "param_plus", param = "atk", value = 3 }, pixie, pixie, sess2)
     effects.apply({ type = "learn_skill", skill = "windBlade" }, pixie, pixie, sess2)
@@ -712,7 +712,7 @@ end
 -- brief asks for -- the difference between a creature you lost and one you spent.
 do
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(1, 5) -- Pixie
+    local b = sess:recruitActor("pixie", 5) -- Pixie
     b.history.expeditions = 2
     interpreter.runImmediate({ { cmd = "SCRIPT", code = "api.sacrifice(false, 1)" } },
         { session = sess, loader = loader, party = sess.party, events = {} })

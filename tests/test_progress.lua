@@ -36,7 +36,7 @@ do
     -- The base case: one creature crosses a threshold and the report is a
     -- before/after of what the player can see on the status screen.
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(1, 1)
+    local b = sess:recruitActor("pixie", 1)
     local before = progress.snapshot(sess)
     local hpBefore = traits.getParam(b, "maxHp", sess)
     b:gainExp(1000, sess)
@@ -58,7 +58,7 @@ do
     -- No level, no entry. The window must not appear for a fight that merely
     -- moved the EXP gauge.
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(1, 1)
+    local b = sess:recruitActor("pixie", 1)
     local before = progress.snapshot(sess)
     b:gainExp(1, sess)
     check(#progress.levelUps(sess, before) == 0, "a sub-threshold grant reports nothing")
@@ -68,7 +68,7 @@ do
     -- A stat that sat this level out prints nothing rather than "+0" -- every
     -- growing parameter still gets a row, so the table doesn't reflow.
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(1, 1)
+    local b = sess:recruitActor("pixie", 1)
     local before = progress.snapshot(sess)
     b:gainExp(1000, sess)
     local e = progress.levelUps(sess, before)[1]
@@ -85,7 +85,7 @@ do
     -- REPLACES the object in the party slot. An identity-keyed diff would lose
     -- exactly the creature whose report matters most.
     local sess = sessionModule.GameSession.new(loader)
-    local egg = sess:recruitActor(15, 9)
+    local egg = sess:recruitActor("egg", 9)
     local wasId = egg.actorData.id
     local before = progress.snapshot(sess)
     egg:gainExp(1000, sess)

@@ -159,13 +159,25 @@ function growth.accumulate(actorData, seed, level)
     return total
 end
 
--- A stable seed for a battler that was never given one. Derived from the actor
--- rather than drawn from math.random so that enemies, previews and the golden
--- harness are reproducible; persistent creatures get a real per-instance seed
--- when they are recruited, which is what makes two Pixies different.
+-- A stable seed for a battler that was never given one. Catalog Units author
+-- this explicitly as `defaultGrowthSeed`: resource identity is an opaque handle
+-- and changing its spelling must never reroll growth. Persistent creatures get
+-- a real per-instance seed when recruited, which is what makes two Pixies
+-- different.
+--
+-- Tiny ad-hoc Battler tables used by focused tests/tools are not authored Units
+-- and may omit the field. They receive one neutral deterministic seed rather
+-- than deriving mechanics from an arbitrary `id` string. G1 requires the field
+-- on every real catalog Unit.
 function growth.defaultSeed(actorData)
-    local id = tonumber(actorData and actorData.id) or 0
-    return (id * 2654435761) % 2147483647
+    local seed = actorData and actorData.defaultGrowthSeed
+    if seed == nil then return 1 end
+    if type(seed) ~= "number" or seed ~= math.floor(seed)
+        or seed <= 0 or seed >= 2147483647 then
+        error("Unit '" .. tostring(actorData and actorData.id)
+            .. "' has invalid defaultGrowthSeed " .. tostring(seed))
+    end
+    return seed
 end
 
 return growth

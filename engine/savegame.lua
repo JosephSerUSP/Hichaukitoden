@@ -12,6 +12,7 @@ local config = require("engine.config")
 local savegame = {}
 
 local SAVE_DIR = "saves"
+local SAVE_VERSION = 3
 
 local function sourceAbsPath(relPath)
     return love.filesystem.getSource() .. "/" .. relPath
@@ -196,7 +197,7 @@ function savegame.serialize(sessionObj, loader, sceneName)
         }
     end
     return {
-        version = 2,
+        version = SAVE_VERSION,
         savedAt = os.time(),
         campaignRoot = loader.root,
         scene = sceneName,
@@ -232,6 +233,11 @@ end
 -- responsible for switching campaigns first if needed and pushing the
 -- returned scene.
 function savegame.deserialize(data, loader)
+    if type(data) ~= "table" or data.version ~= SAVE_VERSION then
+        error("unsupported save version " .. tostring(data and data.version)
+            .. "; current version is " .. tostring(SAVE_VERSION)
+            .. " (pre-symbolic Unit-ID development saves are intentionally not migrated)")
+    end
     local session = require("engine.session")
     local sess = session.GameSession.new(loader)
     sess.gold = data.gold or 0

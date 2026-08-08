@@ -17,7 +17,7 @@ end
 loader.init()
 
 local fixed = loader.system.newGame.party.fixedMembers[1]
-check(fixed.id == 61 and fixed.level == 3,
+check(fixed.id == "moa" and fixed.level == 3,
     "Saban starts at level 3, matching the top of Floor 1's enemy range")
 
 local floor1 = loader.maps[2]
@@ -54,12 +54,12 @@ end
 
 local allCanAttack = true
 for _, entry in ipairs(floor1.encounters) do
-    allCanAttack = allCanAttack and damagingSkill(loader.getActor(entry.actor))
+    allCanAttack = allCanAttack and damagingSkill(loader.getUnit(entry.actor))
 end
 check(allCanAttack, "every Floor 1 enemy has an offensive action")
 
-local saban = sessionModule.Battler.new(loader.getActor(61), fixed.level)
-local mandrake = sessionModule.Battler.new(loader.getActor(30), 3)
+local saban = sessionModule.Battler.new(loader.getUnit("moa"), fixed.level)
+local mandrake = sessionModule.Battler.new(loader.getUnit("mandrake"), 3)
 local peck = loader.getSkill("dartingPeck")
 local mend = loader.getSkill("rootMend")
 saban.hp = saban:getMaxHp(sess)
@@ -107,7 +107,7 @@ check(weakened and weakened.duration == 3, "Weakened status duration is 3 rounds
 
 local sawBlueEnemy = false
 for _, entry in ipairs(floor1.encounters) do
-    local enemyActor = loader.getActor(entry.actor)
+    local enemyActor = loader.getUnit(entry.actor)
     for _, elem in ipairs(enemyActor.elements or {}) do
         if elem == "Blue" then sawBlueEnemy = true end
     end
@@ -122,7 +122,7 @@ sess.maxMp = 50
 sess.mapSafe = false
 flow.run("exploration.step", { session = sess, party = sess.party })
 -- Verify Cerberus actor adjustments & sidequest registration
-local cerberus = loader.getActor(32)
+local cerberus = loader.getUnit("cerberus")
 check(cerberus and cerberus.elements and cerberus.elements[1] == "Black" and cerberus.elements[2] == "White",
     "Cerberus is aligned to Black and White elements")
 check(cerberus and cerberus.baseParams and cerberus.baseParams.mpd == 6,

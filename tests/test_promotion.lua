@@ -32,7 +32,7 @@ end
 loader.init()
 
 -- Pixie (actor 1) promotes into High Pixie (actor 2) at level 6.
-local PIXIE, HIGH_PIXIE = 1, 2
+local PIXIE, HIGH_PIXIE = "pixie", "high_pixie"
 
 local function rigPixie(level)
     local sess = sessionModule.GameSession.new(loader)

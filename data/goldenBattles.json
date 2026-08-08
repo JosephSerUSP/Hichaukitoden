@@ -6,19 +6,19 @@
     "encounters": [
       {
         "party": [
-          2,
-          3,
-          4
+          "high_pixie",
+          "skeleton",
+          "angel"
         ],
         "enemies": [
           {
-            "actor": 1
+            "actor": "pixie"
           },
           {
-            "actor": 1
+            "actor": "pixie"
           },
           {
-            "actor": 1
+            "actor": "pixie"
           }
         ],
         "rounds": [
@@ -78,11 +78,11 @@
       },
       {
         "party": [
-          2
+          "high_pixie"
         ],
         "enemies": [
           {
-            "actor": 1,
+            "actor": "pixie",
             "hp": 1
           }
         ],
@@ -114,11 +114,11 @@
       {
         "_note": "user layer, deepest case: Black x3 vs White x2 = 6 matchups",
         "party": [
-          21
+          "shadow_stalker"
         ],
         "enemies": [
           {
-            "actor": 5
+            "actor": "archangel"
           }
         ],
         "rounds": [
@@ -134,11 +134,11 @@
       {
         "_note": "user layer control: Red has no relationship to White",
         "party": [
-          9
+          "imp"
         ],
         "enemies": [
           {
-            "actor": 5
+            "actor": "archangel"
           }
         ],
         "rounds": [
@@ -154,11 +154,11 @@
       {
         "_note": "user layer control: a non-elemental attacker never gets a bonus",
         "party": [
-          10
+          "golem"
         ],
         "enemies": [
           {
-            "actor": 5
+            "actor": "archangel"
           }
         ],
         "rounds": [
@@ -174,11 +174,11 @@
       {
         "_note": "both layers: Black x3 wielding a Black skill into White x2",
         "party": [
-          21
+          "shadow_stalker"
         ],
         "enemies": [
           {
-            "actor": 5
+            "actor": "archangel"
           }
         ],
         "rounds": [
@@ -195,11 +195,11 @@
       {
         "_note": "skill layer alone: a Black skill in Red hands (the tome case)",
         "party": [
-          9
+          "imp"
         ],
         "enemies": [
           {
-            "actor": 5
+            "actor": "archangel"
           }
         ],
         "rounds": [
@@ -216,11 +216,11 @@
       {
         "_note": "skill layer alone: a Black skill in non-elemental hands",
         "party": [
-          10
+          "golem"
         ],
         "enemies": [
           {
-            "actor": 5
+            "actor": "archangel"
           }
         ],
         "rounds": [
@@ -237,11 +237,11 @@
       {
         "_note": "user layer, single strong match: Red beats Green",
         "party": [
-          9
+          "imp"
         ],
         "enemies": [
           {
-            "actor": 12
+            "actor": "ooze"
           }
         ],
         "rounds": [
@@ -257,11 +257,11 @@
       {
         "_note": "user layer, weak side: Red is weak into Blue",
         "party": [
-          9
+          "imp"
         ],
         "enemies": [
           {
-            "actor": 14
+            "actor": "wisp"
           }
         ],
         "rounds": [
@@ -277,11 +277,11 @@
       {
         "_note": "depth without a matchup: Black x3 has no relationship to Green",
         "party": [
-          21
+          "shadow_stalker"
         ],
         "enemies": [
           {
-            "actor": 12
+            "actor": "ooze"
           }
         ],
         "rounds": [
@@ -317,12 +317,12 @@
         "_note": "Physical and magical attackers against a levelled wall: reads ATK/DEF and MAT/MDF accumulation at once.",
         "level": 14,
         "party": [
-          2,
-          3
+          "high_pixie",
+          "skeleton"
         ],
         "enemies": [
           {
-            "actor": 10
+            "actor": "golem"
           }
         ],
         "rounds": [
@@ -358,11 +358,11 @@
         "_note": "A levelled enemy hitting back, so growth on the receiving side is covered too.",
         "level": 14,
         "party": [
-          1
+          "pixie"
         ],
         "enemies": [
           {
-            "actor": 3
+            "actor": "skeleton"
           }
         ],
         "rounds": [

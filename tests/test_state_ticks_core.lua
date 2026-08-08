@@ -29,7 +29,7 @@ loader.init()
 -- rather than whatever the roster currently carries.
 local function rig(maxHp, traitList)
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 1)
+    local b = sess:recruitActor("skeleton", 1)
     local private = {}
     for k, v in pairs(b.actorData) do private[k] = v end
     private.traits = traitList or {}

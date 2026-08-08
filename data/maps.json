@@ -1840,7 +1840,7 @@
     "treasures": [],
     "encounters": [
       {
-        "actor": 1,
+        "actor": "pixie",
         "weight": 10
       }
     ],
@@ -4422,7 +4422,7 @@
                     "commands": [
                       {
                         "cmd": "OPEN_RECRUIT",
-                        "actorId": 1,
+                        "actorId": "pixie",
                         "level": 1
                       },
                       {
@@ -4462,43 +4462,43 @@
     ],
     "encounters": [
       {
-        "actor": 1,
+        "actor": "pixie",
         "weight": 5,
         "levelMin": 1,
         "levelMax": 2
       },
       {
-        "actor": 3,
+        "actor": "skeleton",
         "weight": 5,
         "levelMin": 1,
         "levelMax": 3
       },
       {
-        "actor": 9,
+        "actor": "imp",
         "weight": 3,
         "levelMin": 1,
         "levelMax": 2
       },
       {
-        "actor": 25,
+        "actor": "cocoon",
         "weight": 3,
         "levelMin": 1,
         "levelMax": 2
       },
       {
-        "actor": 27,
+        "actor": "goblin_thief",
         "weight": 3,
         "levelMin": 1,
         "levelMax": 3
       },
       {
-        "actor": 30,
+        "actor": "mandrake",
         "weight": 3,
         "levelMin": 2,
         "levelMax": 3
       },
       {
-        "actor": 23,
+        "actor": "undine",
         "weight": 4,
         "levelMin": 1,
         "levelMax": 3
@@ -5133,7 +5133,7 @@
                     "commands": [
                       {
                         "cmd": "OPEN_RECRUIT",
-                        "actorId": 32,
+                        "actorId": "cerberus",
                         "level": 1
                       },
                       {
@@ -5176,60 +5176,60 @@
     ],
     "encounters": [
       {
-        "actor": 3,
+        "actor": "skeleton",
         "weight": 8,
         "levelMin": 3,
         "levelMax": 5
       },
       {
-        "actor": 9,
+        "actor": "imp",
         "weight": 5,
         "levelMin": 3,
         "levelMax": 5
       },
       {
-        "actor": 14,
+        "actor": "wisp",
         "weight": 4,
         "levelMin": 3,
         "levelMax": 5
       },
       {
-        "actor": 12,
+        "actor": "ooze",
         "weight": 3,
         "levelMin": 4,
         "levelMax": 6
       },
       {
-        "actor": 23,
+        "actor": "undine",
         "weight": 4,
         "levelMin": 4,
         "levelMax": 6
       },
       {
-        "actor": 50,
+        "actor": "mimic",
         "weight": 2,
         "levelMin": 5,
         "levelMax": 6
       },
       {
-        "actor": 58,
+        "actor": "gargoyle",
         "weight": 3,
         "levelMin": 4,
         "levelMax": 6
       }
     ],
     "recruits": [
-      3,
-      9,
-      12,
-      10,
-      20,
-      19,
-      23,
-      29,
-      50,
-      52,
-      58
+      "skeleton",
+      "imp",
+      "ooze",
+      "golem",
+      "candle",
+      "flauros",
+      "undine",
+      "homunculus",
+      "mimic",
+      "unicorn",
+      "gargoyle"
     ],
     "category": "dungeon",
     "generation": "Fixed",
@@ -5457,53 +5457,53 @@
     ],
     "encounters": [
       {
-        "actor": 10,
+        "actor": "golem",
         "weight": 6,
         "levelMin": 7,
         "levelMax": 9
       },
       {
-        "actor": 6,
+        "actor": "demon",
         "weight": 4,
         "levelMin": 6,
         "levelMax": 8
       },
       {
-        "actor": 4,
+        "actor": "angel",
         "weight": 3,
         "levelMin": 6,
         "levelMax": 8
       },
       {
-        "actor": 32,
+        "actor": "cerberus",
         "weight": 2,
         "levelMin": 8,
         "levelMax": 10
       },
       {
-        "actor": 45,
+        "actor": "giant",
         "weight": 3,
         "levelMin": 7,
         "levelMax": 9
       },
       {
-        "actor": 52,
+        "actor": "unicorn",
         "weight": 3,
         "levelMin": 6,
         "levelMax": 8
       }
     ],
     "recruits": [
-      10,
-      6,
-      4,
-      17,
-      19,
-      23,
-      32,
-      45,
-      52,
-      58
+      "golem",
+      "demon",
+      "angel",
+      "larva",
+      "flauros",
+      "undine",
+      "cerberus",
+      "giant",
+      "unicorn",
+      "gargoyle"
     ]
   },
   {
@@ -5652,41 +5652,41 @@
     ],
     "encounters": [
       {
-        "actor": 6,
+        "actor": "demon",
         "weight": 8
       },
       {
-        "actor": 2,
+        "actor": "high_pixie",
         "weight": 4
       },
       {
-        "actor": 11,
+        "actor": "ghoul",
         "weight": 4
       },
       {
-        "actor": 24,
+        "actor": "proteus",
         "weight": 3
       },
       {
-        "actor": 26,
+        "actor": "notiluca",
         "weight": 3
       },
       {
-        "actor": 31,
+        "actor": "alraune",
         "weight": 3
       },
       {
-        "actor": 59,
+        "actor": "grotesque",
         "weight": 2
       }
     ],
     "recruits": [
-      6,
-      4,
-      10,
-      19,
-      29,
-      45
+      "demon",
+      "angel",
+      "golem",
+      "flauros",
+      "homunculus",
+      "giant"
     ]
   },
   {
@@ -5831,43 +5831,43 @@
     ],
     "encounters": [
       {
-        "actor": 18,
+        "actor": "crimson_lord",
         "weight": 2
       },
       {
-        "actor": 6,
+        "actor": "demon",
         "weight": 8
       },
       {
-        "actor": 2,
+        "actor": "high_pixie",
         "weight": 5
       },
       {
-        "actor": 35,
+        "actor": "red_dragon",
         "weight": 2
       },
       {
-        "actor": 37,
+        "actor": "blue_dragon",
         "weight": 2
       },
       {
-        "actor": 39,
+        "actor": "green_dragon",
         "weight": 2
       },
       {
-        "actor": 41,
+        "actor": "white_dragon",
         "weight": 2
       },
       {
-        "actor": 43,
+        "actor": "black_dragon",
         "weight": 2
       }
     ],
     "recruits": [
-      6,
-      4,
-      32,
-      45
+      "demon",
+      "angel",
+      "cerberus",
+      "giant"
     ]
   },
   {
@@ -5978,39 +5978,39 @@
     ],
     "encounters": [
       {
-        "actor": 18,
+        "actor": "crimson_lord",
         "weight": 10
       },
       {
-        "actor": 6,
+        "actor": "demon",
         "weight": 5
       },
       {
-        "actor": 36,
+        "actor": "salamander",
         "weight": 2
       },
       {
-        "actor": 38,
+        "actor": "leviathan",
         "weight": 2
       },
       {
-        "actor": 40,
+        "actor": "fafnir",
         "weight": 2
       },
       {
-        "actor": 42,
+        "actor": "bahamut",
         "weight": 2
       },
       {
-        "actor": 44,
+        "actor": "nidhogg",
         "weight": 2
       },
       {
-        "actor": 47,
+        "actor": "surtr",
         "weight": 1
       },
       {
-        "actor": 49,
+        "actor": "hyperion",
         "weight": 1
       }
     ],
@@ -6026,13 +6026,28 @@
     "image": "TownAlencar.png",
     "tilesetOverride": {
       "features": [
-        { "id": "wall_torch", "remove": true },
-        { "id": "dungeon_column", "remove": true },
-        { "id": "dungeon_chest", "remove": true },
-        { "id": "ruins_crystal", "remove": true }
+        {
+          "id": "wall_torch",
+          "remove": true
+        },
+        {
+          "id": "dungeon_column",
+          "remove": true
+        },
+        {
+          "id": "dungeon_chest",
+          "remove": true
+        },
+        {
+          "id": "ruins_crystal",
+          "remove": true
+        }
       ],
       "fixturePrefabs": [
-        { "id": "wall_beside_floor", "remove": true }
+        {
+          "id": "wall_beside_floor",
+          "remove": true
+        }
       ]
     },
     "layout": [
@@ -6260,67 +6275,120 @@
               {
                 "label": "1. Arrival (St. Maria)",
                 "commands": [
-                  { "cmd": "LOAD_MAP", "mapId": 1 }
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 1
+                  }
                 ]
               },
               {
                 "label": "2. Before Cerberus (Floor 1)",
                 "commands": [
-                  { "cmd": "LOAD_MAP", "mapId": 2 }
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 2
+                  }
                 ]
               },
               {
                 "label": "3. Return I (Town Post-F1)",
                 "commands": [
-                  { "cmd": "SET_VAR", "name": "return_count", "value": 1 },
-                  { "cmd": "SET_FLAG", "flag": "milestone_return_1", "value": true },
-                  { "cmd": "LOAD_MAP", "mapId": 1 }
+                  {
+                    "cmd": "SET_VAR",
+                    "name": "return_count",
+                    "value": 1
+                  },
+                  {
+                    "cmd": "SET_FLAG",
+                    "flag": "milestone_return_1",
+                    "value": true
+                  },
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 1
+                  }
                 ]
               },
               {
                 "label": "4. Bellroot (Floor 2)",
                 "commands": [
-                  { "cmd": "LOAD_MAP", "mapId": 15 }
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 15
+                  }
                 ]
               },
               {
                 "label": "5. Return II (Town Post-F2)",
                 "commands": [
-                  { "cmd": "SET_VAR", "name": "return_count", "value": 2 },
-                  { "cmd": "SET_FLAG", "flag": "milestone_return_2", "value": true },
-                  { "cmd": "LOAD_MAP", "mapId": 1 }
+                  {
+                    "cmd": "SET_VAR",
+                    "name": "return_count",
+                    "value": 2
+                  },
+                  {
+                    "cmd": "SET_FLAG",
+                    "flag": "milestone_return_2",
+                    "value": true
+                  },
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 1
+                  }
                 ]
               },
               {
                 "label": "6. Borrowed Room (Floor 3)",
                 "commands": [
-                  { "cmd": "LOAD_MAP", "mapId": 4 }
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 4
+                  }
                 ]
               },
               {
                 "label": "7. Vigil (Changed Town)",
                 "commands": [
-                  { "cmd": "SET_FLAG", "flag": "vigil_active", "value": true },
-                  { "cmd": "LOAD_MAP", "mapId": 1 }
+                  {
+                    "cmd": "SET_FLAG",
+                    "flag": "vigil_active",
+                    "value": true
+                  },
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 1
+                  }
                 ]
               },
               {
                 "label": "8. Pre-Dragon (Floor 3 Boss)",
                 "commands": [
-                  { "cmd": "LOAD_MAP", "mapId": 4 }
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 4
+                  }
                 ]
               },
               {
                 "label": "9. Dragon Phase II",
                 "commands": [
-                  { "cmd": "BATTLE", "troop": "boss_red_dragon" }
+                  {
+                    "cmd": "BATTLE",
+                    "troop": "boss_red_dragon"
+                  }
                 ]
               },
               {
                 "label": "10. Low-MP Retreat (<200 MP)",
                 "commands": [
-                  { "cmd": "CHANGE_MP", "amount": -2800 },
-                  { "cmd": "LOAD_MAP", "mapId": 2 }
+                  {
+                    "cmd": "CHANGE_MP",
+                    "amount": -2800
+                  },
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 2
+                  }
                 ]
               }
             ]
@@ -6356,7 +6424,7 @@
                 "commands": [
                   {
                     "cmd": "OPEN_RECRUIT",
-                    "actorId": 1,
+                    "actorId": "pixie",
                     "level": 1,
                     "sourceKey": "dev:recruit_pixie"
                   }
@@ -6367,7 +6435,7 @@
                 "commands": [
                   {
                     "cmd": "OPEN_RECRUIT",
-                    "actorId": 3,
+                    "actorId": "skeleton",
                     "level": 5,
                     "sourceKey": "dev:recruit_skeleton"
                   }
@@ -6378,7 +6446,7 @@
                 "commands": [
                   {
                     "cmd": "OPEN_RECRUIT",
-                    "actorId": 8,
+                    "actorId": "nurse",
                     "level": 8,
                     "sourceKey": "dev:recruit_nurse"
                   }
@@ -6389,7 +6457,7 @@
                 "commands": [
                   {
                     "cmd": "OPEN_RECRUIT",
-                    "actorId": 10,
+                    "actorId": "golem",
                     "level": 10,
                     "sourceKey": "dev:recruit_golem"
                   }
@@ -6400,7 +6468,7 @@
                 "commands": [
                   {
                     "cmd": "OPEN_RECRUIT",
-                    "actorId": 12,
+                    "actorId": "ooze",
                     "level": 5,
                     "sourceKey": "dev:recruit_ooze"
                   }
@@ -6411,7 +6479,7 @@
                 "commands": [
                   {
                     "cmd": "OPEN_RECRUIT",
-                    "actorId": 32,
+                    "actorId": "cerberus",
                     "level": 15,
                     "sourceKey": "dev:recruit_cerberus"
                   }
@@ -6432,12 +6500,12 @@
     ],
     "encounters": [],
     "recruits": [
-      1,
-      3,
-      8,
-      10,
-      12,
-      32
+      "pixie",
+      "skeleton",
+      "nurse",
+      "golem",
+      "ooze",
+      "cerberus"
     ]
   },
   {
@@ -6560,8 +6628,8 @@
       "y": 8,
       "dir": "N"
     }
-  }
-  ,{
+  },
+  {
     "id": 12,
     "title": "FFXII Depth Explore Room",
     "intro": "An exploratory room mixing expressive checkpoints and authored depth fields. Some materials are deliberately strange.",
@@ -6639,9 +6707,18 @@
       {
         "id": "shrine",
         "cells": [
-          { "x": 4, "y": 3 },
-          { "x": 5, "y": 3 },
-          { "x": 6, "y": 3 }
+          {
+            "x": 4,
+            "y": 3
+          },
+          {
+            "x": 5,
+            "y": 3
+          },
+          {
+            "x": 6,
+            "y": 3
+          }
         ]
       }
     ],
@@ -6747,7 +6824,11 @@
     "safe": true,
     "encounterSteps": 0,
     "fog": {
-      "color": [0.035, 0.11, 0.18],
+      "color": [
+        0.035,
+        0.11,
+        0.18
+      ],
       "startDist": 2.5,
       "distance": 9,
       "sharpness": 1.1,
@@ -6758,7 +6839,11 @@
       {
         "x": 5,
         "y": 10,
-        "color": [1, 0.42, 0.12],
+        "color": [
+          1,
+          0.42,
+          0.12
+        ],
         "radius": 4,
         "falloff": 3,
         "material": "wall_torch"
@@ -6766,7 +6851,11 @@
       {
         "x": 11,
         "y": 8,
-        "color": [0.1, 0.55, 1],
+        "color": [
+          0.1,
+          0.55,
+          1
+        ],
         "radius": 4,
         "falloff": 3,
         "material": "crystal"
@@ -6774,7 +6863,11 @@
       {
         "x": 6,
         "y": 10,
-        "color": [1, 0.36, 0.1],
+        "color": [
+          1,
+          0.36,
+          0.1
+        ],
         "radius": 4.5,
         "falloff": 3,
         "material": "wall_torch"
@@ -6782,19 +6875,43 @@
       {
         "x": 10,
         "y": 10,
-        "color": [0.08, 0.48, 1],
+        "color": [
+          0.08,
+          0.48,
+          1
+        ],
         "radius": 4.5,
         "falloff": 3,
         "material": "crystal"
       }
     ],
     "zones": [
-      { "id": "shrine", "cells": [{ "x": 7, "y": 2 }, { "x": 8, "y": 2 }, { "x": 9, "y": 2 }] }
+      {
+        "id": "shrine",
+        "cells": [
+          {
+            "x": 7,
+            "y": 2
+          },
+          {
+            "x": 8,
+            "y": 2
+          },
+          {
+            "x": 9,
+            "y": 2
+          }
+        ]
+      }
     ],
     "events": [],
     "treasures": [],
     "encounters": [],
     "recruits": [],
-    "spawn": { "x": 2, "y": 2, "dir": "E" }
+    "spawn": {
+      "x": 2,
+      "y": 2,
+      "dir": "E"
+    }
   }
 ]

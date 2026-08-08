@@ -28,7 +28,7 @@ loader.init()
 
 local function rig()
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 1)
+    local b = sess:recruitActor("skeleton", 1)
     b.states = {}
     return sess, b
 end
@@ -145,8 +145,8 @@ do
     -- a reserve creature would hand the player a spent one.
     local sess, active = rig()
     local skill = { id = "spell", charges = 4 }
-    local benched = sess:recruitActor(3, 1)
-    local stored = sess:recruitActor(3, 1)
+    local benched = sess:recruitActor("skeleton", 1)
+    local stored = sess:recruitActor("skeleton", 1)
     sess.party[1] = active
     sess.reserve[1] = benched
     sess.storage[1] = stored

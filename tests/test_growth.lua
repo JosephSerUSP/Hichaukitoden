@@ -100,6 +100,22 @@ do
     check(draws == 0, "growth consumes no global RNG")
 end
 
+do
+    local pixie = loader.getUnit("pixie")
+    local original = growth.defaultSeed(pixie)
+    check(original == 506952114,
+        "Pixie's authored default growth seed preserves the pre-symbolic growth stream")
+
+    local renamed = {}
+    for k, v in pairs(pixie) do renamed[k] = v end
+    renamed.id = "presentation_independent_probe"
+    check(growth.defaultSeed(renamed) == original,
+        "default growth does not depend on Unit ID spelling")
+
+    check(growth.defaultSeed({ id = "synthetic" }) == 1,
+        "ad-hoc non-catalog Battler data gets a neutral deterministic fallback")
+end
+
 ------------------------------------------------------------------- the budget --
 
 do
@@ -177,7 +193,7 @@ end
 
 do
     local sess = sessionModule.GameSession.new(loader)
-    local b = sessionModule.Battler.new(loader.getActor(1), 1, 4242)
+    local b = sessionModule.Battler.new(loader.getUnit("pixie"), 1, 4242)
     check(b.growthSeed == 4242, "a battler keeps the seed it was given")
     check(b.growth ~= nil, "a battler carries an accumulated growth record")
 
@@ -204,7 +220,7 @@ do
     -- a history. This is what keeps the golden harness reproducible.
     local sess = sessionModule.GameSession.new(loader)
     local raw = {
-        actorData = loader.getActor(1), level = 10,
+        actorData = loader.getUnit("pixie"), level = 10,
         passives = {}, equipment = {}, states = {}, paramPlus = {},
     }
     local a = traits.getParam(raw, "maxHp", sess)
@@ -217,7 +233,7 @@ do
     -- rerolls the creature.
     local savegame = require("engine.savegame")
     local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(1, 8)
+    local b = sess:recruitActor("pixie", 8)
     local seed, hp = b.growthSeed, traits.getParam(b, "maxHp", sess)
     local data = savegame.serialize(sess, loader, "map")
     local restored = savegame.deserialize(data, loader)
@@ -233,7 +249,7 @@ do
     local sess = sessionModule.GameSession.new(loader)
     local seeds = {}
     for _ = 1, 6 do
-        local b = sessionModule.Battler.new(loader.getActor(1), 1,
+        local b = sessionModule.Battler.new(loader.getUnit("pixie"), 1,
             math.random(1, 2147483646))
         seeds[b.growthSeed] = true
     end
