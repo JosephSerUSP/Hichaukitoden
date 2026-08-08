@@ -1,0 +1,122 @@
+# Phase A of the repository CI baseline (issue #164).
+#
+# Scope is deliberately small: prove that a clean GitHub-hosted Windows runner
+# can execute the project's own deterministic verification entry points. The
+# golden gates (G2/G3/G4) are Phase B and are NOT run here; G5/G6 are explicitly
+# out of scope for hosted CI because they depend on GPU/driver and browser
+# rendering environments.
+#
+# This workflow reports on repository state. It never regenerates a golden
+# reference, never rewrites docs/ENGINE-STATE.md, and asserts afterwards that
+# no tracked file changed.
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phase-a:
+    name: G1 + unit + save (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    env:
+      # Pinned deliberately: a floating "latest" would let an upstream release
+      # change what a green check means. 11.5 is the version that verifies this
+      # project locally. (docs/reports/current-gate-baseline.md still says 11.4;
+      # that report is stale -- see issue #155.)
+      LOVE_VERSION: "11.5"
+      LOVE_URL: "https://github.com/love2d/love/releases/download/11.5/love-11.5-win64.zip"
+
+    steps:
+      - name: Check out the commit under test
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install LOVE ${{ env.LOVE_VERSION }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $zip = Join-Path $env:RUNNER_TEMP "love.zip"
+          $dest = Join-Path $env:RUNNER_TEMP "love"
+
+          Invoke-WebRequest -Uri $env:LOVE_URL -OutFile $zip -MaximumRetryCount 3 -RetryIntervalSec 5
+
+          # Recorded so the digest can be pinned in a follow-up once observed
+          # from a real run; a release asset is not immutable by contract.
+          $sha = (Get-FileHash $zip -Algorithm SHA256).Hash
+          Write-Host "love-$env:LOVE_VERSION-win64.zip SHA256: $sha"
+
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+
+          # Discover rather than assume: the archive's top-level directory name
+          # has changed between releases.
+          $lovec = Get-ChildItem -Path $dest -Recurse -Filter "lovec.exe" |
+                   Select-Object -First 1 -ExpandProperty FullName
+          if (-not $lovec) { throw "lovec.exe not found under $dest" }
+
+          # Cheap smoke test: fail at install time if the pin did not
+          # materialize, rather than deep inside a verification step.
+          $reported = & $lovec --version 2>&1 | Out-String
+          Write-Host "reported: $($reported.Trim())"
+          if ($reported -notmatch [regex]::Escape($env:LOVE_VERSION)) {
+            throw "expected LOVE $env:LOVE_VERSION, got: $($reported.Trim())"
+          }
+
+          "LOVEC=$lovec" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      # The three verification commands below are the project's canonical entry
+      # points, invoked unmodified. Gate semantics live in the repository, not
+      # in this YAML, so local and CI verification stay aligned as they evolve.
+
+      - name: G1 - data validation
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          & $env:LOVEC . validate
+          if ($LASTEXITCODE -ne 0) { throw "G1 failed (exit $LASTEXITCODE)" }
+
+      - name: unit - behavior suites
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          & $env:LOVEC . unittest
+          if ($LASTEXITCODE -ne 0) { throw "unit gate failed (exit $LASTEXITCODE)" }
+
+      - name: save - save/load round trip
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          & $env:LOVEC . savetest
+          if ($LASTEXITCODE -ne 0) { throw "save gate failed (exit $LASTEXITCODE)" }
+
+      - name: Assert verification left tracked files unchanged
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          # Untracked diagnostic output is tolerated (issue #164); rewriting a
+          # tracked reference is not. Shown for visibility either way.
+          $untracked = git ls-files --others --exclude-standard
+          if ($untracked) {
+            Write-Host "untracked output produced by verification (tolerated):"
+            $untracked | ForEach-Object { Write-Host "  $_" }
+          }
+
+          git diff --stat --exit-code
+          if ($LASTEXITCODE -ne 0) { throw "verification modified tracked files" }
+
+          git diff --cached --stat --exit-code
+          if ($LASTEXITCODE -ne 0) { throw "verification staged changes to tracked files" }
+
+          Write-Host "tracked tree clean"
