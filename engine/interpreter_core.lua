@@ -634,11 +634,22 @@ handlers.DAMAGE = function(cmd, ctx)
         -- the target's HP without killing. Exists to reproduce legacy blocks
         -- like MP-exhaustion damage (hp = max(1, hp - n)) exactly.
         local dmg = math.floor(amount)
+        local hpBefore = target.hp or 0
+        local maxHp = traits.getParam(target, "maxHp", ctx.session)
         target.hp = math.max(cmd.minHp or 0, target.hp - dmg)
-        table.insert(ctx.events, { type = "damage", target = target, value = dmg })
+        local hpAfter = target.hp or 0
+        table.insert(ctx.events, {
+            type = "damage", target = target, value = dmg,
+            hpBefore = hpBefore, hpAfter = hpAfter,
+            maxHpBefore = maxHp, maxHpAfter = maxHp,
+        })
         if target.hp <= 0 then
             target:addState("dead")
-            table.insert(ctx.events, { type = "death", target = target })
+            table.insert(ctx.events, {
+                type = "death", target = target,
+                hpBefore = hpAfter, hpAfter = 0,
+                maxHpBefore = maxHp, maxHpAfter = maxHp,
+            })
         end
         return
     end
@@ -827,8 +838,15 @@ handlers.CHANGE_MP = function(cmd, ctx)
     local amount = math.floor(evalFormula(cmd.amount, ctx))
     if amount < 0 then
         local drain = math.abs(amount)
+        local mpBefore = ctx.session.mp or 0
+        local maxMp = ctx.session.maxMp or mpBefore
         ctx.session.mp = math.max(0, ctx.session.mp - drain)
-        table.insert(ctx.events, { type = "mp_drain", value = drain, actor = (cmd.actor and resolveRef(cmd.actor, ctx)) or ctx.a })
+        table.insert(ctx.events, {
+            type = "mp_drain", value = drain,
+            actor = (cmd.actor and resolveRef(cmd.actor, ctx)) or ctx.a,
+            mpBefore = mpBefore, mpAfter = ctx.session.mp,
+            maxMpBefore = maxMp, maxMpAfter = maxMp,
+        })
     else
         ctx.session.mp = math.min(ctx.session.maxMp or (ctx.session.mp + amount), ctx.session.mp + amount)
     end
@@ -884,14 +902,28 @@ handlers.STATE_TICKS = function(cmd, ctx)
                 if amount <= 0 then
                     -- nothing to do
                 elseif hrg > 0 then
+                    local hpBefore = battler.hp or 0
                     battler.hp = math.min(maxHp, battler.hp + amount)
-                    table.insert(ctx.events, { type = "heal", target = battler, value = amount })
+                    table.insert(ctx.events, {
+                        type = "heal", target = battler, value = amount,
+                        hpBefore = hpBefore, hpAfter = battler.hp,
+                        maxHpBefore = maxHp, maxHpAfter = maxHp,
+                    })
                 else
+                    local hpBefore = battler.hp or 0
                     battler.hp = math.max(0, battler.hp - amount)
-                    table.insert(ctx.events, { type = "damage", target = battler, value = amount })
+                    table.insert(ctx.events, {
+                        type = "damage", target = battler, value = amount,
+                        hpBefore = hpBefore, hpAfter = battler.hp,
+                        maxHpBefore = maxHp, maxHpAfter = maxHp,
+                    })
                     if battler.hp <= 0 then
                         battler:addState("dead")
-                        table.insert(ctx.events, { type = "death", target = battler })
+                        table.insert(ctx.events, {
+                            type = "death", target = battler,
+                            hpBefore = battler.hp, hpAfter = 0,
+                            maxHpBefore = maxHp, maxHpAfter = maxHp,
+                        })
                     end
                 end
             end
@@ -1235,14 +1267,12 @@ handlers.REMOVE_EVENT = handlers.ERASE_EVENT
 -- gone permanently and converts to banked EXP using the same yield rule as
 -- ritual sacrifice (totalExp × summoner.sacrificeExpRate ×
 -- (1 + SACRIFICE_EXP_RATE trait)). Runs from the battle.victory and
--- battle.escaped flows. EXP banking happens now (pure bookkeeping, nothing
--- to watch); the actual party[slot] removal does NOT happen here — it's
--- deferred to the presentation layer, one battler at a time, only once
--- that battler's system.reap animation finishes playing (see
--- engine/scenes/battle.lua processEvent's "reap" branch). Emits one `reap`
--- event per fallen spirit, carrying `slot` for battlers still fielded
--- (nil for wave casualties, already off-field) so the deferred removal
--- knows which party index to clear.
+-- battle.escaped flows. This command owns the whole semantic transition:
+-- banking EXP, memorializing the creature, and clearing its authoritative
+-- party slot. Presentation receives a `reap` fact and may keep drawing the
+-- outgoing creature until its fade completes, but it never performs the death.
+-- `slot` is retained on the event so a detached BattleView knows which visual
+-- slot should converge when the animation finishes (#179).
 -- Death wards (ON_PERMADEATH). A creature about to be reaped may be saved by
 -- a trait carried on equipment, a passive, or its actor data. The trait's
 -- `mode` picks the behavior, all four parametric:
@@ -1388,8 +1418,13 @@ handlers.REAP_FALLEN = function(cmd, ctx)
             -- battler object is gone its history would be unrecoverable.
             local record = session.remember and session:remember(b, "battle") or nil
             table.insert(ctx.events, { type = "reap", target = b, exp = exp, slot = f.slot, record = record })
+            if f.slot then session.party[f.slot] = nil end
         end
     end
+    -- Preserve the existing auto-field rule, but make it part of the same
+    -- authoritative sweep rather than an animation callback. It only acts when
+    -- every active slot is empty, so mixed surviving/reaped parties are unchanged.
+    session:autoFieldIfEmpty()
 end
 
 -- Rolls the encounter chance; on success emits an `encounter` event the map

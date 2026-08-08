@@ -118,11 +118,10 @@ function Battle:tryDeployWave(roundEvents)
     self.allies = session.party
 
     -- `deployed` rides on the event ({battler, slot, reserveKey, outgoing}
-    -- per entry) so the presentation layer can play the swap as a proper
-    -- per-slot flip (outgoing shrinks, incoming grows), staggered, timed
-    -- to when the log actually reveals this event rather than the instant
-    -- resolveRound ran — see engine/scenes/battle.lua's resolveRound
-    -- (party/reserve backup+restore) and processEvent's "wave" handler.
+    -- per entry) so presentation can animate the already-resolved swap as a
+    -- proper per-slot flip (outgoing shrinks, incoming grows). The domain
+    -- write above is final; BattleView may keep the older visual roster until
+    -- this event is revealed without rewinding session.party/reserve (#179).
     local names = {}
     for _, d in ipairs(deployed) do table.insert(names, d.battler.name or "?") end
     table.insert(roundEvents, { type = "wave", pending = deployed })
@@ -185,7 +184,7 @@ function Battle:getAIAction(enemy)
     -- this side is wounded. Shipped in violation of SPEC S9's original "no
     -- AI targeting intelligence" line; owner-sanctioned retroactively
     -- 17.07.2026 (see the S9 amendment). The extra math.random calls are
-    -- baked into the T1 golden battle.log — removing this breaks G2.
+    -- baked into the T1 golden battle.log -- removing this breaks G2.
     local skillId = skills[math.random(#skills)]
     local skill = self.session.loader.getSkill(skillId) or getAttackSkill(self.session)
     
@@ -484,7 +483,11 @@ function Battle:executeTurn(turn, roundEvents)
             for slot = 1, config.MAX_PARTY_SIZE do
                 if self.enemies[slot] == turn.actor then isEnemy = true break end
             end
+            local actorHpBefore = turn.actor.hp or 0
+            local mpBefore = self.session.mp or 0
             local paid = skill_cost.spend(turn.skill, turn.actor, self.session, isEnemy)
+            local actorHpAfter = turn.actor.hp or 0
+            local mpAfter = self.session.mp or 0
             skill_cost.startCooldown(turn.skill, turn.actor)
             if paid == "overcast" then
                 table.insert(roundEvents, {
@@ -492,19 +495,31 @@ function Battle:executeTurn(turn, roundEvents)
                     actor = turn.actor,
                     skill = turn.skill,
                     value = turn.skill.overcast and turn.skill.overcast.mp or 0,
+                    mpBefore = mpBefore,
+                    mpAfter = mpAfter,
+                    maxMpBefore = self.session.maxMp,
+                    maxMpAfter = self.session.maxMp,
                     text = loader.formatTerm("battle.overcast",
                         "- {0} overcasts {1}! ({2} MP)", turn.actor.name,
                         turn.skill.name, turn.skill.overcast and turn.skill.overcast.mp or 0),
                 })
             end
 
-            table.insert(roundEvents, {
+            local actionEvent = {
                 type = "action",
                 actor = turn.actor,
                 skill = turn.skill,
                 target = targets[1] or turn.target or turn.actor,
                 animation = turn.skill and turn.skill.animation or nil,
-            })
+            }
+            -- HP costs are semantic skill costs just like charges/Overcast.
+            -- Publish their resolved before/after values on the action event so
+            -- delayed presentation never has to re-evaluate hpCost formulas.
+            if actorHpAfter ~= actorHpBefore then
+                actionEvent.actorHpBefore = actorHpBefore
+                actionEvent.actorHpAfter = actorHpAfter
+            end
+            table.insert(roundEvents, actionEvent)
             
             local seq = nil
             if turn.skill.actionSequence then
@@ -700,8 +715,9 @@ function Battle:applyItem(action, actor, target)
         table.insert(events, ev)
     end
 
-    -- Consume one. Persists: session.inventory is outside the per-round
-    -- hp/state/mp backup/restore the scene host does around resolveRound.
+    -- Consumption is authoritative immediately with the rest of item use.
+    -- Presentation may keep the pre-resolution inventory invisible while the
+    -- log runs, but there is no rollback/replay list to maintain (#179).
     session:addItem(item.id, -1)
     return events
 end
