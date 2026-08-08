@@ -3978,6 +3978,60 @@
   "score": 2,
   "tags": []
  },
+ "texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d040-20260807-215006#1": {
+  "at": "2026-08-07T22:21:51",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d040-20260807-215006.json",
+   "sha256": "fb6f8fcaf4f0c4ea4308ab5b526ceb4a864f8f5cf97e11d36319011b2d4039e1"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d040-20260807-215006#2": {
+  "at": "2026-08-07T22:21:52",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d040-20260807-215006.json",
+   "sha256": "a6204d165bd3e755378f2ee8d7b1fbcb67d85a49ee10494ad01d65440d546828"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d040-20260807-215006#3": {
+  "at": "2026-08-07T22:21:53",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d040-20260807-215006.json",
+   "sha256": "ec475822ea9babc344e17a2a29ca2686c8a6c266f8d77546f55ac7863aa8bfd5"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d055-20260807-214639#1": {
+  "at": "2026-08-07T22:21:54",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d055-20260807-214639.json",
+   "sha256": "ea486d382a53dec0e3bb28b08a550364b79a9cbb3586155e90422396abb297a5"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d055-20260807-214639#2": {
+  "at": "2026-08-07T22:21:55",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d055-20260807-214639.json",
+   "sha256": "754838d3c8568635aa09e2e2e5eba17b35514b7da8cef30db124620b41b67f41"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d055-20260807-214639#3": {
+  "at": "2026-08-07T22:21:56",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d055-20260807-214639.json",
+   "sha256": "ea20f89648fa1d89559863e5a8fa13f56ed054d7ca9fdac3240733be7d022abb"
+  },
+  "score": 1,
+  "tags": []
+ },
  "texturePiece-first_stratum_v2_fixture_floor_bronze_rite_inlay_plate-20260807-213347#1": {
   "at": "2026-08-07T21:48:56",
   "evidence": {
@@ -9777,6 +9831,60 @@
    "sha256": "a6bbfee433cbfd7a664d7a82810575f13fd2e070fd85ac0d300b2bfd6ac29000"
   },
   "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d040-20260807-215802#1": {
+  "at": "2026-08-07T22:21:36",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d040-20260807-215802.json",
+   "sha256": "c4717e0e9349b7a5d192d4171f62ba8e2a3f7159551c547d14a351db05b1b93e"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d040-20260807-215802#2": {
+  "at": "2026-08-07T22:21:37",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d040-20260807-215802.json",
+   "sha256": "0a88af72f42a433d24a15c99897337c86c676201d5963783bd9dea825db665ea"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d040-20260807-215802#3": {
+  "at": "2026-08-07T22:21:38",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d040-20260807-215802.json",
+   "sha256": "55caed43708279c9233ba93f8f59805c29fe51821633b5793dbc12a196c95ba5"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d055-20260807-215320#1": {
+  "at": "2026-08-07T22:21:42",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d055-20260807-215320.json",
+   "sha256": "8d1fb99e542bc83f861228e48f220873046150563763e8ca158dce44f98f3d4f"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d055-20260807-215320#2": {
+  "at": "2026-08-07T22:21:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d055-20260807-215320.json",
+   "sha256": "a53eb49996702defcf59f0307387db267fb86b175946964a453e28b095b506a0"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d055-20260807-215320#3": {
+  "at": "2026-08-07T22:21:48",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_v2_fixture_wall_breach_socket_hugged_d055-20260807-215320.json",
+   "sha256": "f47eeeb322955b557b0efd50a0b0a3a9503131ef63cded260361eebc124391f0"
+  },
+  "score": 3,
   "tags": []
  },
  "wallPiece-followup_wall_pilasters_ohmen-20260804-130543#1": {
