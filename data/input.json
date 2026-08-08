@@ -7,7 +7,7 @@
     "L": "q",
     "R": "e",
     "START": "space",
-    "SELECT": "lshift",
+    "SELECT": "tab",
     "UP": "up",
     "DOWN": "down",
     "LEFT": "left",
