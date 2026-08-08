@@ -696,6 +696,16 @@ def _context_preview(run_path, manifest, variant):
         for cell_x, cell_y in cells:
             atlas.paste(tile, (cell_x * cell_w, cell_y * cell_h))
         atlas.save(atlas_path)
+        # A cell the candidate is provably NOT in, for the two surfaces not under
+        # test. Picking it here rather than letting the engine assume one is the
+        # whole point: the engine used to hardcode a wall cell that disagreed with
+        # this paste, so the candidate was sampled from a cell it never occupied.
+        painted = set(cells)
+        grid = source.width // cell_w
+        spare = next(((x, y) for y in range(grid) for x in range(grid)
+                      if (x, y) not in painted), None)
+        if spare is None:
+            raise RuntimeError("candidate covers every atlas cell; no neutral cell left")
 
         love = os.environ.get("LOVE_BIN", r"C:\Program Files\LOVE\lovec.exe")
         rel_atlas = os.path.relpath(atlas_path, classes.ROOT).replace("\\", "/")
@@ -703,6 +713,9 @@ def _context_preview(run_path, manifest, variant):
         if context.get("heightMap"):
             preview_command.extend(["--height-map", context["heightMap"]])
         preview_command.extend([
+            "--surface", surface,
+            "--cells", ";".join(f"{x},{y}" for x, y in cells),
+            "--neutral-cell", f"{spare[0]},{spare[1]}",
             "--quality-density", str(context.get("qualityDensity", 4.0)),
             "--height-scale", json.dumps(context.get("heightMapScale", {})),
             "--height-columns", str(context.get("heightMapMeshColumns", 16)),
