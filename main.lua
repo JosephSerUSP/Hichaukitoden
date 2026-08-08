@@ -352,6 +352,29 @@ function love.load(arg)
                     elseif option == "--height-budget" then
                         previewTextureOptions.heightMapTriangleBudget = tonumber(arg[i + 2])
                         i = i + 2
+                    elseif option == "--surface" then
+                        previewTextureOptions.surface = arg[i + 2]
+                        i = i + 2
+                    elseif option == "--cells" then
+                        -- "col,row;col,row" -- every cell the caller painted the
+                        -- candidate into, so the engine samples exactly those.
+                        previewTextureOptions.cells = {}
+                        for pair in tostring(arg[i + 2]):gmatch("[^;]+") do
+                            local col, row = pair:match("^%s*(%-?%d+)%s*,%s*(%-?%d+)%s*$")
+                            if not col then
+                                error("--cells expects 'col,row;col,row', got: " .. pair, 0)
+                            end
+                            previewTextureOptions.cells[#previewTextureOptions.cells + 1] =
+                                { tonumber(col), tonumber(row) }
+                        end
+                        i = i + 2
+                    elseif option == "--neutral-cell" then
+                        local col, row = tostring(arg[i + 2]):match("^%s*(%-?%d+)%s*,%s*(%-?%d+)%s*$")
+                        if not col then
+                            error("--neutral-cell expects 'col,row'", 0)
+                        end
+                        previewTextureOptions.neutralCell = { tonumber(col), tonumber(row) }
+                        i = i + 2
                     else
                         break
                     end

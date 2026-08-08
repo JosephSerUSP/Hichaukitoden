@@ -132,6 +132,8 @@
         "name": "Stillnight — Bellroot Vigil",
         "texture": "assets/textures/Stillnight_BellrootVigil.png",
         "heightMap": "assets/textures/Stillnight_BellrootVigil_heightmap.png",
+        "glowMap": "assets/textures/Stillnight_BellrootVigil_glow.png",
+        "glowStrength": 1.0,
         "heightMapScale": {
             "wall": 0.14,
             "floor": 0.09,

@@ -92,8 +92,19 @@ def command_for(job: dict) -> list[str]:
         "promptStyle": "prompt-style",
     }
     for key, flag in scalar_flags.items():
-        if job.get(key) is not None:
-            command.extend([f"--{flag}", str(job[key])])
+        value = job.get(key)
+        # The model and the engine are shown DIFFERENT maps on purpose. SD gets
+        # the fixture merged over the base surface it will sit in, because
+        # conditioning on a shape floating in transparency hands the depth
+        # preprocessor a hard blob boundary and the model paints the object that
+        # boundary implies -- that is how a broken socket came back as a machined
+        # porthole. The engine still gets `height`, the authoritative signed map
+        # with real alpha; the conditioning map is opaque and would claim every
+        # texel. prepare_fixture() deliberately keeps reading job["height"].
+        if key == "height" and job.get("conditioningHeight"):
+            value = job["conditioningHeight"]
+        if value is not None:
+            command.extend([f"--{flag}", str(value)])
     for lora in job.get("loras") or []:
         if isinstance(lora, dict):
             lora = f"{lora['name']}:{lora.get('weight', 0.8)}"

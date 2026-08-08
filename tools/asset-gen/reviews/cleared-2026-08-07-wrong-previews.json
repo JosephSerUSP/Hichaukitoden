@@ -1,0 +1,196 @@
+{
+  "clearedAt": "2026-08-07T23:05:27",
+  "reason": "Judged against context previews built before the tile-lattice and height-manifest fixes, and served by a server process that predated them. Base surfaces have no alpha-composited preview, so the corridor preview was their only in-engine evidence.",
+  "scope": "base-surface ratings from 2026-08-07T20:00 onward",
+  "cleared": {
+    "texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313#1": {
+      "at": "2026-08-07T21:49:06",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313.json",
+        "sha256": "85bd62ac749dfab2cf997e5cd62be5809c89c1016100117426ad68525f55ffca"
+      },
+      "score": 5,
+      "tags": []
+    },
+    "texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313#2": {
+      "at": "2026-08-07T21:49:06",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313.json",
+        "sha256": "e7283e4e3eeea20608388cc9f86f69150ec0d07985e9af21f6fc64a7fe78ed60"
+      },
+      "score": 5,
+      "tags": []
+    },
+    "texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313#3": {
+      "at": "2026-08-07T21:49:07",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313.json",
+        "sha256": "291d6479fb81d53c8a2ff373e7244098116e7e340266ceeeb5b6b7ee07226963"
+      },
+      "score": 5,
+      "tags": []
+    },
+    "texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600#1": {
+      "at": "2026-08-07T22:56:20",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600.json",
+        "sha256": "062a845bbf5390d742c52cc8ccc2ad8a33a7293fff36771c3805210a5741ba75"
+      },
+      "score": 3,
+      "tags": []
+    },
+    "texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600#2": {
+      "at": "2026-08-07T22:56:20",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600.json",
+        "sha256": "847603c6abd0bca74f627d8ae3b6d40f699cd126cc25fe0ea11231d95ebf5250"
+      },
+      "score": 3,
+      "tags": []
+    },
+    "texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600#3": {
+      "at": "2026-08-07T22:56:22",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600.json",
+        "sha256": "226d4fa1eeb14c2e34825073c339b2343ec328c4fa2fc7483f96a245a066f438"
+      },
+      "score": 3,
+      "tags": []
+    },
+    "texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907#1": {
+      "at": "2026-08-07T22:55:41",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907.json",
+        "sha256": "73ef6188ce2985891aaf4e35864a9c8102b53890da64197e3d002cce22b1e30a"
+      },
+      "score": 2,
+      "tags": []
+    },
+    "texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907#2": {
+      "at": "2026-08-07T22:55:42",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907.json",
+        "sha256": "41b6a9f8aa0281110d6dacafb6442dcbdbcf4418b4df0af0942388bee6b2c8c2"
+      },
+      "score": 2,
+      "tags": []
+    },
+    "texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907#3": {
+      "at": "2026-08-07T22:55:43",
+      "evidence": {
+        "manifest": "manifests/texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907.json",
+        "sha256": "d44a36a129d5c05bf0528b9ca541e195971b432c2196bdf4fb6837a8e8260608"
+      },
+      "score": 2,
+      "tags": []
+    },
+    "wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825#1": {
+      "at": "2026-08-07T21:49:12",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825.json",
+        "sha256": "31ee085f812be0a81fc354a67ae5bc1d2bc381621dc3ac783e0d70e7324e662c"
+      },
+      "score": 4,
+      "tags": []
+    },
+    "wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825#2": {
+      "at": "2026-08-07T21:49:13",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825.json",
+        "sha256": "0678b4796eea79905c536590859a8a94b38378a6b630cec8b672b6805580e47d"
+      },
+      "score": 4,
+      "tags": []
+    },
+    "wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825#3": {
+      "at": "2026-08-07T21:49:15",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825.json",
+        "sha256": "93f7b7f91c6b3e986b7f06427140f4aa11e9f1609e47956cd9950f5ab95ab930"
+      },
+      "score": 4,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200#1": {
+      "at": "2026-08-07T22:55:57",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200.json",
+        "sha256": "032d36e02b39b447ee009e73336ef851191fa6b399320a58f0c349cf8be2db5c"
+      },
+      "score": 4,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200#2": {
+      "at": "2026-08-07T22:56:18",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200.json",
+        "sha256": "a7bd1ed47d1416f94e13df491ef5128b4aab97eacd665edcb9ebf159929c4daf"
+      },
+      "score": 4,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200#3": {
+      "at": "2026-08-07T22:56:19",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200.json",
+        "sha256": "35d7a40d188ee9b7011b87be92c8857c2b612c5d17f3304c0399e5df79f05aa7"
+      },
+      "score": 4,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900#1": {
+      "at": "2026-08-07T22:55:51",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900.json",
+        "sha256": "78a4217851693b76d2a2034e645465bd71c1e289aac788ae409012d0e2657752"
+      },
+      "score": 2,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900#2": {
+      "at": "2026-08-07T22:55:52",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900.json",
+        "sha256": "18cb4072c61eb38d1a3bfbab6a8f8833a40033e3591624e05acabd66509f067b"
+      },
+      "score": 2,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900#3": {
+      "at": "2026-08-07T22:55:52",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900.json",
+        "sha256": "cf5d9ca36c42e517b1ae25a06260057e03b14b1f18b2c27656f6ce4233241d03"
+      },
+      "score": 2,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805#1": {
+      "at": "2026-08-07T22:55:31",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805.json",
+        "sha256": "0c266a37649dca92f20dd4abde1ece48ae440152ca913344cb293b949fd001c3"
+      },
+      "score": 2,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805#2": {
+      "at": "2026-08-07T22:55:32",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805.json",
+        "sha256": "df3404d29f74cdc84639098284e1e9249972a30f8b6bdfb7391d1f712357a2a8"
+      },
+      "score": 2,
+      "tags": []
+    },
+    "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805#3": {
+      "at": "2026-08-07T22:55:34",
+      "evidence": {
+        "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805.json",
+        "sha256": "a2cd0bbdc564aca99efebc7780fb6eb2549e9897c20b21b6c5b3bc93f84aeeea"
+      },
+      "score": 2,
+      "tags": []
+    }
+  }
+}

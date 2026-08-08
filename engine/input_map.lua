@@ -12,7 +12,7 @@ local PATH = "data/input.json"
 
 local DEFAULTS = {
     A = "return", B = "escape", X = "x", Y = "z",
-    L = "q", R = "e", START = "space", SELECT = "tab",
+    L = "q", R = "e", START = "space", SELECT = "lshift",
     UP = "up", DOWN = "down", LEFT = "left", RIGHT = "right",
 }
 
@@ -35,7 +35,7 @@ input_map.BUTTON_TO_HOOK = {
     -- mapped here too so unrebound players see byte-for-byte the same
     -- behavior as before this refactor (X/Y are the only truly hookless
     -- buttons, per the no-invented-hooks rule; on_page already existed).
-    SELECT = "on_page",
+    SELECT = "on_inspect",
     UP = "on_up",
     DOWN = "on_down",
     LEFT = "on_left",

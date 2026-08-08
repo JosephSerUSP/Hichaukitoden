@@ -318,11 +318,11 @@
     },
     {
       "token": "ctx.rawSession",
-      "description": "Real session object — only present when scripting.allowRawAccess is true."
+      "description": "Real session object \u2014 only present when scripting.allowRawAccess is true."
     },
     {
       "token": "ctx.rawLoader",
-      "description": "Real data loader — only present when scripting.allowRawAccess is true."
+      "description": "Real data loader \u2014 only present when scripting.allowRawAccess is true."
     },
     {
       "token": "api.damage(target, n)",
@@ -378,7 +378,7 @@
     },
     {
       "token": "random(m, n)",
-      "description": "The seeded math.random — deterministic under the golden harness."
+      "description": "The seeded math.random \u2014 deterministic under the golden harness."
     }
   ],
   "commands": [
@@ -649,7 +649,7 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. — when assignments is present, name/value are ignored."
+      "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. \u2014 when assignments is present, name/value are ignored."
     },
     {
       "id": "MUTATE_TILE",
@@ -3799,10 +3799,19 @@
       "previewList": "equip_list",
       "previewWhen": "v.state == 3",
       "contentY": 0.5
+    },
+    "battle_inspector": {
+      "x": 0.5,
+      "y": 1.5,
+      "width": 31,
+      "height": 18,
+      "style": "battlerInspector",
+      "title": "Inspection",
+      "chrome": "dialogue"
     }
   },
   "dock": {
-    "note": "The persistent bottom dock (SPEC 1.4). One surface owned by presentation/dock.lua, NOT a scene's window: its state survives scene changes, so moving between two scenes that want the same variant animates nothing at all. Scenes pick a variant with config.dock in scenes.json; geometry per window still comes from windowLayout above. Adding a variant is a data edit. Still outside the dock: reserve_party (read by name from Lua in window_renderer's drawSwapIndicator) and status_dock (binds sel('status_party'), a SCENE window, which a variant's list cache cannot see) — both need code changes first, not just data.",
+    "note": "The persistent bottom dock (SPEC 1.4). One surface owned by presentation/dock.lua, NOT a scene's window: its state survives scene changes, so moving between two scenes that want the same variant animates nothing at all. Scenes pick a variant with config.dock in scenes.json; geometry per window still comes from windowLayout above. Adding a variant is a data edit. Still outside the dock: reserve_party (read by name from Lua in window_renderer's drawSwapIndicator) and status_dock (binds sel('status_party'), a SCENE window, which a variant's list cache cannot see) \u2014 both need code changes first, not just data.",
     "footprint": {
       "x": 0,
       "y": 18,

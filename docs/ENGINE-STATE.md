@@ -15,7 +15,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | id | kind | draw | world | windows | hooks |
 |---|---|---|---|---|---|
 | `1` | menu | windows | - | 7 | 8 |
-| `battle` | battle | windows | - | 9 | 7 |
+| `battle` | battle | windows | - | 10 | 8 |
 | `cinematic` | menu | windows | - | 0 | 2 |
 | `controls` | menu | windows | - | 2 | 6 |
 | `datalog` | menu | windows | - | 3 | 4 |
@@ -70,10 +70,10 @@ are what's left:
 
 ## Content inventory
 
-- actors: **65** (6 summonable-from-start, 24 with promotion paths)
-- item-creation disciplines across the roster: alchemyx15, blacksmithingx15, cookingx18, tinkeringx17
+- actors: **66** (6 summonable-from-start, 24 with promotion paths)
+- item-creation disciplines across the roster: alchemyx16, blacksmithingx15, cookingx18, tinkeringx17
 - items: **207** (consumablex66, equipmentx124, questx17)
-- skills: **44**, passives: **41**, states: **14**, roles: **13**, elements: **5**
+- skills: **47**, passives: **41**, states: **14**, roles: **13**, elements: **5**
 - maps: **13**, common events: **20**, shops: **8**, quests: **5**, lore entries: **3**
 - animations: **29**, tilesets: **14**
 
@@ -84,4 +84,3 @@ are what's left:
   and never authoritative.
 - Design docs under `docs/design/` and `docs/game design/` describe
   intent. Where they state implementation status, trust THIS file.
-

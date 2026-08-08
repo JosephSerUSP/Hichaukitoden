@@ -919,6 +919,49 @@ function cli.runPreviewTexture(atlasPath, loader, options)
         local base = assert(loader.tilesets.dungeon_default, "dungeon_default tileset missing")
         local image = love.graphics.newImage(atlasPath)
         image:setFilter("nearest", "nearest")
+
+        -- Where the candidate actually IS in the supplied atlas, told to us by
+        -- the side that pasted it.
+        --
+        -- This used to be a hardcoded `middle = {1, 1}` for the wall while floors
+        -- and ceilings silently inherited dungeon_default's real pools. The
+        -- caller, meanwhile, computed its paste cells from those same real pools
+        -- -- whose only wall is at [1,0]. So the tile was pasted at column 0 and
+        -- sampled from column 1, and the two sides agreed only when a pool
+        -- happened to cover the hardcoded cell. That is why some previews showed
+        -- the candidate on a surface it was never meant for while others looked
+        -- fine: the disagreement was invisible whenever it happened not to bite.
+        -- One side now decides and the other obeys.
+        local function poolFrom(cells, role, keyName)
+            local pool = {}
+            for index, cell in ipairs(cells or {}) do
+                -- Callers speak (column, row); the engine reads {row, column}.
+                local entry = {
+                    id = "asset_preview_" .. role .. "_" .. index,
+                    role = role, weight = 100,
+                }
+                entry[keyName] = { cell[2], cell[1] }
+                pool[#pool + 1] = entry
+            end
+            return pool
+        end
+
+        local surface = options.surface
+        local cells = options.cells
+        local neutral = options.neutralCell and { options.neutralCell } or nil
+        local walls, floors, ceilings
+        if surface and cells and #cells > 0 and neutral then
+            walls = poolFrom(surface == "wall" and cells or neutral, "base_wall", "middle")
+            floors = poolFrom(surface == "floor" and cells or neutral, "base_floor", "atlas")
+            ceilings = poolFrom(surface == "ceiling" and cells or neutral, "base_ceiling", "atlas")
+        else
+            -- No explicit placement: use the stock pools unchanged rather than
+            -- inventing a cell. Wrong-but-consistent beats wrong-and-split.
+            walls = base.base and base.base.walls or {}
+            floors = base.base and base.base.floors or {}
+            ceilings = base.base and base.base.ceilings or {}
+        end
+
         loader.tilesets[previewId] = {
             id = previewId,
             texture = atlasPath,
@@ -932,16 +975,11 @@ function cli.runPreviewTexture(atlasPath, loader, options)
             heightMapSampleColumns = options.heightMapSampleColumns or 24,
             heightMapSampleRows = options.heightMapSampleRows or 24,
             heightMapTriangleBudget = options.heightMapTriangleBudget or 96,
-            base = {
-                walls = { {
-                    id = "asset_preview_wall", role = "base_wall",
-                    middle = { 1, 1 }, weight = 100,
-                } },
-                floors = base.base and base.base.floors or {},
-                ceilings = base.base and base.base.ceilings or {},
-            },
+            base = { walls = walls, floors = floors, ceilings = ceilings },
             doors = {}, features = {}, fixturePrefabs = {},
         }
+        payload.surface = surface
+        payload.cells = cells
 
         local grid = {}
         local rows = {

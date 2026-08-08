@@ -1,0 +1,121 @@
+{
+  "manifestKind": "authored_height_batch",
+  "manifestVersion": 1,
+  "batchId": "first_stratum_surface_fixture_v2_20260807",
+  "source": "tools/asset-gen/build_surface_fixture_v2_20260807.py",
+  "method": "deterministic analytic fields, periodic Voronoi, distance-transform fixture masks",
+  "convention": "RGBA grayscale; 128 neutral; alpha is geometric influence",
+  "maps": [
+    {
+      "preset": "fixture_floor_bronze_rite_inlay_plate",
+      "surface": "floor",
+      "role": "surfaceFixture",
+      "heightOperation": "add",
+      "recommendedHeightScale": 0.02,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/height/fixture_floor_bronze_rite_inlay_plate.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": 0.0,
+      "signedMax": 0.35,
+      "alphaCoverage": 0.19196,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Bronze rite inlay seated in a backing plate so the engine receives a continuous disc rather than floating lines.",
+      "conditioningPath": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/conditioning/fixture_floor_bronze_rite_inlay_plate.png",
+      "conditioningBase": "floor_flagstones",
+      "runtimeTexelCoverage": 732
+    },
+    {
+      "preset": "fixture_ceiling_mineral_fissure_thick",
+      "surface": "ceiling",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.05,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/height/fixture_ceiling_mineral_fissure_thick.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.5,
+      "signedMax": 0.0,
+      "alphaCoverage": 0.09928,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Same fracture path widened to 2.5 runtime texels so it survives the 64px tile.",
+      "conditioningPath": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/conditioning/fixture_ceiling_mineral_fissure_thick.png",
+      "conditioningBase": "ceiling_coffers",
+      "runtimeTexelCoverage": 316
+    },
+    {
+      "preset": "fixture_wall_breach_socket_hugged",
+      "surface": "wall",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.14,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/height/fixture_wall_breach_socket_hugged.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.6864,
+      "signedMax": 0.03402,
+      "alphaCoverage": 0.06792,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Restrained broken socket with alpha hugging the cavity instead of a wide disc.",
+      "conditioningPath": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/conditioning/fixture_wall_breach_socket_hugged.png",
+      "conditioningBase": "wall_ashlar",
+      "runtimeTexelCoverage": 183
+    },
+    {
+      "preset": "fixture_floor_collapsed_socket_hugged",
+      "surface": "floor",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.13,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/height/fixture_floor_collapsed_socket_hugged.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.72,
+      "signedMax": 0.20857,
+      "alphaCoverage": 0.13816,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Collapsed floor socket whose influence no longer erases the surrounding slabs.",
+      "conditioningPath": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/conditioning/fixture_floor_collapsed_socket_hugged.png",
+      "conditioningBase": "floor_flagstones",
+      "runtimeTexelCoverage": 391
+    }
+  ],
+  "alphaRules": "tools/asset-gen/lib/fixture_alpha.py"
+}

@@ -1,0 +1,132 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d040",
+  "description": "aged plaster and limestone ceiling material, one localized branching mineral fracture, open irregular crooked seams of uneven width, crumbling lips, sparse mineral staining, muted ivory and smoke-grey surface, intact ceiling material continuing quietly around the fracture",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, interior room, corridor, tunnel, passage, architecture scene, environmental concept art, establishing shot, camera view, receding floor, receding ceiling, perspective wall, outdoor facade, ruin landscape, doorway view, archway view, horizon line, foreground, background, cutaway, diorama, framed picture, poster, diagram labels, repeated emblem, repeated focal object, dramatic black cavity, tree root, root fibres, vine, tendril, woody branch, botanical roots, hole, opening, cave, tunnel mouth, sky through crack, ceiling photograph, straight line, ruled line, engraved groove, machined channel, symmetrical crack, tube, pipe, rope, cable, worm, snake, raised ridge, moulding, applied trim, extruded shape, object lying on the surface, polished marble, glossy stone, specular highlight",
+      "seed": 361600,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/conditioning/fixture_ceiling_mineral_fissure_thick.png",
+    "heightControlWeight": 0.4
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_v2_fixture_ceiling_mineral_fissure_thick_d040.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.845,
+        "y": 0.461,
+        "centre_x": 1.681,
+        "centre_y": 1.011
+      },
+      "fixtureFile": "fixture-1.png",
+      "fixtureHeight": "fixture-height-1.png",
+      "fixtureCompositeHeight": "fixture-composite-height-1.png",
+      "fixturePreview": "fixture-preview-1.png",
+      "fixtureAlphaCoverage": 0.16455,
+      "fixtureSignedMin": -128,
+      "fixtureSignedMax": 127,
+      "context": "fixture-preview-1.png",
+      "contextSurface": "ceiling",
+      "contextPreviewVersion": "surface-fixture-neutral-alpha-v2",
+      "contextLabel": "alpha-composited fixture over neutral grey and neutral height; operation=replace; recommended scale=0.05"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 2.369,
+        "y": 0.607,
+        "centre_x": 1.721,
+        "centre_y": 2.143
+      },
+      "fixtureFile": "fixture-2.png",
+      "fixtureHeight": "fixture-height-2.png",
+      "fixtureCompositeHeight": "fixture-composite-height-2.png",
+      "fixturePreview": "fixture-preview-2.png",
+      "fixtureAlphaCoverage": 0.16455,
+      "fixtureSignedMin": -128,
+      "fixtureSignedMax": 127,
+      "context": "fixture-preview-2.png",
+      "contextSurface": "ceiling",
+      "contextPreviewVersion": "surface-fixture-neutral-alpha-v2",
+      "contextLabel": "alpha-composited fixture over neutral grey and neutral height; operation=replace; recommended scale=0.05"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.95,
+        "y": 0.297,
+        "centre_x": 1.855,
+        "centre_y": 1.924
+      },
+      "fixtureFile": "fixture-3.png",
+      "fixtureHeight": "fixture-height-3.png",
+      "fixtureCompositeHeight": "fixture-composite-height-3.png",
+      "fixturePreview": "fixture-preview-3.png",
+      "fixtureAlphaCoverage": 0.16455,
+      "fixtureSignedMin": -128,
+      "fixtureSignedMax": 127,
+      "context": "fixture-preview-3.png",
+      "contextSurface": "ceiling",
+      "contextPreviewVersion": "surface-fixture-neutral-alpha-v2",
+      "contextLabel": "alpha-composited fixture over neutral grey and neutral height; operation=replace; recommended scale=0.05"
+    }
+  ],
+  "surfaceFixturePreparation": {
+    "preparedAt": "2026-08-07T21:53:19",
+    "heightSource": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_v2/height/fixture_ceiling_mineral_fissure_thick.png",
+    "heightOperation": "replace",
+    "recommendedHeightScale": 0.05,
+    "previewVersion": "surface-fixture-neutral-alpha-v2",
+    "previewBase": "neutral grey albedo and opaque RGB=128 neutral height",
+    "alphaAuthority": "height PNG alpha copied after generation; SD output alpha ignored",
+    "originalVariantsPreserved": true
+  }
+}

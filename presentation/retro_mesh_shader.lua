@@ -117,15 +117,31 @@ function retro_mesh_shader.buildWorldShader()
     varying float fogVisibility;
     uniform vec3 fogColor;
     uniform float ditherLevels;
+    // Emission. `glowMap` is sampled at the SAME uv as the albedo, so it must
+    // be the albedo's exact parallel -- the atlas for atlas-mapped faces, the
+    // matching composite bake for composited walls. `glowStrength` is 0 when
+    // no map is bound, which is what keeps the 1x1 fallback free.
+    uniform Image glowMap;
+    uniform float glowStrength;
 
 ]] .. sharedShaderSource .. [[
 
     vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
     {
-        vec4 texel = Texel(texture, worldUV / affineScale);
+        vec2 uv = worldUV / affineScale;
+        vec4 texel = Texel(texture, uv);
         if (texel.a < 0.01) discard;
         vec3 lit = texel.rgb * color.rgb * worldColor.rgb;
-        vec3 fogged = mix(fogColor, lit, fogVisibility);
+        // A glowing texel ignores the light reaching it and resists fog. It
+        // still honours `color` (the per-draw tint) -- glow opts out of being
+        // lit, not out of being tinted -- and it never exceeds its own albedo,
+        // so a glow mask can only ever restore a texel to full brightness.
+        float glow = 0.0;
+        if (glowStrength > 0.0) {
+            glow = clamp(Texel(glowMap, uv).r * glowStrength, 0.0, 1.0);
+            lit = mix(lit, texel.rgb * color.rgb, glow);
+        }
+        vec3 fogged = mix(fogColor, lit, max(fogVisibility, glow));
         if (ditherLevels > 1.0) {
             float threshold = orderedDither(screen_coords) - 0.5;
             fogged = floor(clamp(fogged + threshold / ditherLevels, 0.0, 1.0) * ditherLevels + 0.5) / ditherLevels;
