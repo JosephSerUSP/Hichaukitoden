@@ -21,6 +21,8 @@ This batch takes the first contiguous block after the existing modeled roster an
 
 The batch generator is `tools/asset-production/build_item_models_53_62.py`. It writes the OBJ files plus a shared semantic MTL deterministically and, in a normal local checkout, also assigns their paths to items 53–62 in `data/items.json`. The generated OBJ/MTL files are included in this branch so review does not depend on running the builder.
 
+Because this run published through GitHub object writes rather than a full repository checkout, the resulting `data/items.json` rewrite is **not** included in this branch. Running the batch generator in a normal checkout performs those ten explicit assignments. Until that step is committed, the runtime still treats IDs 53–62 as unassigned and uses its missing-model fallback.
+
 ## Creative process
 
 The item viewer is small and continuously rotating, so the first design question was not fine surface detail but whether an object can be identified from silhouette and massing. I treated the ten as a miniature library rather than ten isolated props.
