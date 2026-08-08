@@ -1,0 +1,13 @@
+Extend battle target inspection into a full battler information view
+
+🎯 What:
+- Bound the `SELECT` (Shift) key to an `on_inspect` hook.
+- Added a `battle_inspector` UI window to `scenes.json` that displays full battler information (identity, exact state stacks, and descriptions).
+- Preserved the existing compact `targetInfo` window for immediate recognition, which hides itself while the detailed inspector is open.
+
+⚠️ Risk:
+Low. No core combat logic is affected. State parsing relies on existing data.
+
+🛡️ Solution:
+- Added `battlerInspector` window style that computes and renders an expanded view, navigating active states and pulling mechanical descriptions.
+- Modified the battle scene's `handleInput` to route `on_inspect` and capture scroll inputs while inspecting, isolating the inspection state from the core targeting cursor.

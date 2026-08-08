@@ -1,0 +1,11 @@
+Wait, the issue template asks for PR title / description for feature issue or security issue or code health.
+This is a feature issue (from what I can see). Let's review the memory for Issue #167.
+
+Memory:
+- The PR title must be '🧪 [testing improvement description]' for testing tasks. Wait, this isn't testing.
+- For Security Vulnerability Fix tasks, the PR title must be '🔒 [security fix description]', and description must include '🎯 What:', '⚠️ Risk:', '🛡️ Solution:'.
+- For Code health tasks: '🧹 [code health improvement description]', '🎯 What:', '💡 Why:', '✅ Verification:', '✨ Result:'.
+
+Actually, the issue didn't specify a PR description template, but I used the Security Vulnerability one by mistake? Wait, the memory says: "When an issue specifies a PR description template...". This issue doesn't specify one.
+
+Let me just request a plan review for now.

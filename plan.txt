@@ -1,0 +1,9 @@
+1. We modified `engine/input_map.lua` to map `SELECT` to `on_inspect` (Wait, actually I mapped it to `on_inspect`, let's verify if `SELECT = "on_inspect"` was added correctly and if I need to do the same for `Y` or `X` if we want more buttons mapped. The user requested `shift / select` which maps to `SELECT`. Let's check `input_map.lua` defaults).
+2. We modified `data/scenes.json` to insert `on_inspect` hook handling into `battle` scene `handleInput`.
+3. We added a new `battle_inspector` window widget in `data/scenes.json` with style `battlerInspector`.
+4. We implemented `renderer.drawBattlerInspector(session, bv, x, y, w, h)` in `presentation/renderer.lua` and added the style branch in `presentation/window_renderer.lua`.
+5. Run tests.
+
+Wait! The user says "The button I prefer is shift / select". Does `SELECT` map to the Shift key? Let's check `DEFAULTS` in `input_map.lua`: `SELECT = "tab"`. If they want it to be shift, maybe I should map `SELECT = "lshift"`? Or maybe they mean the Select button on a controller? No, I will just leave it as is or add `SELECT = "tab"` and ensure `BUTTON_TO_HOOK` has `SELECT = "on_inspect"`.
+
+Let's review the code we modified.

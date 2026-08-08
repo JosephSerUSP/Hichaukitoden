@@ -3945,11 +3945,32 @@
             }
           ]
         }
+      ],
+      "on_inspect": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input' and v.targetSelect == true",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'inspect'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "refreshConsole"
+            }
+          ]
+        }
       ]
     },
     "scripts": {
       "announceLevelUp": "local v = ctx.v\nif v.combatState ~= \"levelup\" or v.levelUpIndex == v.announcedLevelUpIndex then return end\nv.announcedLevelUpIndex = v.levelUpIndex\nv.eventsQueue = v.eventsQueue or {}\nv.eventQueueIndex = #v.eventsQueue + 1\ntable.insert(v.eventsQueue, { type = \"text\", text = tostring(v.levelUpName or \"A creature\") .. \" has leveled up!\" })\nv.pendingLevelUpLog = true\nv.combatState = \"log\"\napi.battle.advanceLog()\nv.hookHandled = true\n",
-      "handleInput": "local v = ctx.v\nlocal b = v.battle\n\nif v.confirmPhase then\n    if v.action == \"up\" or v.action == \"left\" or v.action == \"down\" or v.action == \"right\" then\n        v.selectedIndex = (v.selectedIndex % 2) + 1\n    elseif v.action == \"cancel\" then\n        api.battle.undoAction()\n    elseif v.action == \"select\" then\n        if v.selectedIndex == 1 then\n            api.battle.submitRound()\n        else\n            api.battle.undoAction()\n        end\n    end\n    return\nend\n\nlocal memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]\nif not memberInfo then\n    v.combatState = \"log\"\n    return\nend\n\nif v.targetSelect then\n    local targeting = api.targeting\n    local candidates = targeting.getCandidates(memberInfo.actor, v.pendingAction.targetSpec, b)\n    if v.action == \"up\" or v.action == \"left\" then\n        if #candidates > 0 then v.targetIndex = (v.targetIndex - 2) % #candidates + 1 end\n    elseif v.action == \"down\" or v.action == \"right\" then\n        if #candidates > 0 then v.targetIndex = v.targetIndex % #candidates + 1 end\n    elseif v.action == \"cancel\" then\n        v.targetSelect = false\n        v.selectedIndex = v.prevSelectedIndex or 1\n    elseif v.action == \"select\" then\n        if #candidates > 0 then\n            local chosenTarget = candidates[v.targetIndex]\n            v.targetSelect = false\n            api.battle.commitAction(memberInfo.index, { type = v.pendingAction.type, id = v.pendingAction.id, itemIndex = v.pendingAction.itemIndex, target = chosenTarget })\n        end\n    end\n    return\nend\n\nif v.skillSelect then\n    local options = {}\n    for _, skId in ipairs(memberInfo.actor.skills or {}) do\n        local sk = api.getSkill(skId)\n        if sk then table.insert(options, sk) end\n    end\n\n    if v.action == \"up\" then\n        if #options > 0 then v.selectedIndex = (v.selectedIndex - 2) % #options + 1 end\n    elseif v.action == \"down\" then\n        if #options > 0 then v.selectedIndex = v.selectedIndex % #options + 1 end\n    elseif v.action == \"cancel\" then\n        v.skillSelect = false\n        v.selectedIndex = v.submenuReturnIndex or 1\n    elseif v.action == \"select\" then\n        local choice = options[v.selectedIndex]\n        if choice then\n            -- The gate is enforced HERE as well as greyed in the list: the row\n            -- is still selectable so the player can read why, but committing\n            -- it says no and explains, rather than silently doing nothing.\n            local info = api.skillCost(memberInfo.actor, choice.id)\n            if info.blocked then\n                api.battle.showMessage(choice.name .. \": \" .. (info.reason or \"Unavailable\"))\n            else\n                api.battle.startTargetSelection({ type = \"skill\", id = choice.id })\n            end\n        end\n    end\nelseif v.itemSelect then\n    local items = api.items()\n    if v.action == \"up\" then\n        if #items > 0 then v.selectedIndex = (v.selectedIndex - 2) % #items + 1 end\n    elseif v.action == \"down\" then\n        if #items > 0 then v.selectedIndex = v.selectedIndex % #items + 1 end\n    elseif v.action == \"cancel\" then\n        v.itemSelect = false\n        v.selectedIndex = v.submenuReturnIndex or 1\n    elseif v.action == \"select\" then\n        local choice = items[v.selectedIndex]\n        if choice then\n            api.battle.startTargetSelection({ type = \"item\", id = choice.id, itemIndex = v.selectedIndex })\n        end\n    end\nelse\n    -- Dispatch on the command's id, never on the row number: with the set\n    -- authored per creature, row 3 is Defend for a Pixie and does not exist\n    -- for an Egg. Wrapping counts the rows this creature actually has.\n    local cmds = api.battleCommands(memberInfo.actor)\n    local n = #cmds\n    if v.action == \"left\" or v.action == \"up\" then\n        if n > 0 then v.selectedIndex = (v.selectedIndex - 2) % n + 1 end\n    elseif v.action == \"right\" or v.action == \"down\" then\n        if n > 0 then v.selectedIndex = v.selectedIndex % n + 1 end\n    elseif v.action == \"cancel\" then\n        api.battle.undoAction()\n    elseif v.action == \"select\" then\n        local cmd = cmds[v.selectedIndex]\n        if cmd then\n            if cmd.resolve == \"target\" then\n                api.battle.startTargetSelection(cmd.action or { type = cmd.id })\n            elseif cmd.resolve == \"submenu\" then\n                -- Remember the row to come back to, rather than the magic 2/4\n                -- the cancel branches used to hardcode.\n                v.submenuReturnIndex = v.selectedIndex\n                if cmd.submenu == \"skill\" then v.skillSelect = true\n                elseif cmd.submenu == \"item\" then v.itemSelect = true end\n                v.selectedIndex = 1\n            elseif cmd.resolve == \"commit\" then\n                local act = { type = cmd.id }\n                if cmd.action then\n                    act = { type = cmd.action.type, id = cmd.action.id }\n                    -- A committed action carries its target object. Only \"self\"\n                    -- is resolvable without asking the player, which is exactly\n                    -- what a command that skips target selection needs.\n                    if cmd.action.target == \"self\" then act.target = memberInfo.actor end\n                end\n                api.battle.commitAction(memberInfo.index, act)\n            end\n        end\n    end\nend\n",
+      "handleInput": "local v = ctx.v\nlocal b = v.battle\n\nif v.confirmPhase then\n    if v.action == \"up\" or v.action == \"left\" or v.action == \"down\" or v.action == \"right\" then\n        v.selectedIndex = (v.selectedIndex % 2) + 1\n    elseif v.action == \"cancel\" then\n        api.battle.undoAction()\n    elseif v.action == \"select\" then\n        if v.selectedIndex == 1 then\n            api.battle.submitRound()\n        else\n            api.battle.undoAction()\n        end\n    end\n    return\nend\n\nlocal memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]\nif not memberInfo then\n    v.combatState = \"log\"\n    return\nend\n\nif v.inspectingTarget then\n    if v.action == \"cancel\" or v.action == \"inspect\" then\n        v.inspectingTarget = false\n    elseif v.action == \"up\" then\n        v.inspectStateIdx = math.max(1, (v.inspectStateIdx or 1) - 1)\n    elseif v.action == \"down\" then\n        -- we don't know the exact max here without re-evaluating the target,\n        -- but the renderer clamps it so we can just increment.\n        v.inspectStateIdx = (v.inspectStateIdx or 1) + 1\n    end\n    return\nend\n\nif v.targetSelect then\n    local targeting = api.targeting\n    local candidates = targeting.getCandidates(memberInfo.actor, v.pendingAction.targetSpec, b)\n    if v.action == \"up\" or v.action == \"left\" then\n        if #candidates > 0 then v.targetIndex = (v.targetIndex - 2) % #candidates + 1 end\n    elseif v.action == \"down\" or v.action == \"right\" then\n        if #candidates > 0 then v.targetIndex = v.targetIndex % #candidates + 1 end\n    elseif v.action == \"inspect\" then\n        v.inspectingTarget = true\n    elseif v.action == \"cancel\" then\n        v.targetSelect = false\n        v.selectedIndex = v.prevSelectedIndex or 1\n    elseif v.action == \"select\" then\n        if #candidates > 0 then\n            local chosenTarget = candidates[v.targetIndex]\n            v.targetSelect = false\n            api.battle.commitAction(memberInfo.index, { type = v.pendingAction.type, id = v.pendingAction.id, itemIndex = v.pendingAction.itemIndex, target = chosenTarget })\n        end\n    end\n    return\nend\n\nif v.skillSelect then\n    local options = {}\n    for _, skId in ipairs(memberInfo.actor.skills or {}) do\n        local sk = api.getSkill(skId)\n        if sk then table.insert(options, sk) end\n    end\n\n    if v.action == \"up\" then\n        if #options > 0 then v.selectedIndex = (v.selectedIndex - 2) % #options + 1 end\n    elseif v.action == \"down\" then\n        if #options > 0 then v.selectedIndex = v.selectedIndex % #options + 1 end\n    elseif v.action == \"cancel\" then\n        v.skillSelect = false\n        v.selectedIndex = v.submenuReturnIndex or 1\n    elseif v.action == \"select\" then\n        local choice = options[v.selectedIndex]\n        if choice then\n            -- The gate is enforced HERE as well as greyed in the list: the row\n            -- is still selectable so the player can read why, but committing\n            -- it says no and explains, rather than silently doing nothing.\n            local info = api.skillCost(memberInfo.actor, choice.id)\n            if info.blocked then\n                api.battle.showMessage(choice.name .. \": \" .. (info.reason or \"Unavailable\"))\n            else\n                api.battle.startTargetSelection({ type = \"skill\", id = choice.id })\n            end\n        end\n    end\nelseif v.itemSelect then\n    local items = api.items()\n    if v.action == \"up\" then\n        if #items > 0 then v.selectedIndex = (v.selectedIndex - 2) % #items + 1 end\n    elseif v.action == \"down\" then\n        if #items > 0 then v.selectedIndex = v.selectedIndex % #items + 1 end\n    elseif v.action == \"cancel\" then\n        v.itemSelect = false\n        v.selectedIndex = v.submenuReturnIndex or 1\n    elseif v.action == \"select\" then\n        local choice = items[v.selectedIndex]\n        if choice then\n            api.battle.startTargetSelection({ type = \"item\", id = choice.id, itemIndex = v.selectedIndex })\n        end\n    end\nelse\n    -- Dispatch on the command's id, never on the row number: with the set\n    -- authored per creature, row 3 is Defend for a Pixie and does not exist\n    -- for an Egg. Wrapping counts the rows this creature actually has.\n    local cmds = api.battleCommands(memberInfo.actor)\n    local n = #cmds\n    if v.action == \"left\" or v.action == \"up\" then\n        if n > 0 then v.selectedIndex = (v.selectedIndex - 2) % n + 1 end\n    elseif v.action == \"right\" or v.action == \"down\" then\n        if n > 0 then v.selectedIndex = v.selectedIndex % n + 1 end\n    elseif v.action == \"cancel\" then\n        api.battle.undoAction()\n    elseif v.action == \"select\" then\n        local cmd = cmds[v.selectedIndex]\n        if cmd then\n            if cmd.resolve == \"target\" then\n                api.battle.startTargetSelection(cmd.action or { type = cmd.id })\n            elseif cmd.resolve == \"submenu\" then\n                -- Remember the row to come back to, rather than the magic 2/4\n                -- the cancel branches used to hardcode.\n                v.submenuReturnIndex = v.selectedIndex\n                if cmd.submenu == \"skill\" then v.skillSelect = true\n                elseif cmd.submenu == \"item\" then v.itemSelect = true end\n                v.selectedIndex = 1\n            elseif cmd.resolve == \"commit\" then\n                local act = { type = cmd.id }\n                if cmd.action then\n                    act = { type = cmd.action.type, id = cmd.action.id }\n                    -- A committed action carries its target object. Only \"self\"\n                    -- is resolvable without asking the player, which is exactly\n                    -- what a command that skips target selection needs.\n                    if cmd.action.target == \"self\" then act.target = memberInfo.actor end\n                end\n                api.battle.commitAction(memberInfo.index, act)\n            end\n        end\n    end\nend\n",
       "handleLogInput": "\nlocal v = ctx.v\nif v.action == \"select\" then\n    if api.battle.isLogRevealing() then\n        api.battle.finishLogReveal()\n        v.hookHandled = true\n    elseif api.battle.isAnimationPlaying() then\n        v.hookHandled = true\n    elseif v.eventQueueIndex <= #(v.eventsQueue or {}) then\n        api.battle.advanceLog()\n        -- Reward and level-up narration share their matching window. The\n        -- confirm that advances beyond a fully-read line starts that beat.\n        if v.pendingRewardLog and v.eventQueueIndex > #(v.eventsQueue or {}) then\n            v.pendingRewardLog = nil\n            v.combatState = \"victory\"\n            v.victoryStage = 1\n        elseif v.pendingLevelUpLog and v.eventQueueIndex > #(v.eventsQueue or {}) then\n            v.pendingLevelUpLog = nil\n            v.combatState = \"levelup\"\n        end\n        v.hookHandled = true\n    else\n        v.hookHandled = false\n    end\nelse\n    v.hookHandled = false\nend\n",
       "handleTransition": "\nlocal v = ctx.v\nif v.action ~= \"select\" or not v.battle then\n    v.hookHandled = false\n    return\nend\n\n-- A reward log line and its matching window are one presentation beat. Once\n-- the line is read, leave the window in place and start its drain animation;\n-- no information is presented a second time.\nif v.combatState == \"log\" and v.pendingRewardLog\n    and v.eventQueueIndex > #(v.eventsQueue or {}) then\n    v.pendingRewardLog = nil\n    v.combatState = \"victory\"\n    v.victoryStage = 1\n    v.hookHandled = true\n    return\nend\n\n-- Gold/items precede EXP. After Gold finishes draining, open the EXP window\n-- at the same moment its ordinary typewriter console line begins revealing.\nif v.combatState == \"victory\" and v.rewardPresentationStage == \"spoils\" then\n    if v.victoryStage == 0 then\n        v.victoryStage = 1\n    elseif v.victoryStage == 2 then\n        v.rewardPresentationStage = \"exp\"\n        v.victoryStage = 0\n        v.eventsQueue = v.eventsQueue or {}\n        v.eventQueueIndex = #v.eventsQueue + 1\n        local reward = v.victory or {}\n        table.insert(v.eventsQueue, { type = \"text\", text = \"Earned \" .. tostring(reward.exp or 0) .. \" Experience Points.\" })\n        v.pendingRewardLog = \"exp\"\n        v.combatState = \"log\"\n        api.battle.advanceLog()\n    end\n    v.hookHandled = true\n    return\nend\n\nlocal before = v.combatState\nv.hookHandled = api.battle.handleTransition(v.action)\nif before == \"log\" and v.combatState == \"victory\" and not v.rewardAnnounced then\n    v.rewardAnnounced = true\n    v.rewardPresentationStage = \"spoils\"\n    v.victoryStage = 0\n    v.eventsQueue = v.eventsQueue or {}\n    v.eventQueueIndex = #v.eventsQueue + 1\n    local reward = v.victory or {}\n    table.insert(v.eventsQueue, { type = \"text\", text = \"Found \" .. tostring(reward.gold or 0) .. \" Gold.\" })\n    v.pendingRewardLog = \"spoils\"\n    v.combatState = \"log\"\n    api.battle.advanceLog()\n    v.hookHandled = true\nend\n",
       "refreshConsole": "local v = ctx.v\nlocal memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]\nlocal monster = memberInfo and memberInfo.actor\nlocal rows, helps = {}, {}\nif v.confirmPhase then\n    table.insert(rows, { name = \"Execute Round\" })\n    table.insert(rows, { name = \"Back\" })\n    helps[1] = \"Execute all queued party actions for this round.\"\n    helps[2] = \"Go back to modify queued actions.\"\nelseif v.skillSelect then\n    -- A known skill is never hidden: an unusable one is shown greyed with its\n    -- cost still legible and the reason in the context-help bar. A row that\n    -- vanishes looks like a bug and teaches the player nothing.\n    for _, skId in ipairs((monster and monster.skills) or {}) do\n        local sk = api.getSkill(skId)\n        if sk then\n            local info = api.skillCost(monster, skId)\n            table.insert(rows, { name = sk.name, icon = sk.icon or 0,\n                costSegments = info.cost, disabled = info.blocked })\n            table.insert(helps, info.blocked\n                and ((info.reason or \"Unavailable\") .. \" -- \" .. (sk.description or \"\"))\n                or (sk.description or \"\"))\n        end\n    end\n    if #rows == 0 then table.insert(rows, { name = \"(No skills)\" }) end\nelseif v.itemSelect then\n    local pending = {}\n    for _, mInfo in ipairs(v.livingMembers or {}) do\n        local act = v.pendingActions and v.pendingActions[mInfo.index]\n        if act and act.type == \"item\" and (act.id or act.itemId) then\n            local itemId = act.id or act.itemId\n            pending[itemId] = (pending[itemId] or 0) + 1\n        end\n    end\n    for _, it in ipairs(api.items()) do\n        local full = api.getItem(it.id)\n        local queuedCount = pending[it.id] or 0\n        local availQty = math.max(0, it.qty - queuedCount)\n        local label = (it.name or \"?\") .. \" x\" .. tostring(availQty)\n        if queuedCount > 0 then\n            label = label .. \" [\" .. queuedCount .. \" pending]\"\n        end\n        table.insert(rows, { name = label, icon = (full and full.icon) or it.icon or 0 })\n        table.insert(helps, (full and full.description) or \"\")\n    end\n    if #rows == 0 then table.insert(rows, { name = \"(No items)\" }) end\nelse\n    -- The command set is this creature's, not a fixed five: engine.json\n    -- `battleCommands` filtered by the actor's own list. An Egg shows one row.\n    v.commandIds = {}\n    for i, cmd in ipairs(api.battleCommands(monster)) do\n        table.insert(rows, { name = cmd.label or cmd.id })\n        helps[i] = cmd.help or \"\"\n        v.commandIds[i] = cmd.id\n    end\nend\nv.commandRows = rows\nv.currentHelpText = helps[v.selectedIndex] or \"\"\n"
@@ -3998,8 +4019,15 @@
       },
       {
         "id": "battle_target_info",
-        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and v.targetSelect == true",
+        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and v.targetSelect == true and not v.inspectingTarget",
         "style": "targetInfo",
+        "content": []
+      },
+      {
+        "id": "battle_inspector",
+        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and v.targetSelect == true and v.inspectingTarget == true",
+        "style": "battlerInspector",
+        "title": "Battler Info",
         "content": []
       },
       {
@@ -5894,7 +5922,7 @@
           "assignments": [
             {
               "name": "idx",
-          "value": 1
+              "value": 1
             },
             {
               "name": "_guard",
@@ -5923,7 +5951,7 @@
       "on_down": [
         {
           "cmd": "IF",
-            "condition": "v.idx < 12",
+          "condition": "v.idx < 12",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -5958,18 +5986,40 @@
           "cmd": "IF",
           "condition": "v._guard == 0 and v.idx == 2",
           "then": [
-            { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
-            { "cmd": "SET_VAR", "name": "fps", "value": "not (v.fps or false)" },
-            { "cmd": "SCRIPT", "code": "api.setFpsToggle(ctx.v.fps)" }
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "fps",
+              "value": "not (v.fps or false)"
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.setFpsToggle(ctx.v.fps)"
+            }
           ]
         },
         {
           "cmd": "IF",
           "condition": "v._guard == 0 and v.idx == 3",
           "then": [
-            { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
-            { "cmd": "SET_VAR", "name": "perf", "value": "not (v.perf or false)" },
-            { "cmd": "SCRIPT", "code": "api.setPerfToggle(ctx.v.perf)" }
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "perf",
+              "value": "not (v.perf or false)"
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.setPerfToggle(ctx.v.perf)"
+            }
           ]
         },
         {
@@ -5990,7 +6040,7 @@
         },
         {
           "cmd": "IF",
-            "condition": "v._guard == 0 and v.idx == 5",
+          "condition": "v._guard == 0 and v.idx == 5",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -6007,10 +6057,10 @@
             }
           ]
         },
-         {
-           "cmd": "IF",
-            "condition": "v._guard == 0 and v.idx == 6",
-           "then": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 6",
+          "then": [
             {
               "cmd": "SET_VAR",
               "name": "_guard",
@@ -6020,77 +6070,109 @@
               "cmd": "SCRIPT",
               "code": "api.toggleDeveloperServer()\nctx.v.server = api.developerServerActive()"
             }
-           ]
-          },
-         {
-           "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 7",
-           "then": [
-             { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
-             { "cmd": "SET_VAR", "name": "phase", "value": "not (v.phase or false)" },
-             { "cmd": "SCRIPT", "code": "api.setPhaseMode(ctx.v.phase)" }
-           ]
-         },
-         {
-           "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 8",
-           "then": [
-             { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
-             { "cmd": "SCRIPT", "code": "api.recoverParty()" }
-           ]
-         },
-         {
-           "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 9",
-           "then": [
-             { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
-             { "cmd": "SCRIPT", "code": "api.recoverMp()" }
-           ]
-         },
-         {
-           "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 10",
-           "then": [
-             { "cmd": "SET_VAR", "name": "_guard", "value": 1 },
-             { "cmd": "SCRIPT", "code": "api.giveAllItems()" }
-           ]
-         },
-         {
-           "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 11",
-           "then": [
-             {
-               "cmd": "SET_VAR",
-               "name": "_guard",
-               "value": 1
-             },
-             {
-               "cmd": "SCRIPT",
-               "code": "api.forceWinBattle()"
-             }
-           ]
-         },
-         {
-           "cmd": "IF",
-           "condition": "v._guard == 0 and v.idx == 12",
-           "then": [
-             {
-               "cmd": "SET_VAR",
-               "name": "_guard",
-               "value": 1
-             },
-             {
-               "cmd": "RESET_SESSION"
-             },
-             {
-               "cmd": "SCENE_EVENT",
-               "kind": "goto",
-               "scene": "title"
-             }
-           ]
-         },
-         {
-           "cmd": "SET_VAR",
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 7",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "phase",
+              "value": "not (v.phase or false)"
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.setPhaseMode(ctx.v.phase)"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 8",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.recoverParty()"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 9",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.recoverMp()"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 10",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.giveAllItems()"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 11",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.forceWinBattle()"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 12",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "RESET_SESSION"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "goto",
+              "scene": "title"
+            }
+          ]
+        },
+        {
+          "cmd": "SET_VAR",
           "name": "_guard",
           "value": 0
         }
