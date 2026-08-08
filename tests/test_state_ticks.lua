@@ -1,16 +1,17 @@
--- Round-end HP drift (STATE_TICKS), driven by the HRG trait.
---
--- This replaced a branch on `state.id == "regen"` / `"poison"` with rates read
--- from system.json. That hardcoded two content ids in the engine, left HRG
--- dead on every item and passive carrying it, and made a second regenerating
--- state impossible to author -- which the planned roster needs.
-package.path = package.path .. ";./?.lua;./engine/?.lua"
+-- Existing STATE_TICKS coverage stays intact in the core file. This extension
+-- pins issue #166's Overheal and temporary-Max-HP contracts against the public
+-- engine surfaces used by gameplay.
+require("tests.test_state_ticks_core")
 
 local loader = require("data.loader")
 local sessionModule = require("engine.session")
+local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
+local traits = require("engine.traits")
+local vitality = require("engine.vitality")
+local savegame = require("engine.savegame")
 
-print("[TEST] Starting state tick tests...")
+print("[TEST] Starting combat-state resource tests...")
 
 local passed, failed = 0, 0
 local function check(cond, msg)
@@ -25,167 +26,164 @@ end
 
 loader.init()
 
--- A battler with a known Max HP and no innate traits, so a tick is arithmetic
--- rather than whatever the roster currently carries.
-local function rig(maxHp, traitList)
-    local sess = sessionModule.GameSession.new(loader)
-    local b = sess:recruitActor(3, 1)
-    local private = {}
-    for k, v in pairs(b.actorData) do private[k] = v end
-    private.traits = traitList or {}
-    private.baseParams = { maxHp = maxHp, atk = 10, def = 10, mat = 10, mdf = 10 }
-    private.growthMultiplier = 0
-    b.actorData = private
-    b.passives = {}
-    b.level = 1
-    sess.party = { b }
+local TEMP_STATE = "__test_temp_max_hp"
+local function testLoader(overhealCap)
+    local proxy = setmetatable({}, { __index = loader })
+    local sys = {}
+    for k, v in pairs(loader.system or {}) do sys[k] = v end
+    local combat = {}
+    for k, v in pairs((loader.system and loader.system.combat) or {}) do combat[k] = v end
+    combat.overhealCap = overhealCap or 1.5
+    sys.combat = combat
+    proxy.system = sys
+    proxy.getState = function(id)
+        if id == TEMP_STATE then
+            return {
+                id = TEMP_STATE,
+                name = "Test Temporary Max HP",
+                categories = { "positive" },
+                traits = { { code = "PARAM_PLUS", dataId = "maxHp", value = 25 } },
+            }
+        end
+        return loader.getState(id)
+    end
+    return proxy
+end
+
+local function fresh(cap)
+    local ldr = testLoader(cap)
+    local sess = sessionModule.GameSession.new(ldr)
+    local b = sess:recruitActor(3, 5)
     return sess, b
 end
 
-local function tick(sess)
-    local ctx = { session = sess, party = sess.party, enemies = {}, events = {} }
-    interpreter.runImmediate({ { cmd = "STATE_TICKS" } }, ctx)
-    return ctx.events
+local function hasEvent(events, kind)
+    for _, ev in ipairs(events or {}) do if ev.type == kind then return ev end end
 end
 
-local function firstEvent(events, evType)
-    for _, ev in ipairs(events) do if ev.type == evType then return ev end end
-    return nil
-end
-
------------------------------------------------------------------- direction --
-
+-------------------------------------------------------------- Overheal --
 do
-    local sess, b = rig(100, { { code = "HRG", value = 0.1 } })
-    b.hp = 50
-    local ev = firstEvent(tick(sess), "heal")
-    check(b.hp == 60 and ev and ev.value == 10,
-        "a positive HRG restores that share of Max HP")
+    local sess, b = fresh(1.5)
+    local maxHp = traits.getParam(b, "maxHp", sess)
+    b.hp = maxHp - 5
+    effects.apply({ type = "hp_heal", formula = "999" }, b, b, sess)
+    check(b.hp == maxHp, "ordinary formula healing still clamps at Max HP")
+
+    b.hp = maxHp + 10
+    local evs = effects.apply({ type = "hp_heal", formula = "999" }, b, b, sess)
+    check(b.hp == maxHp + 10 and hasEvent(evs, "heal").value == 0,
+        "ordinary healing never deletes existing Overheal")
+
+    b.hp = maxHp - 5
+    evs = effects.apply({ type = "hp_heal", formula = "999", overheal = true }, b, b, sess)
+    local cap = math.floor(maxHp * 1.5)
+    check(b.hp == cap, "an explicit Overheal heal can exceed Max HP up to the system cap")
+    check(hasEvent(evs, "heal") and hasEvent(evs, "heal").cap == cap,
+        "heal events expose the recovery cap explicitly")
+
+    local beforeDamage = b.hp
+    effects.apply({ type = "hp_damage", formula = "5" }, b, b, sess)
+    check(b.hp == beforeDamage - 5,
+        "damage consumes Overheal as ordinary current HP, with no shield pool")
 end
 
+--------------------------------------------------------- percentages --
 do
-    -- Negative HRG is degeneration: one trait, both directions, so poison is
-    -- not a second mechanism the engine has to know about by name.
-    local sess, b = rig(100, { { code = "HRG", value = -0.1 } })
-    b.hp = 50
-    local ev = firstEvent(tick(sess), "damage")
-    check(b.hp == 40 and ev and ev.value == 10,
-        "a negative HRG drains that share of Max HP")
+    local sess, b = fresh(1.5)
+    local maxHp = traits.getParam(b, "maxHp", sess)
+    b.hp = math.floor(maxHp * 1.2)
+    check(vitality.hpRatio(b, sess) > 1,
+        "HP ratio remains above 1.0 while current HP exceeds effective Max HP")
+    check(not traits.evaluateCondition("HP < 100%", b, sess)
+        and traits.evaluateCondition("HP < 125%", b, sess),
+        "authored HP thresholds compare the unclamped currentHP/effectiveMaxHP ratio")
 end
 
+----------------------------------------------------- temporary Max HP --
 do
-    local sess, b = rig(100, { { code = "HRG", value = 0.1 } })
-    b.hp = 95
-    tick(sess)
-    check(b.hp == 100, "regeneration never overheals")
-end
+    local sess, b = fresh(1.5)
+    local beforeMax = traits.getParam(b, "maxHp", sess)
+    local permanentBefore = b.paramPlus.maxHp
+    b.hp = beforeMax - 20
 
-do
-    local sess, b = rig(100, { { code = "HRG", value = -0.5 } })
-    b.hp = 10
-    local events = tick(sess)
-    check(b.hp == 0 and b:isDead(), "degeneration can kill")
-    check(firstEvent(events, "death") ~= nil, "a death from degeneration is reported")
-end
+    local evs = effects.apply({
+        type = "add_status", status = TEMP_STATE, duration = 1, chance = 1,
+    }, b, b, sess)
+    local afterMax = traits.getParam(b, "maxHp", sess)
+    check(afterMax == beforeMax + 25,
+        "a state PARAM_PLUS maxHp raises the actual effective Max HP")
+    check(b.hp == beforeMax + 5,
+        "raising temporary Max HP immediately grants the new capacity as current HP")
+    check(b.paramPlus.maxHp == permanentBefore,
+        "temporary Max HP never mutates persistent paramPlus.maxHp")
+    local maxEv = hasEvent(evs, "max_hp_change")
+    check(maxEv and maxEv.value == 25 and maxEv.hpGranted == 25,
+        "state application emits a structured Max-HP transition")
 
-do
-    -- A rate too small to move a small creature emits nothing at all, rather
-    -- than a "+0 HP" line that reads as a tick and is not one.
-    local sess, b = rig(10, { { code = "HRG", value = 0.05 } })
-    b.hp = 5
-    local events = tick(sess)
-    check(b.hp == 5, "a rate that rounds to nothing changes nothing")
-    check(firstEvent(events, "heal") == nil and firstEvent(events, "damage") == nil,
-        "a rate that rounds to nothing emits no event")
-end
-
---------------------------------------------------------------- composition --
-
-do
-    -- Summed across sources, so an authored regeneration and a poison net out
-    -- instead of both firing and racing each other in the log.
-    local sess, b = rig(100, {
-        { code = "HRG", value = 0.15 },
-        { code = "HRG", value = -0.05 },
+    local tickEvents = interpreter.runImmediate({ { cmd = "STATE_TICKS" } }, {
+        session = sess, loader = sess.loader, party = sess.party, enemies = {}, events = {},
     })
-    b.hp = 50
-    tick(sess)
-    check(b.hp == 60, "HRG sums across sources, so regen and poison net out")
+    check(traits.getParam(b, "maxHp", sess) == beforeMax and b.hp == beforeMax,
+        "temporary Max HP expiry restores the underlying cap and clamps current HP")
+    check(hasEvent(tickEvents, "max_hp_change") and hasEvent(tickEvents, "hp_clamp"),
+        "expiry exposes Max-HP loss and the non-damage HP clamp as structured events")
+    check(not hasEvent(tickEvents, "damage") and not hasEvent(tickEvents, "death"),
+        "Max-HP expiry clamp emits neither damage nor death")
 end
 
+---------------------------------------------------------- composition --
 do
-    local sess, b = rig(100, {
-        { code = "HRG", value = 0.1 },
-        { code = "HRG", value = -0.1 },
+    local sess, b = fresh(1.5)
+    local baseMax = traits.getParam(b, "maxHp", sess)
+    b.hp = baseMax
+    effects.apply({ type = "hp_heal", formula = "999", overheal = true, overhealCap = 2.0 }, b, b, sess)
+    local overHp = b.hp
+    effects.apply({ type = "add_status", status = TEMP_STATE, duration = 2, chance = 1 }, b, b, sess)
+    check(b.hp == overHp,
+        "temporary capacity does not double-count current HP already above the grown cap")
+
+    local sess2, b2 = fresh(1.5)
+    local base2 = traits.getParam(b2, "maxHp", sess2)
+    b2.hp = base2
+    effects.apply({ type = "add_status", status = TEMP_STATE, duration = 2, chance = 1 }, b2, b2, sess2)
+    local grownMax = traits.getParam(b2, "maxHp", sess2)
+    check(b2.hp == grownMax, "growth-first reaches the grown Max HP normally")
+    effects.apply({ type = "hp_heal", formula = "999", overheal = true }, b2, b2, sess2)
+    check(b2.hp == math.floor(grownMax * 1.5),
+        "Overheal applied after growth uses the grown effective Max HP as its cap base")
+end
+
+--------------------------------------------------------------- regen --
+do
+    local sess, b = fresh(1.5)
+    local private = {}
+    for k, v in pairs(b.actorData) do private[k] = v end
+    private.traits = { { code = "HRG", value = 0.1 } }
+    b.actorData = private
+    local maxHp = traits.getParam(b, "maxHp", sess)
+    b.hp = maxHp + 10
+    local evs = interpreter.runImmediate({ { cmd = "STATE_TICKS" } }, {
+        session = sess, loader = sess.loader, party = sess.party, enemies = {}, events = {},
     })
-    b.hp = 50
-    local events = tick(sess)
-    check(b.hp == 50 and firstEvent(events, "heal") == nil,
-        "exactly cancelling rates produce no tick")
+    check(b.hp == maxHp + 10,
+        "ordinary positive regeneration does not erase or refill Overheal")
+    check(not hasEvent(evs, "heal"),
+        "a regen tick with no legal recovery emits no fake +0 heal event")
 end
 
+------------------------------------------------------------- save shape --
 do
-    local sess, b = rig(100, {})
-    b.hp = 50
-    b:addState("regen")
-    tick(sess)
-    check(b.hp > 50, "the live regen state still regenerates through its trait")
+    local sess, b = fresh(1.5)
+    local maxHp = traits.getParam(b, "maxHp", sess)
+    b.hp = maxHp + 7
+    local data = savegame.serialize(sess, sess.loader, "map")
+    local saved
+    for _, row in pairs(data.party or {}) do
+        if row and row.id == b.id then saved = row break end
+    end
+    check(saved and saved.hp == maxHp + 7 and saved.overheal == nil,
+        "Overheal saves as real current HP rather than a second persistent resource")
 end
 
-do
-    local sess, b = rig(100, {})
-    b.hp = 50
-    b:addState("poison")
-    tick(sess)
-    check(b.hp < 50, "the live poison state still damages through its trait")
-end
-
-do
-    local sess, b = rig(100, {})
-    b.hp = 50
-    tick(sess)
-    check(b.hp == 50, "a creature with no HRG anywhere is untouched")
-end
-
--- The dead are not ticked: a corpse that keeps regenerating would climb back
--- above zero without ever leaving the dead state.
-do
-    local sess, b = rig(100, { { code = "HRG", value = 0.1 } })
-    b.hp = 0
-    b:addState("dead")
-    tick(sess)
-    check(b.hp == 0, "a dead creature does not tick")
-end
-
-------------------------------------------------------- no hardcoded content --
-
--- The point of the change: a SECOND regenerating state must work, because the
--- roster plans one (Kirin's party-wide regeneration) and the old id-matching
--- engine could only ever tick the one id it named.
-do
-    local sess, b = rig(100, {})
-    b.hp = 50
-    -- Any state carrying HRG regenerates, whatever it is called. Simulated
-    -- through a passive-shaped source rather than by authoring a state, so the
-    -- test does not depend on content that does not exist yet.
-    b.actorData.traits = { { code = "HRG", value = 0.08 } }
-    tick(sess)
-    check(b.hp == 58,
-        "any source carrying HRG regenerates, not just the state named 'regen'")
-end
-
--- Duration decay is the other half of STATE_TICKS and must survive the rewrite.
-do
-    local sess, b = rig(100, {})
-    b:addState("regen")
-    local before
-    for _, st in ipairs(b.states) do if st.id == "regen" then before = st.duration end end
-    tick(sess)
-    local after
-    for _, st in ipairs(b.states) do if st.id == "regen" then after = st.duration end end
-    check(before and after and after == before - 1,
-        "state durations still decay one per round")
-end
-
-print(("=== State Tick Tests Completed: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then require("tests.fail_fast")("state tick tests failed", failed) end
+print(("=== Combat-State Resource Tests Completed: %d passed, %d failed ==="):format(passed, failed))
+if failed > 0 then require("tests.fail_fast")("combat-state resource tests failed", failed) end
