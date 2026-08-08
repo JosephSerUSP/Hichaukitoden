@@ -47,8 +47,10 @@ function effects.apply(effectData, a, b, session, context)
     -- Drain damage remains the mature core path (crit, affinity, execution,
     -- death and kill rewards). Re-run only its recovery side through vitality
     -- so a drain cannot erase existing Overheal and can opt into Overheal with
-    -- the same authored fields as other recovery.
-    if effectData.type == "hp_drain" and a then
+    -- the same authored fields as other recovery. A self-drain is left to the
+    -- mature path: restoring the source snapshot there would also undo the
+    -- damage because source and target are the same object.
+    if effectData.type == "hp_drain" and a and a ~= b then
         local beforeHp = a.hp or 0
         local events = core.apply(effectData, a, b, session, context)
         local damageEv = findEvent(events, "damage", b)
@@ -106,8 +108,9 @@ function effects.apply(effectData, a, b, session, context)
     -- Permanent Max-HP growth keeps its existing lifetime and event text. If
     -- current HP was already above the old cap, raising that cap must not erase
     -- real HP merely because the mature implementation used math.min.
+    local permanentParam = effectData.param or effectData.dataId
     if effectData.type == "maxHp"
-        or (effectData.type == "param_plus" and effectData.param == "maxHp") then
+        or (effectData.type == "param_plus" and permanentParam == "maxHp") then
         local beforeHp = b and b.hp or 0
         local beforeMax = b and traits.getParam(b, "maxHp", session) or 0
         local events = core.apply(effectData, a, b, session, context)
