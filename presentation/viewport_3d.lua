@@ -267,6 +267,28 @@ local function getAtlasByDef(id, tilesetDef)
             end
             heightData = data
         end
+        -- Emission map. Unlike the height map this has no tile-sized mode: it
+        -- is sampled at the albedo's own uv, including through the composite
+        -- wall bake, so it has to be the atlas's exact parallel or nothing.
+        local glowImg
+        if tilesetDef.glowMap then
+            local glowPath = tilesetDef.glowMap
+            if not love.filesystem.getInfo(glowPath) then
+                error("tileset glow map missing: " .. tostring(glowPath), 0)
+            end
+            local okGlow, glowOrErr = pcall(love.graphics.newImage, glowPath)
+            if not okGlow then
+                error("tileset glow map unreadable: " .. tostring(glowPath), 0)
+            end
+            if glowOrErr:getWidth() ~= img:getWidth()
+                or glowOrErr:getHeight() ~= img:getHeight() then
+                error("tileset glow map must match the texture atlas exactly: "
+                    .. glowOrErr:getWidth() .. "x" .. glowOrErr:getHeight()
+                    .. " vs " .. img:getWidth() .. "x" .. img:getHeight(), 0)
+            end
+            glowOrErr:setFilter("nearest", "nearest")
+            glowImg = glowOrErr
+        end
         -- `features[]` is the single source of truth for feature/material ids
         -- (SPEC 1.8); the redundant `tiles{}` mirror was purged 24.07.2026.
         local tiles = {}
@@ -367,6 +389,8 @@ local function getAtlasByDef(id, tilesetDef)
             img = img, w = img:getWidth(), h = img:getHeight(),
             tileWidth = tileWidth, tileHeight = tileHeight,
             heightData = heightData, heightMode = heightMode,
+            glowImg = glowImg,
+            glowStrength = tilesetDef.glowStrength or 1.0,
             heightMapPath = tilesetDef.heightMap,
             heightMapScale = tilesetDef.heightMapScale,
             heightMapOperation = tilesetDef.heightMapOperation or "add",
@@ -463,6 +487,58 @@ local skyQuad = nil          -- reused for the sky strip, viewport recomputed pe
 local spriteSliceQuad = nil
 local compositeQuad = nil    -- Quad for baking tile layer composites into a 64x64 canvas
 local compositeCache = {}    -- Cached 64x64 composite tile canvases keyed by tile specs
+local compositeGlowCache = {} -- Glow twins of the above, same keys, nil when the tileset has no glow map
+-- Albedo texture -> its glow twin. Surface batches are keyed by texture alone,
+-- and the twin is a pure function of the texture, so this side table keeps the
+-- pairing without threading a second texture through every mesh-building
+-- signature. Weak keys: a released atlas or composite must not be pinned here.
+local glowForTexture = setmetatable({}, { __mode = "k" })
+
+local blackGlowTexture = nil
+
+-- The "nothing is emissive" sampler. Bound whenever a draw has no glow twin so
+-- the uniform is never left unset, and paired with glowStrength 0 so the shader
+-- skips the sample entirely rather than relying on the black texel.
+local function getBlackGlowTexture()
+    if blackGlowTexture then return blackGlowTexture end
+    local imageData = love.image.newImageData(1, 1)
+    imageData:setPixel(0, 0, 0, 0, 0, 1)
+    blackGlowTexture = love.graphics.newImage(imageData)
+    blackGlowTexture:setFilter("nearest", "nearest")
+    return blackGlowTexture
+end
+
+-- Sets both halves of the emission contract together. Callers must not send one
+-- without the other: a stale strength with a fresh map is how one glowing wall
+-- makes every later surface in the frame emit. Sends are skipped when nothing
+-- changed, so a map with no glow map at all costs one send per frame and a
+-- glowing map costs one per transition rather than two per surface.
+local lastGlowTexture, lastGlowStrength = nil, nil
+
+local function setGlowUniform(shader, glowTexture, strength)
+    if not shader then return end
+    strength = (glowTexture and (strength or 1.0)) or 0.0
+    if strength <= 0 then glowTexture = getBlackGlowTexture() end
+    if glowTexture == lastGlowTexture and strength == lastGlowStrength then return end
+    shader:send("glowMap", glowTexture)
+    shader:send("glowStrength", strength)
+    lastGlowTexture, lastGlowStrength = glowTexture, strength
+end
+
+-- The glow twin of whatever texture a mesh already carries. Meshes are the one
+-- place the albedo is guaranteed to be recorded, so asking the mesh is more
+-- robust than threading a parallel field through every producer.
+local function glowForMesh(mesh)
+    if not mesh or not mesh.getTexture then return nil end
+    local ok, texture = pcall(mesh.getTexture, mesh)
+    if not ok or not texture then return nil end
+    return glowForTexture[texture]
+end
+
+-- The cache is per-shader-instance state; a reloaded shader must not inherit it.
+local function resetGlowUniformCache()
+    lastGlowTexture, lastGlowStrength = nil, nil
+end
 local wallOverlayCache = {}
 
 local function getWallOverlay(path)
@@ -522,7 +598,7 @@ local function getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rig
         .. "|" .. tostring(wallOverlay or "")
 
     if compositeCache[key] then
-        return compositeCache[key]
+        return compositeCache[key], compositeGlowCache[key]
     end
 
     local canvas = love.graphics.newCanvas(ATLAS_TILE, ATLAS_TILE)
@@ -574,6 +650,40 @@ local function getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rig
             ATLAS_TILE / overlayImage:getHeight())
     end
 
+    -- The glow twin. It repeats steps 1-4 with the glow atlas so that every
+    -- texel of the finished albedo canvas has its emission at the SAME uv --
+    -- the whole reason the composite path cannot just sample the glow atlas
+    -- directly. Step 5 is deliberately absent: an event-authored wall overlay
+    -- (a door) has no glow counterpart, and leaving those texels at zero is
+    -- exactly right -- it means "not emissive", not "missing data".
+    local glowCanvas
+    if atlas.glowImg then
+        glowCanvas = love.graphics.newCanvas(ATLAS_TILE, ATLAS_TILE)
+        glowCanvas:setFilter("nearest", "nearest")
+        love.graphics.setCanvas(glowCanvas)
+        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setBlendMode("alpha")
+        love.graphics.setColor(1, 1, 1, 1)
+        compositeQuad:setViewport(originX, originY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
+        love.graphics.draw(atlas.glowImg, compositeQuad, 0, 0)
+        if leftEdgeSpec then
+            local eRow, eCol, eOffX = leftEdgeSpec[1], leftEdgeSpec[2], leftEdgeSpec[3] or 0
+            compositeQuad:setViewport(eCol * ATLAS_TILE + eOffX, eRow * ATLAS_TILE, 32, ATLAS_TILE, atlas.w, atlas.h)
+            love.graphics.draw(atlas.glowImg, compositeQuad, 0, 0)
+        end
+        if rightEdgeSpec then
+            local eRow, eCol, eOffX = rightEdgeSpec[1], rightEdgeSpec[2], rightEdgeSpec[3] or 32
+            compositeQuad:setViewport(eCol * ATLAS_TILE + eOffX, eRow * ATLAS_TILE, 32, ATLAS_TILE, atlas.w, atlas.h)
+            love.graphics.draw(atlas.glowImg, compositeQuad, 32, 0)
+        end
+        if featureOverlay and featureOverlay.atlas then
+            local fOriginY = featureOverlay.atlas[1] * ATLAS_TILE
+            local fOriginX = featureOverlay.atlas[2] * ATLAS_TILE
+            compositeQuad:setViewport(fOriginX, fOriginY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
+            love.graphics.draw(atlas.glowImg, compositeQuad, 0, 0)
+        end
+    end
+
     -- Canvas targets are not part of LÖVE's push/pop graphics state. Failing
     -- to restore this explicitly sends the rest of the frame into the 64px
     -- bake canvas, leaving the on-screen world black/untextured.
@@ -581,7 +691,8 @@ local function getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rig
     love.graphics.pop()
 
     compositeCache[key] = canvas
-    return canvas
+    compositeGlowCache[key] = glowCanvas
+    return canvas, glowCanvas
 end
 
 -- Deterministic per-cell variant picks so ambient wall/door texture varies
@@ -743,7 +854,9 @@ function viewport_3d.init()
     skyQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
     compositeQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
     compositeCache = {}
+    compositeGlowCache = {}
     wallOverlayCache = {}
+    resetGlowUniformCache()
 end
 
 -- Resolves which atlas to draw walls/doors/sky from this frame: the map's
@@ -910,6 +1023,7 @@ function viewport_3d.invalidateStructure(session)
         structuralCache[session] = nil
     end
 end
+
 
 local whiteWallTexture = nil
 
@@ -1178,17 +1292,20 @@ local function prepareResolvedWallFaces(structure, atlas)
         local leftSpec = hasLeft and baseWall and baseWall.leftEdge or nil
         local rightSpec = hasRight and baseWall and baseWall.rightEdge or nil
         local texture, uv = getWhiteWallTexture(), { 0, 0, 1, 1 }
+        local glowTexture
         if atlas then
             if leftSpec or rightSpec or (featureOverlay and featureOverlay.atlas)
                     or (event and event.sprite) then
-                texture = getCompositeTileCanvas(
+                texture, glowTexture = getCompositeTileCanvas(
                     atlas, originX, originY, leftSpec, rightSpec, featureOverlay, event and event.sprite)
             else
                 texture = atlas.img
+                glowTexture = atlas.glowImg
                 uv = { atlasUV(originX, originY, ATLAS_TILE, ATLAS_TILE,
                     atlas.w, atlas.h, kind == "west" or kind == "south") }
             end
         end
+        if glowTexture then glowForTexture[texture] = glowTexture end
         if not atlas or texture ~= atlas.img then uv = { 0, 0, 1, 1 } end
         uv[2], uv[4] = uv[4], uv[2]
         local normalX, normalY = 0, 0
@@ -1198,7 +1315,7 @@ local function prepareResolvedWallFaces(structure, atlas)
             p1 = p1, p2 = p2, sideDarken = side == 1,
             normalX = normalX, normalY = normalY,
             centerX = (p1.x + p2.x) * 0.5, centerY = (p1.y + p2.y) * 0.5,
-            texture = texture, uv = uv,
+            texture = texture, uv = uv, glowTexture = glowTexture,
             -- The variant itself, not just its path: the placement site needs
             -- the spec to compile either mesh source from it.
             meshSpec = (event and doorSpec and viewport_3d.meshSource(doorSpec) and doorSpec)
@@ -1365,6 +1482,11 @@ local function drawWorldSpace(session)
     local mapData = session.currentMapData
     local fog = getFogConfig(session, mapData)
     local atlas = resolveTileset(mapData, session)
+    -- Atlas-mapped geometry (floors, ceilings, and every height-displaced
+    -- surface mesh) draws straight from atlas.img, so the atlas is its own
+    -- glow pairing. Registered here rather than in getAtlasByDef because the
+    -- side table is declared after it.
+    if atlas and atlas.glowImg then glowForTexture[atlas.img] = atlas.glowImg end
     local structure = viewport_3d.prepareStructure(session)
     if not structure.worldEffectsInitialized then
         structure.worldEffectsInitialized = true
@@ -2130,6 +2252,7 @@ local function drawWorldSpace(session)
             batch.mesh:setVertexMap(indices)
             table.insert(surfaces, {
                 mesh = batch.mesh,
+                glow = glowForTexture[batch.texture],
                 depth = depthTotal / #batch.selected,
                 sequence = #surfaces + 1,
             })
@@ -2166,6 +2289,9 @@ local function drawWorldSpace(session)
     shader:send("fogSharpness", fog.sharpness)
     shader:send("fogMinFactor", fog.minFactor)
     shader:send("fogBands", fogBands)
+    -- Emission defaults to off, and the sampler always has something bound:
+    -- an Image uniform left unset is a driver-dependent crash, not a zero.
+    setGlowUniform(shader, nil, 0)
     if playerLight.active then
         shader:send("playerLightColor", playerLight.color)
         shader:send("playerLightRadius", playerLight.radius)
@@ -2194,6 +2320,12 @@ local function drawWorldSpace(session)
         if g.mesh then
             if g.model then modelDraws = modelDraws + 1 end
             if not (profileVariant == "no-draw" and g.model) then
+                -- Resolved from the mesh's own texture, not from a field the
+                -- producer had to remember to set: this branch draws surface
+                -- batches AND placed/height-displaced model meshes, and only
+                -- the former could ever have carried a glow field down.
+                setGlowUniform(shader, g.glow or glowForMesh(g.mesh),
+                    atlas and atlas.glowStrength)
                 love.graphics.draw(g.mesh)
             end
         elseif #g.vertices > 0 then
@@ -2223,6 +2355,12 @@ local function drawWorldSpace(session)
             entry.mesh:setVertices(g.vertices, 1, needed)
             entry.mesh:setDrawRange(1, needed)
             if not (profileVariant == "no-draw" and g.model) then
+                -- Dynamic geometry (billboards, placed models, sprites) has no
+                -- glow twin. Without this, a glowing wall earlier in the
+                -- depth-sorted list would leave its map bound and every model
+                -- drawn after it would emit through that wall's mask.
+                setGlowUniform(shader, glowForTexture[g.texture],
+                    atlas and atlas.glowStrength)
                 love.graphics.draw(entry.mesh)
             end
         end
