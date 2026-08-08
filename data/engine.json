@@ -37,6 +37,22 @@
       "description": "Max HP after traits (also on b/target/enemy/ally)."
     },
     {
+      "token": "a.maxHpParts.underlying",
+      "description": "Max HP from base growth plus permanent param gains, before active state/equipment/passive modifiers (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.maxHpParts.activeModifier",
+      "description": "Current active Max-HP delta from traits, states, equipment and passives relative to underlying Max HP (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.hpRatio",
+      "description": "Current HP divided by effective Max HP without clamping; an Overhealed battler reports above 1 (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.overheal",
+      "description": "Current HP above effective Max HP, or 0 when not Overhealed (also on b/target/enemy/ally)."
+    },
+    {
       "token": "a.atk",
       "description": "Attack after traits (also on b/target/enemy/ally)."
     },
@@ -2596,9 +2612,11 @@
       "id": "hp_heal",
       "label": "HP Heal",
       "params": [
-        "formula"
+        "formula",
+        "overheal",
+        "overhealCap"
       ],
-      "description": "Restores formula HP, capped at max HP.",
+      "description": "Restores formula HP. Ordinary healing stops at Max HP; `overheal` permits recovery up to `overhealCap` or the authored combat default.",
       "display": {
         "short": "Heal",
         "polarity": "higher"
@@ -2612,7 +2630,9 @@
         "power",
         "defense",
         "penetration",
-        "formula"
+        "formula",
+        "overheal",
+        "overhealCap"
       ],
       "description": "Resolves damage exactly as hp_damage does -- one shared implementation, so a drain can never drift from the curve -- and heals the user for what it dealt.",
       "display": {
@@ -2641,9 +2661,11 @@
       "label": "HP Restore",
       "params": [
         "value",
-        "percent"
+        "percent",
+        "overheal",
+        "overhealCap"
       ],
-      "description": "Restores `value` HP plus `percent` of the target's Max HP (0.25 = 25%). Either may stand alone, so one effect covers flat, percentage and hybrid recovery -- a percentage keeps a food relevant to creatures whose Max HP differ by an order of magnitude.",
+      "description": "Restores `value` HP plus `percent` of the target's Max HP (0.25 = 25%). With `overheal`, recovery may exceed Max HP up to `overhealCap` or the authored combat default.",
       "display": {
         "short": "Heal",
         "polarity": "higher"

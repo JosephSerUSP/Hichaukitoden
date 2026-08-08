@@ -724,7 +724,8 @@
                 return eff.formula ? `direct: ${eff.formula}` : '(choose relative power or direct formula)';
             }
             if (eff.type === 'hp_heal') {
-                return eff.formula || '(no formula)';
+                const over = eff.overheal === true ? `, overheal${eff.overhealCap !== undefined ? ` to ${eff.overhealCap}x` : ''}` : '';
+                return (eff.formula || '(no formula)') + over;
             }
             if (eff.type === 'add_status') {
                 const pct = Math.round((eff.chance !== undefined ? eff.chance : 1) * 100);
@@ -736,6 +737,40 @@
                 .filter(key => eff[key] !== undefined && eff[key] !== '')
                 .map(key => `${key}: ${eff[key]}`)
                 .join(', ') || '(not configured)';
+        }
+
+        function appendOverhealFields(row, eff) {
+            const label = document.createElement('label');
+            label.className = 'win98-checkbox-label';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = eff.overheal === true;
+            checkbox.onchange = () => {
+                if (checkbox.checked) eff.overheal = true;
+                else delete eff.overheal;
+                cap.disabled = !checkbox.checked;
+                setDirty(true);
+            };
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(' Overheal'));
+            row.appendChild(label);
+
+            const cap = document.createElement('input');
+            cap.type = 'number';
+            cap.step = '0.05';
+            cap.min = '1';
+            cap.className = 'win98-input';
+            cap.style.width = '64px';
+            cap.title = 'Overheal cap multiplier';
+            cap.placeholder = 'default cap';
+            cap.value = eff.overhealCap !== undefined ? eff.overhealCap : '';
+            cap.disabled = !checkbox.checked;
+            cap.oninput = () => {
+                if (cap.value === '') delete eff.overhealCap;
+                else eff.overhealCap = Number(cap.value);
+                setDirty(true);
+            };
+            row.appendChild(cap);
         }
 
         function buildEffectsEditor(container, owner) {
@@ -810,6 +845,7 @@
                             f.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                             row.appendChild(f);
                         }
+                        if (eff.type === 'hp_drain') appendOverhealFields(row, eff);
                     } else if (eff.type === 'hp_heal') {
                         const f = document.createElement('input');
                         f.className = 'win98-input';
@@ -819,6 +855,7 @@
                         f.oninput = () => { eff.formula = f.value; setDirty(true); };
                         f.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                         row.appendChild(f);
+                        appendOverhealFields(row, eff);
                     } else if (eff.type === 'add_status') {
                         const stateIds = Object.keys(dbPayload.states || {});
                         row.appendChild(makeSelect(stateIds, eff.status, v => { eff.status = v; setDirty(true); }, '1'));
@@ -838,6 +875,7 @@
                     } else {
                         const params = effectTypeDefinition(eff.type).params || [];
                         params.forEach(key => {
+                            if (key === 'overheal' || key === 'overhealCap') return;
                             if (key === 'status' || (key === 'value' && eff.type === 'remove_status')) {
                                 row.appendChild(makeSelect(Object.keys(dbPayload.states || {}), eff[key] || '',
                                     v => { eff[key] = v; setDirty(true); }, '1'));
@@ -865,6 +903,7 @@
                                 row.appendChild(input);
                             }
                         });
+                        if (params.includes('overheal')) appendOverhealFields(row, eff);
                     }
 
                     const doneBtn = document.createElement('button');
