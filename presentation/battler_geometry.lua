@@ -31,6 +31,7 @@
 
 local ui = require("presentation.ui")
 local battle_layout = require("presentation.battle_layout")
+local battle_view = require("presentation.battle_view")
 
 local battler_geometry = {}
 
@@ -152,11 +153,17 @@ function battler_geometry.rect(battleState, session, target, resolveImage)
             end
         end
     end
-    local party = session and session.party or {}
+
+    -- Domain roster writes may already be final while a wave/reap card is still
+    -- on screen. Geometry is presentation state, so resolve party identities
+    -- through the same BattleView session facade as the windows. This preserves
+    -- popup/animation anchors for outgoing battlers without undoing GameSession.
+    local viewSession = battle_view.sessionFor(session)
+    local party = viewSession and viewSession.party or {}
     for idx = 1, 4 do
         local member = party[idx]
         if member == target then
-            return battler_geometry.partyRect(session, idx)
+            return battler_geometry.partyRect(viewSession, idx)
         end
     end
     return nil

@@ -4,9 +4,21 @@
 local core = require("engine.effects_core")
 local traits = require("engine.traits")
 local vitality = require("engine.vitality")
+local resolved_event = require("engine.resolved_event")
 
 local effects = {}
 for k, v in pairs(core) do effects[k] = v end
+
+-- Effects mutate domain state before returning their descriptive event list.
+-- Stamp each event with the resolved after-values while we are still at that
+-- semantic boundary. A live battle presentation can then reveal those facts
+-- later without calling Battler/GameSession mutators a second time (#179).
+local function resolved(events, session)
+    for _, ev in ipairs(events or {}) do
+        resolved_event.attach(ev, session)
+    end
+    return events
+end
 
 local function maxHpEvent(target, transition, extra)
     local ev = {
@@ -41,7 +53,7 @@ function effects.apply(effectData, a, b, session, context)
             cap = cap,
             overheal = effectData.overheal == true or nil,
         })
-        return events
+        return resolved(events, session)
     end
 
     -- Drain damage remains the mature core path (crit, affinity, execution,
@@ -62,7 +74,7 @@ function effects.apply(effectData, a, b, session, context)
             healEv.cap = cap
             healEv.overheal = effectData.overheal == true or nil
         end
-        return events
+        return resolved(events, session)
     end
 
     -- A state is the existing battle-scoped carrier for temporary parameter
@@ -85,16 +97,17 @@ function effects.apply(effectData, a, b, session, context)
                     state = effectData.status or effectData.value,
                 }))
                 if transition.hpGranted > 0 then
-                    -- Presentation can replay the state_add first (raising the
-                    -- cap), then this ordinary heal without inferring a delta.
+                    -- Presentation receives the engine-resolved state/cap and
+                    -- recovery as separate visual beats; it never infers either
+                    -- transition from the other.
                     table.insert(events, {
                         type = "heal", target = b, value = transition.hpGranted,
                         cap = afterMax, reason = "max_hp_gain",
                     })
                 elseif transition.hpClamped > 0 then
                     -- A distinct non-damage event. The battle presentation seam
-                    -- can apply the assignment without producing damage/death
-                    -- reactions or a fake green recovery popup.
+                    -- can display the resolved assignment without producing
+                    -- damage/death reactions or a fake green recovery popup.
                     table.insert(events, {
                         type = "hp_clamp", target = b, value = b.hp,
                         removed = transition.hpClamped, reason = "max_hp_loss",
@@ -102,7 +115,7 @@ function effects.apply(effectData, a, b, session, context)
                 end
             end
         end
-        return events
+        return resolved(events, session)
     end
 
     -- Permanent Max-HP growth keeps its existing lifetime and event text. If
@@ -117,10 +130,10 @@ function effects.apply(effectData, a, b, session, context)
         if b and beforeHp > beforeMax and b.hp < beforeHp then b.hp = beforeHp end
         local healEv = findEvent(events, "heal", b)
         if b and healEv then healEv.value = math.max(0, b.hp - beforeHp) end
-        return events
+        return resolved(events, session)
     end
 
-    return core.apply(effectData, a, b, session, context)
+    return resolved(core.apply(effectData, a, b, session, context), session)
 end
 
 return effects
