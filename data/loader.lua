@@ -120,6 +120,35 @@ function loader.init(root)
     loader.roles = J("roles.json")
     -- Engine registries: effect types, trait codes, battle layout, element rules
     loader.engine = J("engine.json")
+
+    -- Skill use occasion is required authored data. The vocabulary is owned by
+    -- engine.json's existing itemScopes registry so runtime, editor surfaces and
+    -- campaign tooling share one set of words. Reject at the load boundary: a
+    -- missing field must never fall back to deriving occasion from charges or
+    -- effect shape.
+    local validSkillScopes = {}
+    local skillScopeNames = {}
+    for _, entry in ipairs((loader.engine and loader.engine.itemScopes) or {}) do
+        if entry.scope then
+            validSkillScopes[entry.scope] = true
+            table.insert(skillScopeNames, entry.scope)
+        end
+    end
+    table.sort(skillScopeNames)
+    if #skillScopeNames == 0 then
+        error("engine.json itemScopes declares no skill use-scope vocabulary")
+    end
+    local skillScopeList = table.concat(skillScopeNames, ", ")
+    for id, skill in pairs(loader.skills or {}) do
+        if skill.scope == nil then
+            error("skill '" .. tostring(id) .. "' is missing required scope")
+        end
+        if not validSkillScopes[skill.scope] then
+            error("skill '" .. tostring(id) .. "' has unknown scope '"
+                .. tostring(skill.scope) .. "' (" .. skillScopeList .. ")")
+        end
+    end
+
     -- Phase flows (SPEC S4): scene phase -> command list, run in immediate mode
     loader.flows = J("flows.json")
     -- Troops: what a battle is made of (member slots, rigid or pooled) and its

@@ -307,7 +307,7 @@ do
     -- so a row the player sees greyed is a row the enemy cannot pick either.
     local sess, caster = rig()
     skill_cost.beginBattle(caster, loader)
-    local spell = { id = "spell", target = "enemy-any", charges = 1 }
+    local spell = { id = "spell", target = "enemy-any", scope = "battle", charges = 1 }
 
     check(usability.canUseSkill(spell, caster, nil, { session = sess }),
         "canUseSkill allows a paid-for skill")
@@ -315,6 +315,57 @@ do
     local ok, reason = usability.canUseSkill(spell, caster, nil, { session = sess })
     check(not ok and reason == "Out of charges",
         "canUseSkill refuses an empty pool, with the reason the menu shows")
+end
+
+do
+    -- Occasion is authored independently from cost/effect shape. These fixtures
+    -- pin the migration so changing charges or effects cannot silently move a
+    -- skill between battle and field.
+    local sess, caster = rig()
+    local ally = sess:recruitActor(3, 1)
+    ally.states = {}
+    ally.hp = 1
+
+    local soothing = loader.getSkill("soothingMote")
+    local rootMend = loader.getSkill("rootMend")
+    local surgery = loader.getSkill("fieldSurgery")
+
+    local soothingField = usability.canUseSkill(soothing, caster, ally, {
+        session = sess, isField = true,
+    })
+    local rootField = usability.canUseSkill(rootMend, caster, ally, {
+        session = sess, isField = true,
+    })
+    check(soothing.scope == "always" and soothingField,
+        "Soothing Mote explicitly remains usable in the field")
+    check(rootMend.scope == "always" and rootField,
+        "Root Mend explicitly remains usable in the field")
+
+    local surgeryField, surgeryReason = usability.canUseSkill(surgery, caster, ally, {
+        session = sess, isField = true,
+    })
+    check(surgery.scope == "battle" and not surgeryField
+            and surgeryReason == "Cannot be used in field",
+        "Field Surgery explicitly remains battle-only")
+
+    local inferredShape = {
+        id = "inferredShape",
+        target = "ally-any",
+        charges = 2,
+        effects = { { type = "hp_heal", formula = "10" } },
+    }
+    local inferredOk, inferredReason = usability.canUseSkill(inferredShape, caster, ally, {
+        session = sess, isField = true,
+    })
+    check(not inferredOk and inferredReason == "Invalid use scope",
+        "missing skill scope is rejected instead of derived from a charged-heal shape")
+
+    inferredShape.scope = "battle"
+    local authoredOk, authoredReason = usability.canUseSkill(inferredShape, caster, ally, {
+        session = sess, isField = true,
+    })
+    check(not authoredOk and authoredReason == "Cannot be used in field",
+        "authored battle scope wins even for a charged pure-heal skill")
 end
 
 do
