@@ -355,6 +355,18 @@ function skill_cost.displayCost(skill, battler, session, isEnemy, verbose)
         end
     end
 
+    -- Cooldown/warmup are availability costs measured in battle turns rather
+    -- than resources. Put the active timer at the far right of the cost column
+    -- so a blocked skill explains itself at a glance ("1T", "2T", ...), even
+    -- while its selected row keeps the normal cursor colour. The renderer
+    -- already greys cost segments for blocked rows.
+    local warm = skill_cost.warmupLeft(skill, battler)
+    local cool = skill_cost.cooldownLeft(skill, battler)
+    local turns = warm > 0 and warm or cool
+    if turns > 0 then
+        table.insert(segments, { text = tostring(turns) .. "T", color = "charges" })
+    end
+
     return segments
 end
 

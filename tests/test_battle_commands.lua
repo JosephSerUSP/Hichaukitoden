@@ -61,6 +61,33 @@ local waitSkill = loader.getSkill("wait")
 check(waitSkill and #(waitSkill.effects or {}) == 0,
     "Wait is a genuine no-op -- it spends the turn and does nothing")
 
+-- A rejected skill (cooldown, warmup, cost, condition) is input feedback, not
+-- a round-resolution event. Routing it through the combat log used to rebuild
+-- livingMembers on the way back and clear earlier queued actions, which then
+-- fell through to the basic-attack fallback. Pin the state seam directly: the
+-- message must stay in input and leave the in-progress round untouched.
+local battleScene = require("engine.scenes.battle")
+local realGetState = battleScene.getState
+local queued = { type = "attack", target = {} }
+local inputState = {
+    combatState = "input",
+    selectedIndex = 2,
+    skillSelect = true,
+    activeMemberIdx = 2,
+    collectedActions = { [1] = queued },
+}
+battleScene.getState = function() return inputState end
+battleScene.showMessage("Darting Peck: Cooling down (1)")
+check(inputState.combatState == "input"
+        and inputState.skillSelect == true
+        and inputState.selectedIndex == 2
+        and inputState.activeMemberIdx == 2
+        and inputState.collectedActions[1] == queued,
+    "blocked skill feedback preserves the exact in-progress command state")
+check(inputState.currentHelpText == "Darting Peck: Cooling down (1)",
+    "blocked skill feedback is exposed through the command help text")
+battleScene.getState = realGetState
+
 -- Escaping is an effect, not a keyword. It used to be `act.type == "flee"`
 -- scanned before the round was built, so it preempted the whole round and no
 -- item could ever carry it. It resolves in speed order now, which is why the
