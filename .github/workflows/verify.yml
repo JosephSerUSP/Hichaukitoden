@@ -15,6 +15,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Phase B determinism evidence requires re-running the SAME commit on fresh
+  # runners; manual dispatch is how those repeat runs are triggered.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,7 +30,7 @@ jobs:
   phase-a:
     name: G1 + unit + save (Windows)
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     env:
       # Pinned deliberately: a floating "latest" would let an upstream release
@@ -90,8 +93,14 @@ jobs:
             throw "expected LOVE $env:LOVE_VERSION, got: $($reported.Trim())"
           }
 
+          $loveDir = Split-Path -Parent $lovec
           "LOVEC=$lovec" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "LOVE_DIR=$(Split-Path -Parent $lovec)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "LOVE_DIR=$loveDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          # tools/golden/check*.ps1 invoke a bare `lovec`, exactly as they do
+          # locally. Putting the install on PATH lets those scripts run unmodified
+          # rather than teaching CI a second way to locate the binary.
+          $loveDir | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Install Mesa software OpenGL ${{ env.MESA_VERSION }}
         shell: pwsh
@@ -163,6 +172,72 @@ jobs:
           $ErrorActionPreference = "Continue"
           & $env:LOVEC . savetest
           if ($LASTEXITCODE -ne 0) { throw "save gate failed (exit $LASTEXITCODE)" }
+
+      # ---------------------------------------------------------------------
+      # Phase B probe -- NON-BLOCKING on purpose.
+      #
+      # Issue #164 requires each golden gate to be exercised repeatedly from
+      # fresh hosted runners against the same known-good commit before it can be
+      # trusted as a required check; a single green run is not evidence of
+      # determinism. These steps therefore gather that evidence without being
+      # able to fail the job. Promoting them to required is a separate,
+      # deliberate change once the runs justify it.
+      #
+      # The gate scripts are invoked exactly as they are locally (bare `lovec`,
+      # resolved via PATH), so CI cannot drift from local semantics.
+      # ---------------------------------------------------------------------
+
+      - name: 'Phase B probe: G2 battle golden traces'
+        id: g2
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check.ps1
+          if ($LASTEXITCODE -ne 0) { throw "G2 mismatch (exit $LASTEXITCODE)" }
+
+      - name: 'Phase B probe: G3 UI golden traces'
+        id: g3
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check-ui.ps1
+          if ($LASTEXITCODE -ne 0) { throw "G3 mismatch (exit $LASTEXITCODE)" }
+
+      - name: 'Phase B probe: G4 engine-state consistency'
+        id: g4
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check-state.ps1
+          if ($LASTEXITCODE -ne 0) { throw "G4 mismatch (exit $LASTEXITCODE)" }
+
+      - name: 'Phase B probe: reachability (informational, never a gate)'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          & $env:LOVEC . reachability
+
+      - name: Phase B probe summary
+        if: always()
+        shell: pwsh
+        run: |
+          $rows = @(
+            @{ gate = "G2 battle";       result = "${{ steps.g2.outcome }}" }
+            @{ gate = "G3 UI";           result = "${{ steps.g3.outcome }}" }
+            @{ gate = "G4 engine-state"; result = "${{ steps.g4.outcome }}" }
+          )
+          "## Phase B probe (non-blocking)" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "| gate | result |" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "|---|---|" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          foreach ($r in $rows) {
+            "| $($r.gate) | $($r.result) |" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            Write-Host "$($r.gate): $($r.result)"
+          }
 
       - name: Assert verification left tracked files unchanged
         shell: pwsh
