@@ -126,6 +126,14 @@ it. Practical consequences an agent must internalize:
   (`GET /validate`) — it never re-implements rendering or schema in JS. If you
   find yourself writing a second version of something the engine already does,
   stop.
+- **Domain transitions happen exactly once.** The subsystem that owns a gameplay
+  mutation performs it to authoritative engine state; other layers may observe,
+  project, format, cache or animate the resolved fact, but must not rewind,
+  replay, repair, infer or independently reproduce that mutation. Battle is the
+  reference seam: `Battle:resolveRound()` leaves `Battle` / `Battler` /
+  `GameSession` fully resolved, while `presentation/battle_view.lua` may retain
+  an earlier visual frame until its event/animation beat lands. Adding a new
+  gameplay field must never require adding it to a presentation rollback list.
 - **One event editor, everywhere, sharing one clipboard.** Every command list
   in the editor — map, common, scene, battle phase, troop event, quest, action
   sequence, recruit event — is `renderCommandList`, and commands copy between

@@ -99,5 +99,136 @@ local outside = effects.apply(escapeEffect, actor, actor, sess, {})
 check(type(outside) == "table" and #outside == 0,
     "an escape effect outside battle does nothing rather than erroring")
 
+---------------------------------------------------------------- #179 authority --
+
+-- A detached battle view may show an earlier frame, but mutating/advancing it
+-- must never write back into the real Battler/GameSession graph.
+do
+    local battleView = require("presentation.battle_view")
+    local s = sessionModule.GameSession.new(loader)
+    s:initializeStartingParty()
+    s.mp, s.maxMp = 100, 100
+    local foe = sessionModule.Battler.new(loader.getActor(3), 1)
+    local b = battle.Battle.new(s, { foe })
+    local member = s.party[1]
+    member.hp = math.max(2, member:getMaxHp(s))
+    local beforeHp = member.hp
+
+    battleView.beginRound(s, b)
+    member.hp = math.max(0, beforeHp - 7)
+    s.mp = 63
+
+    local projectedState, projectedSession = battleView.projectState({ v = { battle = b } }, s)
+    check(projectedState ~= nil and projectedSession ~= nil,
+        "BattleView creates a detached draw projection for an active round")
+    check(projectedSession.party[1].hp == beforeHp and projectedSession.mp == 100,
+        "the projection keeps the pre-resolution visual HP/MP frame")
+
+    battleView.applyEvent({ type = "damage", target = member, value = 7,
+        hpBefore = beforeHp, hpAfter = beforeHp - 7 })
+    battleView.applyEvent({ type = "overcast", value = 37, mpBefore = 100, mpAfter = 63 })
+    check(projectedSession.party[1].hp == beforeHp - 7 and projectedSession.mp == 63,
+        "resolved damage/Overcast facts advance only the presentation projection")
+    check(member.hp == beforeHp - 7 and s.mp == 63,
+        "advancing BattleView leaves authoritative HP/MP untouched")
+
+    -- The inverse MP transition matters too: Reaper/KILL_MP_RESTORE was also
+    -- erased by the old MP rollback because presentation had no replay branch.
+    -- Here the engine has already resolved 63 -> 75; the event merely catches
+    -- the detached visual pool up to that fact.
+    s.mp = 75
+    battleView.applyEvent({ type = "kill_mp_restore", value = 12,
+        mpBefore = 63, mpAfter = 75 })
+    check(projectedSession.mp == 75,
+        "KILL_MP_RESTORE advances the projected MP to the engine's resolved value")
+    check(s.mp == 75,
+        "projecting a Reaper MP reward does not perform the authoritative restore again")
+
+    -- Party membership is the other dangerous clock. A wave/reap visual may
+    -- temporarily show a different slot occupant, but the real session is not
+    -- a presentation scratchpad and must never move with that projection.
+    battleView.applyWaveEntry({ slot = 1, battler = foe, reserveKey = 1 })
+    check(projectedSession.party[1].name == foe.name,
+        "a wave can advance projected slot membership")
+    check(s.party[1] == member,
+        "projecting a wave does not rewrite authoritative party membership")
+    battleView.applyReap({ slot = 1 })
+    check(projectedSession.party[1].name == member.name,
+        "reap projection can converge the visual slot to authoritative membership")
+    check(s.party[1] == member,
+        "converging a reap projection leaves authoritative party membership untouched")
+    battleView.clear()
+end
+
+-- Regression specimen discovered while investigating #179: Overcast was paid
+-- by Battle:resolveRound(), then the live scene wrapper restored the old MP and
+-- had no `overcast` replay branch, making the cast free only in live play.
+do
+    local sceneHost = require("engine.scene_host")
+    local battleScene = require("engine.scenes.battle")
+    local battleView = require("presentation.battle_view")
+    local oldGetSkill = loader.getSkill
+    local testSkill = {
+        id = "testOvercast179", name = "Test Overcast", target = "enemy",
+        speed = 999, effects = {}, charges = 0, overcast = { mp = 37 },
+    }
+    loader.getSkill = function(id)
+        if id == testSkill.id then return testSkill end
+        return oldGetSkill(id)
+    end
+
+    local s = sessionModule.GameSession.new(loader)
+    s:initializeStartingParty()
+    s.mp, s.maxMp = 100, 100
+    local member = s.party[1]
+    member.skills = { testSkill.id }
+    local foe = sessionModule.Battler.new(loader.getActor(3), 1)
+    foe.hp = foe:getMaxHp(s)
+    local b = battle.Battle.new(s, { foe })
+
+    local oldGlobal = _G.activeSession
+    _G.activeSession = s
+    sceneHost.init()
+    sceneHost.push("battle", { session = s, loader = loader, party = s.party })
+    local v = battleScene.getState()
+    v.battle = b
+    v.collectedActions = { [1] = { type = "skill", id = testSkill.id, target = foe } }
+    battleScene.resolveRound()
+
+    check(s.mp == 63,
+        "live scene resolution preserves the authoritative Overcast MP spend")
+    check(battleView.isActive(),
+        "live scene resolution starts a presentation projection instead of rolling state back")
+
+    battleView.clear()
+    sceneHost.init()
+    _G.activeSession = oldGlobal
+    loader.getSkill = oldGetSkill
+end
+
+-- REAP_FALLEN is the semantic authority on permanent death. By the time its
+-- immediate-mode command returns, the real party slot must already reflect the
+-- decision; the reap animation is allowed to delay only what is drawn.
+do
+    local interpreter = require("engine.interpreter")
+    local s = sessionModule.GameSession.new(loader)
+    s:initializeStartingParty()
+    local member = s.party[1]
+    -- Isolate one occupied slot so autoFieldIfEmpty has nothing else to refill.
+    for i = 2, 4 do s.party[i] = nil end
+    s.reserve = {}
+    member.hp = 0
+    member:addState("dead")
+    local b = battle.Battle.new(s, {})
+    local evs = interpreter.runImmediate({ { cmd = "REAP_FALLEN" } }, {
+        session = s, battle = b, party = s.party, enemies = {}, events = {},
+    })
+    local sawReap = false
+    for _, ev in ipairs(evs) do if ev.type == "reap" then sawReap = true end end
+    check(sawReap, "REAP_FALLEN emits the presentation fact for a permanent death")
+    check(s.party[1] == nil,
+        "REAP_FALLEN removes the authoritative party slot before presentation")
+end
+
 print(string.format("=== Battle Command Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then require("tests.fail_fast")(failed .. " battle command test(s) failed", failed) end

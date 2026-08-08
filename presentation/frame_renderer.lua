@@ -9,10 +9,42 @@ function frame_renderer.draw(scene_host, renderer, session, loader, gameHeight)
     local ctx = { session = session, loader = loader, party = session and session.party or {} }
     local stringPictures = require("presentation.string_picture_renderer")
     local imagePictures = require("presentation.image_picture_renderer")
+
+    -- #179: while a resolved round is still being revealed, draw from a
+    -- detached presentation projection. Keep this substitution entirely on
+    -- the presentation side: scene_host still owns its real scene state and
+    -- knows nothing about BattleView. Only the battle reference is swapped for
+    -- the duration of this draw call; Battler/GameSession domain objects are
+    -- never rewound or replayed.
+    local projectedState = nil
+    local realBattle = nil
+    if scene_host.getCurrent() == "battle" then
+        local battle_view = require("presentation.battle_view")
+        local state = scene_host.getCurrentState()
+        local projectedSession
+        projectedState, projectedSession = battle_view.projectState(state, session)
+        if projectedState and projectedSession then
+            ctx.session = projectedSession
+            ctx.party = projectedSession.party
+            if state and state.v then
+                realBattle = state.v.battle
+                state.v.battle = projectedState.v.battle
+            end
+        end
+    end
+
     scene_host.draw(ctx)
 
+    -- Restore the scene's real Battle immediately after drawing. This is a
+    -- presentation reference substitution only; no domain field is changed.
+    if realBattle ~= nil then
+        local state = scene_host.getCurrentState()
+        if state and state.v then state.v.battle = realBattle end
+    end
+
     if scene_host.getCurrent() == "battle" then
-        local bv = require("engine.scenes.battle").getState()
+        local bv = projectedState and projectedState.v
+            or require("engine.scenes.battle").getState()
         renderer.drawTargetReticles(
             bv, bv.combatState or "input", bv.selectedIndex or 1,
             bv.skillSelect or false, bv.itemSelect or false,

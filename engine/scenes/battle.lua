@@ -27,6 +27,7 @@ local session = require("engine.session")
 local config = require("engine.config")
 local loader = require("data.loader")
 local animation_player = require("presentation.animation_player")
+local battle_view = require("presentation.battle_view")
 local compareIds = require("engine.inventory").compareIds
 local progress = require("engine.progress")
 
@@ -113,6 +114,7 @@ end
 battle.onResolved = nil
 
 local function resolved(outcome)
+    battle_view.clear()
     if battle.onResolved then battle.onResolved(outcome) end
 end
 
@@ -136,6 +138,7 @@ function battle.triggerBattle(troopId)
     end
     if not enemyList or #enemyList == 0 then return end
 
+    battle_view.clear()
     -- CRITICAL: goto_scene must come FIRST — it creates a fresh scene state (v = {}).
     -- Setting state variables before goto_scene would write to the OLD scene and lose them.
     scene_host.goto_scene("battle", { session = sess(), loader = ldr(), party = sess().party })
@@ -162,6 +165,7 @@ end
 -- Test battle (used by command-line test-battle mode)
 -------------------------------------------------------------------------------
 function battle.triggerTestBattle()
+    battle_view.clear()
     local enemyList = {}
     local gData = ldr().getActor(1) or { id = "enemy_1", name = "Test Target A", level = 1 }
     local b1 = session.Battler.new(gData, 1)
@@ -197,47 +201,19 @@ function battle.getTargetCoords(target)
 end
 
 -------------------------------------------------------------------------------
--- Resolves combat rounds with dynamic state backup/restore
+-- Resolve authoritative combat once; presentation owns its own earlier frame
 -------------------------------------------------------------------------------
 function battle.resolveRound()
     local v = battle.getState()
     local actBattle = v.battle
     if not actBattle then return {} end
 
-    local backups = {}
-    for _, b in ipairs(actBattle:getAllActiveBattlers()) do
-        local stateCopy = {}
-        for _, st in ipairs(b.states) do
-            table.insert(stateCopy, { id = st.id, duration = st.duration, maxDuration = st.maxDuration })
-        end
-        backups[b] = {
-            hp = b.hp,
-            states = stateCopy
-        }
-    end
-    local mpBackup = sess().mp
-    -- Emergency wave (Summoner rework §3): back up party/reserve SLOT
-    -- membership too, same idea as the hp/mp backups above — a same-round
-    -- swap must not silently show in the party grid before its "wave"
-    -- event is actually revealed in the log. The real writes are replayed
-    -- by processEvent's "wave" handler, timed to the swap animation.
-    local partyBackup = {}
-    for i = 1, config.MAX_PARTY_SIZE do partyBackup[i] = sess().party[i] end
-    local reserveBackup = {}
-    for k, b in pairs(sess().reserve or {}) do reserveBackup[k] = b end
-
-    local events = actBattle:resolveRound(v.collectedActions)
-
-    -- Restore backup states immediately so the UI can apply changes step-by-step
-    for b, bk in pairs(backups) do
-        b.hp = bk.hp
-        b.states = bk.states
-    end
-    sess().mp = mpBackup
-    for i = 1, config.MAX_PARTY_SIZE do sess().party[i] = partyBackup[i] end
-    sess().reserve = reserveBackup
-
-    return events
+    -- #179: capture only what presentation needs BEFORE the engine advances.
+    -- Battle:resolveRound then commits the real Battle/Battler/GameSession graph
+    -- exactly once. Nothing below rewinds HP, states, MP, party membership or
+    -- any future semantic field merely to make an animation land later.
+    battle_view.beginRound(sess(), actBattle)
+    return actBattle:resolveRound(v.collectedActions)
 end
 
 -------------------------------------------------------------------------------
@@ -247,71 +223,71 @@ local function processEvent(ev)
     local v = battle.getState()
     local popupX, popupY = battle.getTargetCoords(ev.target)
     local desc = ""
+    local function visualTarget(target)
+        return battle_view.target(target)
+    end
+    local function isEnemy(target)
+        if not (v.battle and target) then return false end
+        for _, enemy in ipairs(v.battle.enemies or {}) do
+            if enemy == target then return true end
+        end
+        return false
+    end
 
     if ev.type == "text" then
+        battle_view.applyEvent(ev)
         desc = ev.text
         if ev.animation then
-            animation_player.play(ev.animation, ev.itemTarget or ev.target)
+            animation_player.play(ev.animation, visualTarget(ev.itemTarget or ev.target))
         end
     elseif ev.type == "action" then
+        battle_view.applyEvent(ev)
         desc = ldr().formatTerm("battle.uses_skill", "{0} uses {1} on {2}!", ev.actor.name, ev.skill.name, ev.target.name)
-        animation_player.play("system.action_flash", ev.actor)
-        if v.battle then
-            for idx, enemy in ipairs(v.battle.enemies) do
-                if enemy == ev.actor then
-                    renderer.triggerActionFlash(idx, "action")
-                    break
-                end
-            end
-        end
+        animation_player.play("system.action_flash", visualTarget(ev.actor))
     elseif ev.type == "play_anim" then
         local target = ev.on or ev.target or (v.battle and v.battle.enemies[1])
         if target then
-            animation_player.play(ev.animId, target)
+            animation_player.play(ev.animId, visualTarget(target))
         end
     elseif ev.type == "damage" then
-        animation_player.onComplete(ev.target, function()
+        local target = visualTarget(ev.target)
+        animation_player.onComplete(target, function()
             local fmt = conf("battle_screen", "popup", {}).damageFormat or "-{0}"
             local text = fmt:gsub("{0}", tostring(ev.value))
             local color = conf("battle_screen", "popup", {}).damageColor or {1, 0.2, 0.2, 1}
             renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target.hp = math.max(0, ev.target.hp - ev.value)
-            if v.battle then
-                local isEnemy = false
-                for idx, enemy in ipairs(v.battle.enemies) do
-                    if enemy == ev.target then
-                        renderer.triggerActionFlash(idx, "damage")
-                        isEnemy = true
-                        break
-                    end
-                end
-                if not isEnemy then
-                    renderer.triggerSmallDamage(ev.target)
-                end
+            battle_view.applyEvent(ev)
+            if isEnemy(ev.target) then
+                animation_player.play("system.damage_flash", target)
+            else
+                renderer.triggerSmallDamage(target)
             end
         end)
     elseif ev.type == "heal" then
-        animation_player.onComplete(ev.target, function()
+        local target = visualTarget(ev.target)
+        animation_player.onComplete(target, function()
             local fmt = conf("battle_screen", "popup", {}).healFormat or "+{0}"
             local text = fmt:gsub("{0}", tostring(ev.value))
             local color = conf("battle_screen", "popup", {}).healColor or {0.2, 1, 0.2, 1}
             renderer.addDamagePopup(text, popupX, popupY, color)
-            local cap = ev.cap or ev.target:getMaxHp(sess())
-            ev.target.hp = math.max(ev.target.hp, math.min(cap, ev.target.hp + ev.value))
+            battle_view.applyEvent(ev)
         end)
-    elseif ev.type == "hp_clamp" then
-        -- Temporary Max-HP expiry is a non-damage transition. Apply the
-        -- resolved value without a popup, death state, or damage reaction.
-        ev.target.hp = math.min(ev.target.hp, ev.value)
+    elseif ev.type == "hp_clamp" or ev.type == "max_hp_change" then
+        -- Capacity changes are already resolved facts. The projection catches
+        -- up without producing damage/death feedback or touching the battler.
+        battle_view.applyEvent(ev)
     elseif ev.type == "death" then
-        animation_player.onComplete(ev.target, function()
+        local target = visualTarget(ev.target)
+        animation_player.onComplete(target, function()
             local fmt = conf("battle_screen", "popup", {}).deadFormat or "DEAD"
             local color = conf("battle_screen", "popup", {}).deadColor or {0.6, 0.6, 0.6, 1}
             renderer.addDamagePopup(fmt, popupX, popupY, color)
-            ev.target:addState("dead")
-            ev.target.hp = 0
-            if v.battle then
-                for idx, enemy in ipairs(v.battle.enemies) do
+            battle_view.applyEvent(ev)
+            if isEnemy(ev.target) then
+                -- Keep renderer's deadEnemyFlags keyed to the same projected
+                -- identity it draws; otherwise the death animation finishes
+                -- and the enemy becomes visible again.
+                for idx, enemy in ipairs(v.battle.enemies or {}) do
                     if enemy == ev.target then
                         renderer.triggerDeathAnim(idx)
                         break
@@ -320,19 +296,21 @@ local function processEvent(ev)
             end
         end)
     elseif ev.type == "state_add" then
-        animation_player.onComplete(ev.target, function()
+        local target = visualTarget(ev.target)
+        animation_player.onComplete(target, function()
             local fmt = conf("battle_screen", "popup", {}).stateFormat or "{0}"
             local text = fmt:gsub("{0}", ev.state:upper())
             local color = conf("battle_screen", "popup", {}).stateColor or {0.8, 0.4, 1.0, 1}
             renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target:addState(ev.state, ev.duration)
+            battle_view.applyEvent(ev)
         end)
     elseif ev.type == "state_remove" then
-        animation_player.onComplete(ev.target, function()
-            ev.target:removeState(ev.state)
+        local target = visualTarget(ev.target)
+        animation_player.onComplete(target, function()
+            battle_view.applyEvent(ev)
         end)
-    elseif ev.type == "mp_drain" then
-        sess().mp = math.max(0, sess().mp - ev.value)
+    elseif ev.type == "mp_drain" or ev.type == "overcast" or ev.type == "kill_mp_restore" then
+        battle_view.applyEvent(ev)
     elseif ev.type == "victory" then
         desc = ldr().getTerm("battle.victory_full", "Victory! All hostile forces vanquished.")
     elseif ev.type == "defeat" then
@@ -341,50 +319,39 @@ local function processEvent(ev)
         desc = ldr().getTerm("battle.flee_success", "Escaped successfully!")
         v.escaped = true
     elseif ev.type == "wave" then
-        -- Emergency wave (Summoner rework §3): the swap stands in for a
-        -- game over, so it needs to read as a distinct, understandable
-        -- beat, not a buried log line or a silent instant substitution.
-        -- resolveRound's wrapper reverted session.party/reserve to their
-        -- pre-round state (see battle.resolveRound), so at this exact
-        -- moment — when the log actually reveals the event, not when the
-        -- engine originally resolved it — the party grid still shows the
-        -- OLD (dead) occupants. Each slot gets its own staggered flip:
-        -- the outgoing spirit shrinks (system.swap_out), and only once
-        -- THAT finishes does the real slot write land and the incoming
-        -- spirit grow in (system.swap_in) — a per-slot "card flip", not a
-        -- screen-wide pop. An amber screen-flash marks the whole beat.
+        -- Emergency wave is already authoritative when resolveRound returns.
+        -- BattleView intentionally keeps the old party visible until this beat,
+        -- then advances only its projected slot membership as the card-flip
+        -- animation lands. No session.party/reserve writes occur here.
         local STAGGER = 0.15
         local pending = ev.pending or {}
-        if pending[1] then animation_player.play("system.wave", pending[1].battler) end
+        if pending[1] then
+            animation_player.play("system.wave", visualTarget(pending[1].battler))
+        end
         for i, p in ipairs(pending) do
             local delayMs = (i - 1) * STAGGER * 1000
+            local incoming = visualTarget(p.battler)
             if p.outgoing then
-                animation_player.play("system.swap_out", p.outgoing, delayMs)
-                animation_player.onComplete(p.outgoing, function()
-                    sess().party[p.slot] = p.battler
-                    sess().reserve[p.reserveKey] = nil
-                    animation_player.play("system.swap_in", p.battler)
+                local outgoing = visualTarget(p.outgoing)
+                animation_player.play("system.swap_out", outgoing, delayMs)
+                animation_player.onComplete(outgoing, function()
+                    battle_view.applyWaveEntry(p)
+                    animation_player.play("system.swap_in", incoming)
                 end)
             else
-                -- Empty slot (reserve ran shorter than the wipe) — nothing
-                -- to shrink out, just place the incoming spirit and grow
-                -- it in on the same stagger as the others.
-                sess().party[p.slot] = p.battler
-                sess().reserve[p.reserveKey] = nil
-                animation_player.play("system.swap_in", p.battler, delayMs)
+                battle_view.applyWaveEntry(p)
+                animation_player.play("system.swap_in", incoming, delayMs)
             end
         end
     elseif ev.type == "reap" then
-        -- Permadeath (Summoner rework §3): one animation + one dedicated
-        -- log line per fallen spirit, individually, like "action"/"death".
-        -- The actual party[slot] removal is deferred until the animation
-        -- finishes (onComplete), so the spirit visibly fades in the party
-        -- grid instead of vanishing the instant the log line appears.
-        animation_player.play("system.reap", ev.target)
+        -- REAP_FALLEN has already removed the creature from authoritative
+        -- party state. Keep its projected card alive until the fade finishes,
+        -- then converge that one visual slot to the engine's resolved roster.
+        local target = visualTarget(ev.target)
+        animation_player.play("system.reap", target)
         desc = ldr().formatTerm("battle.reaped", "{0} has passed away.", ev.target.name)
-        animation_player.onComplete(ev.target, function()
-            if ev.slot then sess().party[ev.slot] = nil end
-            sess():autoFieldIfEmpty()
+        animation_player.onComplete(target, function()
+            battle_view.applyReap(ev)
         end)
     end
 
@@ -415,6 +382,7 @@ function battle.advanceLog()
                 if nextEv.type == "damage" or nextEv.type == "heal" or nextEv.type == "hp_clamp" or
                    nextEv.type == "max_hp_change" or nextEv.type == "death" or
                    nextEv.type == "state_add" or nextEv.type == "state_remove" or nextEv.type == "mp_drain" or
+                   nextEv.type == "overcast" or nextEv.type == "kill_mp_restore" or
                    nextEv.type == "play_anim" then
                     v.eventQueueIndex = v.eventQueueIndex + 1
                     processEvent(nextEv)
@@ -643,21 +611,10 @@ function battle.handleTransition(action)
     if v.combatState ~= "log"
         or v.eventQueueIndex <= #(v.eventsQueue or {}) then return false end
 
-    -- Bug fix (owner report, 17.07.2026): a lethal hit's damage/death
-    -- mutation is deferred to animation_player.onComplete, gated behind
-    -- that event's own animation (e.g. a delayed skill-cast effect on the
-    -- target can run 1-2s past when its log LINE finishes revealing).
-    -- battle.update's auto-advance already refuses to proceed while
-    -- anything is still playing, but a player-pressed SPACE reaches this
-    -- function directly and has no such guard — so victory/defeat could
-    -- fire, and battle.victory's REAP_FALLEN could check isDead() on a
-    -- battler, BEFORE that battler's own lethal-hit callback had actually
-    -- landed: hp/dead-state still read pre-death, REAP_FALLEN misses it,
-    -- and the deferred callback finally applies moments later with
-    -- nothing left to process it — a party member stuck permanently
-    -- "dead" (hp/tint eventually update) but never reaped. Matching
-    -- battle.update's own gate here closes the race at its only other
-    -- entry point.
+    -- #179: animations gate only PRESENTATION progression now. Domain truth is
+    -- already fully resolved before the first log event is shown, so victory,
+    -- REAP_FALLEN and other engine rules no longer depend on a presentation
+    -- callback having performed a delayed HP/death mutation.
     if animation_player.isAnythingPlaying() then return false end
 
     -- Reap ("{name} has passed away") messages queued below drain through
@@ -667,6 +624,7 @@ function battle.handleTransition(action)
         local nextState = v.pendingAfterReap
         v.pendingAfterReap = nil
         if nextState == "victory" then
+            battle_view.clear()
             v.combatState = "victory"
         elseif nextState == "escaped" then
             scene_host.goto_scene("map")
@@ -682,7 +640,15 @@ function battle.handleTransition(action)
     local function queueReapEvents(flowEvents, nextState)
         local reaped = {}
         for _, ev in ipairs(flowEvents) do
-            if ev.type == "reap" then table.insert(reaped, ev) end
+            if ev.type == "reap" then
+                table.insert(reaped, ev)
+            else
+                -- Ward saves and other already-resolved facts may accompany
+                -- reaps in the same end-of-battle flow. Advance their visual
+                -- projection now; ignoring them would leave a saved creature
+                -- looking dead until BattleView is discarded.
+                battle_view.applyEvent(ev)
+            end
         end
         if #reaped == 0 then return false end
         v.eventsQueue = v.eventsQueue or {}
@@ -737,6 +703,7 @@ function battle.handleTransition(action)
         v.levelUpIndex = 0
         progress.publish(v, v.levelUps, 0)
         if not queueReapEvents(flowEvents, "victory") then
+            battle_view.clear()
             v.combatState = "victory"
         end
     elseif b:isDefeat() then
@@ -753,6 +720,7 @@ function battle.handleTransition(action)
             end
         end
         if toGameOver then
+            battle_view.clear()
             -- Staged defeat sequence: background fades to fully black -> a
             -- dramatic pause -> a second fade covers the party dock and
             -- monsters -> THEN hand off to game_over. The persistent dock
@@ -778,6 +746,7 @@ function battle.handleTransition(action)
             resolved("escaped")
         end
     else
+        battle_view.clear()
         battle.rebuildLivingMembers()
         v.combatState = "input"
         v.selectedIndex = 1
@@ -819,6 +788,7 @@ local DEFEAT_STAGE1_DUR = 0.7  -- dramatic pause, held black background
 local DEFEAT_STAGE2_DUR = 0.6  -- final fade to full black
 
 function battle.update(dt)
+    battle_view.update(dt)
     local v = battle.getState()
     if not v or not v.battle then
         autoAdvanceTimer = 0
@@ -851,6 +821,7 @@ function battle.update(dt)
             if v.defeatTargetScene then
                 local target = v.defeatTargetScene
                 v.defeatTargetScene = nil
+                battle_view.clear()
                 scene_host.goto_scene(target, { session = sess(), loader = ldr(), party = sess().party })
             end
         end
@@ -897,6 +868,7 @@ function battle.update(dt)
                     local delay = conf("battle_screen", "autoAdvanceDelay", 1.2)
                     if autoAdvanceTimer >= delay then
                         autoAdvanceTimer = 0
+                        battle_view.clear()
                         battle.rebuildLivingMembers()
                         v.combatState = "input"
                         v.selectedIndex = 1
