@@ -14,6 +14,8 @@ the order they were run, because each one spends the previous one's answer:
     negprompt     did the face/margin negative terms actually work (measured)
     newmodels     do purpose-trained texture models beat repurposed ones
     lora-family   which LoRA arm wins per wall subject, stacks included
+    stack-partner which style LoRA best partners a texture LoRA, low ranks
+                  included -- a solo score cannot predict this
 
 The XL checkpoints are deliberately not included.  This Forge installation is
 the project's 4 GB SD1.5 profile; sending SDXL checkpoints through the SD1.5
@@ -595,6 +597,92 @@ def lora_family_groups(variants):
     return groups
 
 
+# A seventh experiment, and a correction to the sixth.
+#
+# `lora-family` picks its two stack partners (Genesis, resevil) because those
+# two scored best ALONE. That is the wrong criterion, and the owner caught it:
+# solo score measures "can this LoRA draw stone", but in a stack the texture
+# LoRA is already doing that job, and what remains for the partner is a
+# rendering aesthetic that solo scoring cannot see. A LoRA that is hopeless at
+# masonry on its own may be the best tint on top of one that is not -- FF8BG
+# sits at 2.13 alone and is a Final Fantasy BACKGROUND LoRA, which is exactly
+# the kind of prior that should compose rather than compete.
+#
+# So this holds the texture LoRA fixed at the top of its class and sweeps the
+# partner across the whole bottom of the library. `quake_solo` is carried inside
+# the grid, not inferred from another report, because the only question that
+# matters is whether a partner beats no partner at all on the same seed.
+STACK_PARTNERS = [
+    ("solo", None),                          # Quake alone -- the baseline
+    ("ps1", "Hideous_PS1_Game"),             # 2.54 alone
+    ("ffix", "FFIX-10"),                     # 2.49 alone
+    ("pc90", "1990's_PC_v2"),                # 2.42 alone
+    ("ogrebattle", "Ogre_Battle_SNES64"),    # 2.17 alone
+    ("ff8bg", "FF8BG"),                      # 2.13 alone -- worst, and a BG LoRA
+]
+
+STACK_BASE = ("Quake_Texture_v1", 0.7)
+
+# Two checkpoints and two families rather than four of each: the partner is the
+# factor under test, and this keeps the grid at 24 jobs (~1.2h) instead of 96.
+# masonry and cathedral are the pair because they bracket the difficulty --
+# cathedral was the hardest family on 08.08 (1.73) and plain masonry the median.
+STACK_MODELS = [
+    ("anylora", "anyloraCheckpoint_lcm"),
+    ("ohmen", "ohmenOrigins_ohmenOriginsV3"),
+]
+
+STACK_FAMILIES = ("masonry", "cathedral")
+
+
+def stack_partner_groups(variants, depth_weight=None):
+    """One report per family; Quake against every low-ranked style partner.
+
+    Seeds match `lora_family_groups` for the same family, so a card here is the
+    direct counterpart of that experiment's `quake` and `quake_genesis` cards
+    and the two reports can be read together.
+    """
+    weight = LORA_DEPTH_WEIGHT if depth_weight is None else depth_weight
+    bodies = dict(PROMPT_BODIES)
+    index_of = {prompt_id: index
+                for index, (prompt_id, _) in enumerate(PROMPT_BODIES, 1)}
+    groups = []
+    for prompt_id in STACK_FAMILIES:
+        body = bodies[prompt_id]
+        seed = 940000 + index_of[prompt_id] * 100
+        jobs = []
+        for model_key, model in STACK_MODELS:
+            for partner_key, partner in STACK_PARTNERS:
+                stack = [STACK_BASE]
+                if partner:
+                    stack.append((partner, 0.35))
+                jobs.append({
+                    "name": f"stack_{prompt_id}_{model_key}_{partner_key}",
+                    "class": "wallPiece",
+                    "provider": "forge-quality",
+                    "model": model,
+                    # Always a texture stack here, so the trigger is always on.
+                    "description": (f"diffuse texture, {body}, "
+                                    f"{MATERIAL_SUFFIXES['ao']}"),
+                    "height": HEIGHT,
+                    "depthWeight": weight,
+                    "variants": variants,
+                    "steps": 20,
+                    "cfg": 6.5,
+                    "seed": seed,
+                    "requestSize": "256x256",
+                    "loras": [{"name": name, "weight": w} for name, w in stack],
+                })
+        groups.append({
+            "id": prompt_id,
+            "label": (f"stack partner sweep: {prompt_id}; Quake_Texture_v1 at "
+                      f"{STACK_BASE[1]} plus one style LoRA at 0.35; "
+                      f"ControlNet depth weight {weight:.2f}"),
+            "jobs": jobs,
+        })
+    return groups
+
+
 def check_not_retired(groups):
     """Refuse to spend a night re-rating a checkpoint already rejected.
 
@@ -654,7 +742,8 @@ def write_report(group_id, group_label, runs, experiment):
               "surface-kit-ao": "surface-kit",
               "negprompt": "negprompt",
               "newmodels": "newmodels",
-              "lora-family": "lora-family"}.get(experiment, "overnight-wall")
+              "lora-family": "lora-family",
+              "stack-partner": "stack-partner"}.get(experiment, "overnight-wall")
     report_path = OUT / f"{prefix}-{group_id}-matrix.html"
     command = [sys.executable, str(GEN), "report"]
     command.extend(str(path) for path in runs)
@@ -674,7 +763,8 @@ def main():
     parser.add_argument("--variants", type=int, default=2)
     parser.add_argument("--experiment",
                         choices=("checkpoint", "style-depth", "surface-kit", "surface-kit-ao",
-                                 "negprompt", "newmodels", "lora-family"),
+                                 "negprompt", "newmodels", "lora-family",
+                                 "stack-partner"),
                         default="checkpoint")
     parser.add_argument("--only", nargs="*", help="report group ids, for a smaller rerun")
     args = parser.parse_args()
@@ -689,6 +779,7 @@ def main():
         "negprompt": negprompt_groups,
         "newmodels": newmodels_groups,
         "lora-family": lora_family_groups,
+        "stack-partner": stack_partner_groups,
         "checkpoint": checkpoint_groups,
     }[args.experiment](args.variants)
     selected = [group for group in groups if not args.only or group["id"] in args.only]
