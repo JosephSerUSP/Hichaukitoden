@@ -36,6 +36,19 @@ jobs:
       # that report is stale -- see issue #155.)
       LOVE_VERSION: "11.5"
       LOVE_URL: "https://github.com/love2d/love/releases/download/11.5/love-11.5-win64.zip"
+      LOVE_SHA256: "BA6E56BE2685E53C817749C4A5007F51137136FE5A3AB64920508BABC2E74369"
+
+      # A hosted Windows runner has no GPU: it offers only "1.1.0 - GDI Generic"
+      # while LOVE requires OpenGL 2.1+. Without a software driver LOVE does not
+      # merely fail -- it raises a modal message box that blocks until the job
+      # times out (observed on the first run of this workflow). Mesa's llvmpipe
+      # supplies the missing driver on the CPU.
+      MESA_VERSION: "26.1.6"
+      MESA_URL: "https://github.com/pal1000/mesa-dist-win/releases/download/26.1.6/mesa3d-26.1.6-release-msvc.7z"
+
+      # The runner has no audio endpoint either (ALCwasapiPlayback_open failed).
+      # LOVE survives that, but the dummy driver keeps it off the startup path.
+      SDL_AUDIODRIVER: "dummy"
 
     steps:
       - name: Check out the commit under test
@@ -52,10 +65,13 @@ jobs:
 
           Invoke-WebRequest -Uri $env:LOVE_URL -OutFile $zip -MaximumRetryCount 3 -RetryIntervalSec 5
 
-          # Recorded so the digest can be pinned in a follow-up once observed
-          # from a real run; a release asset is not immutable by contract.
+          # A GitHub release asset is not immutable by contract, so the pin is a
+          # digest, not just a version number.
           $sha = (Get-FileHash $zip -Algorithm SHA256).Hash
           Write-Host "love-$env:LOVE_VERSION-win64.zip SHA256: $sha"
+          if ($sha -ne $env:LOVE_SHA256) {
+            throw "LOVE archive digest mismatch`n  expected: $($env:LOVE_SHA256)`n  actual:   $sha"
+          }
 
           Expand-Archive -Path $zip -DestinationPath $dest -Force
 
@@ -74,6 +90,49 @@ jobs:
           }
 
           "LOVEC=$lovec" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "LOVE_DIR=$(Split-Path -Parent $lovec)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Install Mesa software OpenGL ${{ env.MESA_VERSION }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $archive = Join-Path $env:RUNNER_TEMP "mesa.7z"
+          $mesa = Join-Path $env:RUNNER_TEMP "mesa"
+
+          Invoke-WebRequest -Uri $env:MESA_URL -OutFile $archive -MaximumRetryCount 3 -RetryIntervalSec 5
+          Write-Host "mesa3d-$env:MESA_VERSION-release-msvc.7z SHA256: $((Get-FileHash $archive -Algorithm SHA256).Hash)"
+
+          & 7z x $archive "-o$mesa" -y | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "failed to extract Mesa archive" }
+
+          # Discovered, not assumed: the archive's internal layout is upstream's
+          # to change. Windows resolves opengl32.dll next to the executable
+          # before the system copy, so dropping the x64 build beside lovec.exe
+          # is what swaps GDI Generic for llvmpipe.
+          $dll = Get-ChildItem -Path $mesa -Recurse -Filter "opengl32.dll" |
+                 Where-Object { $_.FullName -match "x64" } |
+                 Select-Object -First 1
+          if (-not $dll) { throw "opengl32.dll (x64) not found in Mesa archive" }
+
+          Copy-Item -Path (Join-Path $dll.DirectoryName "*.dll") -Destination $env:LOVE_DIR -Force
+          Write-Host "installed software OpenGL into $env:LOVE_DIR"
+
+          # Prove the swap took effect before any gate depends on it. LOVE prints
+          # its renderer when it can create a window; failing here keeps a driver
+          # problem from surfacing as an unexplained hang inside a gate.
+          $probe = Join-Path $env:RUNNER_TEMP "glprobe"
+          New-Item -ItemType Directory -Path $probe -Force | Out-Null
+          @'
+          function love.load()
+            local name, version, vendor, device = love.graphics.getRendererInfo()
+            print(string.format("renderer: %s | %s | %s | %s", name, version, vendor, device))
+            love.event.quit(0)
+          end
+          '@ | Set-Content -Path (Join-Path $probe "main.lua") -Encoding utf8
+
+          $info = & $env:LOVEC $probe 2>&1 | Out-String
+          Write-Host $info.Trim()
+          if ($info -notmatch "renderer:") { throw "LOVE could not create an OpenGL context" }
 
       # The three verification commands below are the project's canonical entry
       # points, invoked unmodified. Gate semantics live in the repository, not
