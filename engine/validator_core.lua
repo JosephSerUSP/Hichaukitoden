@@ -7,6 +7,7 @@ local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
 local config = require("engine.config")
+local barriers = require("engine.barriers")
 local itemModelView = require("presentation.item_model_view")
 
 validator.run = function(loader)
@@ -3645,6 +3646,11 @@ elseif paramDef.type == "script" then
 
     print("[validator] total SCRIPT usages: " .. scriptUsageCount)
     print("[validator] total deprecated usages: " .. deprecatedUsageCount)
+
+    -- Barrier specs (#165) are structurally rejected rather than warned about:
+    -- a malformed stack count, reduction or match kind must stop G1 before dead
+    -- barrier content can reach a battle.
+    barriers.validateData(loader)
 
     if #problems > 0 then
         error(table.concat(problems, "\n"), 0)

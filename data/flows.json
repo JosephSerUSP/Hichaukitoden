@@ -9,6 +9,34 @@
         "cmd": "SPAWN_ENEMIES"
       },
       {
+        "cmd": "COMMENT",
+        "text": "Barriers are encounter-local: clear whatever survived the last fight, then let BARRIER_GRANT traits (passives, equipment, states) lay down their opening stacks. Runs after SPAWN_ENEMIES so enemies exist to receive them."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "BARRIER_SYNC",
+            "target": "ally",
+            "trigger": "battle_start"
+          }
+        ]
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_enemies",
+        "as": "enemy",
+        "do": [
+          {
+            "cmd": "BARRIER_SYNC",
+            "target": "enemy",
+            "trigger": "battle_start"
+          }
+        ]
+      },
+      {
         "cmd": "RUN_TROOP_EVENTS",
         "at": "battle_start"
       },
@@ -35,6 +63,34 @@
       {
         "cmd": "COMMENT",
         "text": "Start of a round, before actions are collected. Nothing structural happens here yet -- the phase exists so a troop can act at the top of a round (a boss taunting, a hazard ticking) without that becoming engine code."
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Refreshing producers restore their minimum stack count for the new round. `refresh` raises to the authored minimum rather than adding, so a barrier cannot stockpile across a long fight. Runs before troop events so a troop script sees the refreshed count."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "BARRIER_SYNC",
+            "target": "ally",
+            "trigger": "round_start"
+          }
+        ]
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_enemies",
+        "as": "enemy",
+        "do": [
+          {
+            "cmd": "BARRIER_SYNC",
+            "target": "enemy",
+            "trigger": "round_start"
+          }
+        ]
       },
       {
         "cmd": "RUN_TROOP_EVENTS",
@@ -107,6 +163,34 @@
                 ]
               }
             ]
+          }
+        ]
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Age optional barrier durations once the round is fully resolved. Stacks consumed by damage are already gone; this only expires barriers that outlived their authored round count."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "BARRIER_SYNC",
+            "target": "ally",
+            "trigger": "round_end"
+          }
+        ]
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_enemies",
+        "as": "enemy",
+        "do": [
+          {
+            "cmd": "BARRIER_SYNC",
+            "target": "enemy",
+            "trigger": "round_end"
           }
         ]
       }

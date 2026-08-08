@@ -464,6 +464,7 @@ function love.load(arg)
             "test_permadeath_wards", "test_item_menu_targeting",
             "test_element_affinity", "test_craft", "test_item_vocabulary",
             "test_damage_model", "test_state_ticks", "test_status_infliction",
+            "test_barriers",
             "test_skill_costs", "test_forced_action", "test_mpd_economy",
             "test_growth", "test_progress", "test_promotion", "test_transform",
             "test_developer_mode", "test_map_transfer", "test_battle_commands",
