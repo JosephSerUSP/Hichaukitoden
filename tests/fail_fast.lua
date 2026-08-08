@@ -39,8 +39,15 @@ end
 --- Called by main.lua once every suite has run. Exits the process itself, so
 --- no caller can forget to and the exit code always matches what was printed.
 function M.finish()
-    -- Keep repository hygiene in the canonical unittest entry point so local
-    -- verification and hosted CI enforce the same invariant.
+    -- Keep small repository-wide invariants in the canonical unittest entry
+    -- point so local verification and hosted CI enforce the same contract.
+    local reserveOk, reserveErr = pcall(function()
+        require("tests.test_reserve_list").run()
+    end)
+    if not reserveOk then
+        M.crashed("tests.test_reserve_list", reserveErr)
+    end
+
     local hygieneOk, hygieneErr = pcall(function()
         require("tests.test_powershell_ascii").run()
     end)
