@@ -321,7 +321,7 @@
             document.getElementById('asset-picker-modal').classList.remove('active');
         }
 
-        // ---- Shared structured editors (used by Skills/Passives/States/Actors/Items forms) ----
+        // ---- Shared structured editors (used by Skills/Passives/States/Units/Items forms) ----
 
         // Effect types and trait codes come from the engine registry
         // (data/engine.json), editable in the Engine editor. The literals here
@@ -406,10 +406,10 @@
         }
 
         // Small sparkline showing how a growth-scaled stat (maxHp, atk, def,
-        // mat, mdf, mpd) rises from level 1 to the actor's max level, using
+        // mat, mdf, mpd) rises from level 1 to the Unit's max level, using
         // the same formula as engine/traits.lua traits.getBaseParam:
         //   value(level) = base * (1 + rate * growthMultiplier * (level-1)^exponent)
-        // Draws a stat's central level curve from the actor's authored growth
+        // Draws a stat's central level curve from the Unit's authored growth
         // bands: base at level 1, then the band budget accrued evenly across
         // the band's levels. It is the SPECIES curve, not any one creature's --
         // an instance's seed breaks each band into uneven packets, so a real
@@ -538,7 +538,7 @@
         // Generic MZ-style row-list editor: fixed-height scrollable box,
         // compact single-line summary rows, click/shift-click range select,
         // Delete/Ctrl+C/X/V act on the whole selection, double-click or
-        // Enter/Space edits a row in place. Every list in the Actors form
+        // Enter/Space edits a row in place. Every list in the Units form
         // (and elsewhere) is built from this one engine so the interaction
         // model — and the "only one row edits at a time" guarantee — is
         // shared rather than reimplemented per list.
@@ -1001,7 +1001,7 @@
             });
         }
 
-        // Checkbox list bound to an array of ids (actor skills/passives)
+        // Checkbox list bound to an array of ids (Unit skills/passives)
         function buildChecklistField(container, label, allIds, nameOf, ownerArrGetter, ownerArrSetter) {
             const group = document.createElement('div');
             group.className = 'form-group';
@@ -1039,7 +1039,7 @@
             container.appendChild(group);
         }
 
-        // List field bound to an array of ids (actor skills/passives)
+        // List field bound to an array of ids (Unit skills/passives)
         function buildIdListEditor(container, label, allIds, nameOf, ownerArrGetter, ownerArrSetter, addLabel) {
             // buildRowListEditor mutates its array in place (push/splice), so
             // it needs one stable array reference for the lifetime of this
@@ -1064,7 +1064,7 @@
             });
         }
 
-        // Editable list of drop rows ({itemId, chance}) for actors
+        // Editable list of drop rows ({itemId, chance}) for units
         function buildDropsEditor(container, actor) {
             actor.drops = actor.drops || [];
             const itemOptions = dbPayload.items.map(it => ({ value: String(it.id), label: it.name }));
@@ -1096,7 +1096,7 @@
         }
 
         // Editable list of sacrifice reward rows ({itemId, chance, count, minLevel})
-        // for actors. Empty list = the actor falls back to
+        // for Units. Empty list = the Unit falls back to
         // system.summoner.defaultSacrificeRewards.
         function buildSacrificeRewardsEditor(container, actor) {
             actor.sacrificeRewards = actor.sacrificeRewards || [];
@@ -1147,10 +1147,10 @@
             });
         }
 
-        // Editable list of evolution rows ({level, evolvesTo}) for actors
+        // Editable list of evolution rows ({level, evolvesTo}) for units
         function buildEvolutionsEditor(container, actor) {
             actor.evolutions = actor.evolutions || [];
-            const actorOptions = dbPayload.actors.map(a => ({ value: String(a.id), label: a.name }));
+            const actorOptions = dbPayload.units.map(a => ({ value: String(a.id), label: a.name }));
             const actorName = (id) => (actorOptions.find(o => o.value === String(id)) || {}).label || String(id);
 
             buildRowListEditor(container, actor.evolutions, {
@@ -1166,14 +1166,14 @@
                     level.oninput = () => { evo.level = parseInt(level.value) || 1; setDirty(true); };
                     level.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                     row.appendChild(level);
-                    row.appendChild(makeSelect(actorOptions, evo.evolvesTo, v => { evo.evolvesTo = parseInt(v); setDirty(true); }, '1'));
+                    row.appendChild(makeSelect(actorOptions, evo.evolvesTo, v => { evo.evolvesTo = v; setDirty(true); }, '1'));
                     const doneBtn = document.createElement('button');
                     doneBtn.className = 'win98-btn'; doneBtn.textContent = '✓'; doneBtn.title = 'Done editing';
                     doneBtn.onclick = () => commit();
                     row.appendChild(doneBtn);
                     row.appendChild(makeRowDeleteBtn(() => { actor.evolutions.splice(idx, 1); commit(); }));
                 },
-                newItem: () => ({ level: 5, evolvesTo: dbPayload.actors[0] ? dbPayload.actors[0].id : 1 }),
+                newItem: () => ({ level: 5, evolvesTo: dbPayload.units[0] ? dbPayload.units[0].id : '' }),
                 addLabel: '+ Add Evolution'
             });
         }
@@ -1799,7 +1799,7 @@
             });
         }
 
-        let activeActorSubTab = 'stats';
+        let activeUnitSubTab = 'stats';
 
         function loadFormForItem(item) {
             if (!item) return;
@@ -1814,10 +1814,10 @@
             formPanel.style.display = 'block'; // Reset layout
 
             // Host for the "{ } JSON" toggle button; set by whichever branch
-            // builds this tab's header bar (actors uses its own hero header).
+            // builds this tab's header bar (units uses its own hero header).
             let headerHost = null;
 
-            if (activeDbTab !== 'actors') {
+            if (activeDbTab !== 'units') {
                 const header = document.createElement('div');
                 header.style.fontWeight = 'bold';
                 header.style.fontSize = '12px';
@@ -1932,7 +1932,7 @@
                 formPanel.appendChild(listBox);
             }
 
-            if (activeDbTab === 'actors') {
+            if (activeDbTab === 'units') {
                 item.baseParams = item.baseParams || {};
                 const base = (key, fallback) => item.baseParams[key] != null ? item.baseParams[key] : fallback;
 
@@ -2009,7 +2009,7 @@
                 // ID Badge
                 const idBadge = document.createElement('div');
                 idBadge.style.cssText = 'font-weight: bold; font-family: monospace; font-size: 11px; color: var(--win-highlight, #000080); background: #ffffff; padding: 2px 5px; border: 1px solid var(--win-shadow, #808080); min-width: 50px; text-align: center;';
-                idBadge.textContent = `#${String(item.id != null ? item.id : '').padStart(4, '0')}`;
+                idBadge.textContent = `ID: ${String(item.id != null ? item.id : '')}`;
                 heroHeader.appendChild(idBadge);
 
                 // Name Field (inline compact)
@@ -2099,7 +2099,7 @@
                     item.isRecruitable = recChk.checked;
                     if (recChk.checked && !item.recruitEvent) item.recruitEvent = { type: 'free' };
                     setDirty(true);
-                    if (activeActorSubTab === 'recruitment') renderSubPageContent();
+                    if (activeUnitSubTab === 'recruitment') renderSubPageContent();
                 };
                 const recLbl = document.createElement('label');
                 recLbl.style.cssText = 'font-size: 10px; cursor: pointer; user-select: none;';
@@ -2145,11 +2145,11 @@
                 const tabButtons = {};
                 subTabs.forEach(t => {
                     const btn = document.createElement('button');
-                    btn.className = 'db-tab-btn' + (activeActorSubTab === t.id ? ' active' : '');
+                    btn.className = 'db-tab-btn' + (activeUnitSubTab === t.id ? ' active' : '');
                     btn.textContent = t.label;
                     btn.style.cssText = 'padding: 4px 10px; font-size: 11px; cursor: pointer;';
                     btn.onclick = () => {
-                        activeActorSubTab = t.id;
+                        activeUnitSubTab = t.id;
                         Object.keys(tabButtons).forEach(k => tabButtons[k].classList.remove('active'));
                         btn.classList.add('active');
                         renderSubPageContent();
@@ -2168,7 +2168,7 @@
                 function renderSubPageContent() {
                     subPageContainer.innerHTML = '';
 
-                    if (activeActorSubTab === 'stats') {
+                    if (activeUnitSubTab === 'stats') {
                         // General info + Progression + Stats
                         const topRow = document.createElement('div');
                         topRow.className = 'groupbox-grid';
@@ -2180,15 +2180,15 @@
                         createCheckboxField(bioBox, 'Unlocked by Default', item.unlocked, v => { item.unlocked = v; setDirty(true); });
 
                         const lvlBox = makeGroupbox(topRow, 'Level & Rewards');
-                        createFormField(lvlBox, 'Base Level', item.level || 1, val => { item.level = parseInt(val) || 1; renderActorStatCurves(); setDirty(true); }, 'number', false, null, false);
-                        createFormField(lvlBox, 'Growth Multiplier', item.growthMultiplier == null ? 1 : item.growthMultiplier, val => { item.growthMultiplier = parseFloat(val) || 1; renderActorStatCurves(); setDirty(true); }, 'number', false, null, false);
+                        createFormField(lvlBox, 'Base Level', item.level || 1, val => { item.level = parseInt(val) || 1; renderUnitStatCurves(); setDirty(true); }, 'number', false, null, false);
+                        createFormField(lvlBox, 'Growth Multiplier', item.growthMultiplier == null ? 1 : item.growthMultiplier, val => { item.growthMultiplier = parseFloat(val) || 1; renderUnitStatCurves(); setDirty(true); }, 'number', false, null, false);
                         createFormField(lvlBox, 'Exp Growth', item.expGrowth || 0, val => { item.expGrowth = parseInt(val) || 0; setDirty(true); }, 'number', false, null, false);
                         createFormField(lvlBox, 'Gold Reward', item.gold || 0, val => { item.gold = parseInt(val) || 0; setDirty(true); }, 'number', false, null, false);
 
                         const capBox = makeGroupbox(topRow, 'Capacity Limits');
                         createFormField(capBox, 'Max Actions (mxa)', base('mxa', 4), val => { item.baseParams.mxa = parseFloat(val) || 0; setDirty(true); }, 'number', false, null, false);
                         createFormField(capBox, 'Max Passives (mxp)', base('mxp', 2), val => { item.baseParams.mxp = parseFloat(val) || 0; setDirty(true); }, 'number', false, null, false);
-                        createFormField(capBox, 'MP Drain (mpd)', base('mpd', 2), val => { item.baseParams.mpd = parseFloat(val) || 2; renderActorStatCurves(); setDirty(true); }, 'number', false, null, false);
+                        createFormField(capBox, 'MP Drain (mpd)', base('mpd', 2), val => { item.baseParams.mpd = parseFloat(val) || 2; renderUnitStatCurves(); setDirty(true); }, 'number', false, null, false);
 
                         // Base Stats groupbox: editable base value + growth-curve sparkline per stat
                         const statsBox = makeGroupbox(subPageContainer, 'Base Stats & Growth Curves (Lv 1-' + (item.maxLevel || 99) + ')');
@@ -2201,7 +2201,7 @@
                             ['maxHp', 'Max HP'], ['atk', 'ATK'], ['def', 'DEF'],
                             ['mat', 'MAT'], ['mdf', 'MDF'], ['mpd', 'MP Drain']
                         ];
-                        function renderActorStatCurves() {
+                        function renderUnitStatCurves() {
                             statsGrid.innerHTML = '';
                             STAT_DEFS.forEach(([key, label]) => {
                                 const cell = document.createElement('div');
@@ -2213,7 +2213,7 @@
                                 input.oninput = () => {
                                     item.baseParams[key] = parseFloat(input.value) || 0;
                                     setDirty(true);
-                                    renderActorStatCurves();
+                                    renderUnitStatCurves();
                                 };
                                 cell.appendChild(input);
                                 statsGrid.appendChild(cell);
@@ -2221,9 +2221,9 @@
                                     item.growthBands, key, item.maxLevel || 99);
                             });
                         }
-                        renderActorStatCurves();
+                        renderUnitStatCurves();
 
-                    } else if (activeActorSubTab === 'combat') {
+                    } else if (activeUnitSubTab === 'combat') {
                         // Which rows this creature gets in the battle console.
                         // Options come from the engine.json registry, never a
                         // list typed here. Leaving it empty means "the default
@@ -2276,11 +2276,11 @@
                         subPageContainer.appendChild(elemBox);
                         buildElementSlotsEditor(elemBox, item);
 
-                    } else if (activeActorSubTab === 'recruitment') {
+                    } else if (activeUnitSubTab === 'recruitment') {
                         // Dungeon Recruitment Event Config
                         buildRecruitmentEditor(subPageContainer, item);
 
-                    } else if (activeActorSubTab === 'ecosystem') {
+                    } else if (activeUnitSubTab === 'ecosystem') {
                         // Discipline row
                         const discBox = makeGroupbox(subPageContainer, 'Crafting & Discipline');
                         createSelectField(discBox, 'Discipline (Item Creation)', item.discipline || '',
@@ -2362,7 +2362,7 @@
             // Every tab gets a direct-JSON escape hatch on its edit target
             const jsonTarget = (function () {
                 switch (activeDbTab) {
-                    case 'actors': case 'items': return item;
+                    case 'units': case 'items': return item;
                     case 'skills': case 'passives': case 'states':
                     case 'elements': case 'roles': case 'lore': return dbPayload[activeDbTab][item.id];
                     case 'shops': return dbPayload.shops[item.id];
@@ -2726,7 +2726,7 @@
 
         // Options for a field whose value must name an entry in an engine.json
         // registry (today: `disciplines`, named by item meta.craftKind and by
-        // actor.discipline). G1 rejects a value that is not in the registry, so
+        // Unit discipline). G1 rejects a value that is not in the registry, so
         // the editor offers the registry instead of a free string -- but a
         // drifted existing value is kept as an extra option rather than
         // silently rewritten to something valid on open.

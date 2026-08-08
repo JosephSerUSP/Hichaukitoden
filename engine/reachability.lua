@@ -41,30 +41,30 @@ local function walkAll(loader, visit)
         for _, v in pairs(node) do rec(v) end
     end
     for _, root in ipairs({ loader.scenes, loader.flows, loader.commonEvents,
-        loader.maps, loader.quests, loader.items, loader.actors, loader.shops,
+        loader.maps, loader.quests, loader.items, loader.units, loader.shops,
         loader.skills, loader.states, loader.system, loader.actionSequences }) do
         rec(root)
     end
 end
 
-function reachability.collectActorSources(loader)
-    local actorSources = {}
-    local function addActor(id, src)
+function reachability.collectUnitSources(loader)
+    local unitSources = {}
+    local function addUnit(id, src)
         if id == nil then return end
         id = tostring(id)
-        actorSources[id] = actorSources[id] or {}
-        actorSources[id][src] = true
+        unitSources[id] = unitSources[id] or {}
+        unitSources[id][src] = true
     end
 
     walkAll(loader, function(node)
         if node.cmd == "COMMENT" then return end
-        if node.actorId ~= nil then addActor(node.actorId, "event") end
+        if node.actorId ~= nil then addUnit(node.actorId, "event") end
     end)
 
     for _, map in ipairs(loader.maps or {}) do
-        for _, id in ipairs(map.recruits or {}) do addActor(id, "recruit pool") end
+        for _, id in ipairs(map.recruits or {}) do addUnit(id, "recruit pool") end
         for _, enc in ipairs(map.encounters or {}) do
-            if type(enc) == "table" then addActor(enc.id, "encounter") end
+            if type(enc) == "table" then addUnit(enc.id, "encounter") end
         end
     end
 
@@ -73,28 +73,28 @@ function reachability.collectActorSources(loader)
     local partyRules = ng.party or {}
     if partyRules.fixedMembers ~= nil then
         for _, member in ipairs(partyRules.fixedMembers or {}) do
-            if member.id and (not loader.getActor or loader.getActor(member.id)) then
-                addActor(member.id, "initial party (fixed)")
+            if member.id and (not loader.getUnit or loader.getUnit(member.id)) then
+                addUnit(member.id, "initial party (fixed)")
             end
         end
     end
 
-    for _, actor in ipairs(loader.actors or {}) do
-        if actor.unlocked then addActor(actor.id, "summon pool") end
-        if actor.initialParty then addActor(actor.id, "initial party") end
-        if actor.role == "Summoner" then addActor(actor.id, "role Summoner") end
-        for _, evo in ipairs(actor.evolutions or {}) do addActor(evo.evolvesTo, "promotion") end
+    for _, actor in ipairs(loader.units or {}) do
+        if actor.unlocked then addUnit(actor.id, "summon pool") end
+        if actor.initialParty then addUnit(actor.id, "initial party") end
+        if actor.role == "Summoner" then addUnit(actor.id, "role Summoner") end
+        for _, evo in ipairs(actor.evolutions or {}) do addUnit(evo.evolvesTo, "promotion") end
     end
 
     for _, item in ipairs(loader.items or {}) do
         for _, eff in ipairs(item.effects or {}) do
             if eff.type == "recruit_egg" then
-                addActor(eff.value or eff.actorId, "item " .. tostring(item.id))
+                addUnit(eff.value or eff.actorId, "item " .. tostring(item.id))
             end
         end
     end
 
-    return actorSources
+    return unitSources
 end
 
 function reachability.build(loader)
@@ -116,7 +116,7 @@ function reachability.build(loader)
         itemSources[id][src] = true
     end
 
-    local actorSources = reachability.collectActorSources(loader)
+    local unitSources = reachability.collectUnitSources(loader)
 
     walkAll(loader, function(node)
         local cmd = node.cmd
@@ -157,7 +157,7 @@ function reachability.build(loader)
     for _, rew in ipairs(((sys.summoner or {}).defaultSacrificeRewards) or {}) do
         addItem(rew.itemId, "sacrifice (default)")
     end
-    for _, actor in ipairs(loader.actors or {}) do
+    for _, actor in ipairs(loader.units or {}) do
         for _, rew in ipairs(actor.sacrificeRewards or {}) do
             addItem(rew.itemId, "sacrifice")
         end
@@ -173,7 +173,7 @@ function reachability.build(loader)
     local vSession = sessionMod.GameSession.new(loader)
     local craftWinners, craftPairs = {}, 0
     local items = loader.items or {}
-    for _, actorData in ipairs(loader.actors or {}) do
+    for _, actorData in ipairs(loader.units or {}) do
         if actorData.discipline then
             local crafter = sessionMod.Battler.new(actorData, actorData.level or 1)
             for _, a in ipairs(items) do
@@ -248,13 +248,13 @@ function reachability.build(loader)
     section("Creatures nothing can obtain")
     line("Sources counted: starting party (`actor.initialParty` or `system.newGame.party.fixedMembers`),")
     line("`unlocked` (summon pool), map `encounters` and `recruits` pools, promotion targets,")
-    line("`recruit_egg` items, an actor `role` the engine looks up, explicit actorId.")
+    line("`recruit_egg` items, a Unit `role` the engine looks up, explicit actorId.")
     line()
     n = 0
-    for _, actor in ipairs(loader.actors or {}) do
-        if not actorSources[tostring(actor.id)] then
+    for _, actor in ipairs(loader.units or {}) do
+        if not unitSources[tostring(actor.id)] then
             n = n + 1
-            line(("- actor %s '%s'"):format(tostring(actor.id), tostring(actor.name)))
+            line(("- Unit %s '%s'"):format(tostring(actor.id), tostring(actor.name)))
         end
     end
     if n == 0 then line("- (none)") end
@@ -286,7 +286,7 @@ function reachability.build(loader)
     line("Counted: `scriptId` on a map event or event page, `commonEventId` on")
     line("CALL_COMMON_EVENT, and an actor's `recruitEvent` scriptId.")
     line()
-    for _, actor in ipairs(loader.actors or {}) do
+    for _, actor in ipairs(loader.units or {}) do
         local rec = actor.recruitEvent
         if type(rec) == "number" or type(rec) == "string" then
             calledEvents[tostring(rec)] = true

@@ -9,7 +9,7 @@ materials).
 
 {{OUTLINE}}
 
-## Id manifest (actors are final now; quest items you invent here become the
+## Id manifest (units are final now; quest items you invent here become the
 ids the quests stage references)
 
 {{MANIFEST}}

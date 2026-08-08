@@ -9,8 +9,8 @@ full conversations next.
 
 {{OUTLINE}}
 
-## Id manifest (actors/items are final; encounters and recruits reference
-actor ids, treasures reference item ids)
+## Id manifest (units/items are final; encounters and recruits reference
+Unit ids, treasures reference item ids)
 
 {{MANIFEST}}
 
@@ -33,6 +33,6 @@ Rules:
   (e.g., `assets/sprites/NPC00.png` through `assets/sprites/NPC16.png`).
 - Dungeon floors: follow the sample's procedural fields (generation, depth,
   encounters, treasures, recruits, encounterSteps); encounters/recruits use
-  manifest actor ids, treasures use manifest item ids; difficulty scales
+  manifest Unit ids, treasures use manifest item ids; difficulty scales
   with depth per the outline's acts.
 - Every map title matches the outline's maps list.

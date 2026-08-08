@@ -249,12 +249,12 @@ validator.run = function(loader)
                 .. "' is not a pool source; only 'map' (the current map's"
                 .. " encounter table) exists")
             if slot.actor ~= nil then
-                check(loader.getActor(slot.actor) ~= nil,
+                check(loader.getUnit(slot.actor) ~= nil,
                     swhere .. " names missing actor '" .. tostring(slot.actor) .. "'")
             end
             for pi, entry in ipairs(slot.pool or {}) do
                 local pwhere = swhere .. " pool[" .. pi .. "]"
-                check(loader.getActor(entry.actor) ~= nil,
+                check(loader.getUnit(entry.actor) ~= nil,
                     pwhere .. " names missing actor '" .. tostring(entry.actor) .. "'")
                 check(entry.weight == nil or (type(entry.weight) == "number" and entry.weight > 0),
                     pwhere .. " weight must be a positive number")
@@ -436,7 +436,7 @@ validator.run = function(loader)
                     .. disciplineList .. ")")
             end
         end
-        for _, actor in ipairs(loader.actors or {}) do
+        for _, actor in ipairs(loader.units or {}) do
             local disc = actor.discipline
             if disc ~= nil and disc ~= "" then
                 check(knownDisciplines[disc] == true,
@@ -526,7 +526,7 @@ validator.run = function(loader)
         for _, item in ipairs(loader.items or {}) do
             checkCategoryTraits(item.traits, "item '" .. tostring(item.id) .. "'")
         end
-        for _, actor in ipairs(loader.actors or {}) do
+        for _, actor in ipairs(loader.units or {}) do
             checkCategoryTraits(actor.traits, "actor '" .. tostring(actor.id) .. "'")
         end
         for pid, passive in pairs(loader.passives or {}) do
@@ -620,7 +620,7 @@ validator.run = function(loader)
         end
     end
 
-    for _, actor in ipairs(loader.actors or {}) do
+    for _, actor in ipairs(loader.units or {}) do
         validateMeta(actor.meta, "actors", actor.id or actor.name or "?")
     end
     for _, item in ipairs(loader.items or {}) do
@@ -736,31 +736,31 @@ validator.run = function(loader)
     end
 
     -- Actors must reference existing skills/passives/elements/roles
-    for _, actor in ipairs(loader.actors) do
-        local actorDesc = "actor " .. tostring(actor.id)
+    for _, actor in ipairs(loader.units) do
+        local unitDesc = "Unit " .. tostring(actor.id)
         -- An actor authoring an empty list would sit in battle with no rows to
         -- pick, which reads as a frozen game rather than a design choice. A
         -- creature meant to be helpless authors ["wait"], not [].
         if actor.battleCommands ~= nil then
             check(type(actor.battleCommands) == "table" and #actor.battleCommands > 0,
-                actorDesc .. " has an empty battleCommands list; author [\"wait\"] for a "
+                unitDesc .. " has an empty battleCommands list; author [\"wait\"] for a "
                 .. "creature that should be unable to act")
             for _, id in ipairs(actor.battleCommands or {}) do
                 check(knownBattleCommands[id],
-                    actorDesc .. " battleCommands names unknown command '" .. tostring(id)
+                    unitDesc .. " battleCommands names unknown command '" .. tostring(id)
                     .. "' (known: " .. battleCommandList .. ")")
             end
         end
         check(type(actor.names) == "table" and #actor.names > 0,
-            actorDesc .. " ('" .. tostring(actor.name) .. "') needs at least one default personal name")
+            unitDesc .. " ('" .. tostring(actor.name) .. "') needs at least one default personal name")
         check(type(actor.flavor) == "string" and actor.flavor ~= "",
-            actorDesc .. " ('" .. tostring(actor.name) .. "') needs a biography")
+            unitDesc .. " ('" .. tostring(actor.name) .. "') needs a biography")
         check(not actor.isEvolved or actor.unlocked ~= true,
-            actorDesc .. " cannot be both a promotion result and unlocked by default")
+            unitDesc .. " cannot be both a promotion result and unlocked by default")
         check(not actor.isEvolved or actor.isRecruitable ~= true,
-            actorDesc .. " cannot be both a promotion result and directly recruitable")
+            unitDesc .. " cannot be both a promotion result and directly recruitable")
         check(not actor.isEvolved or actor.initialParty ~= true,
-            actorDesc .. " cannot be both a promotion result and eligible for the initial party")
+            unitDesc .. " cannot be both a promotion result and eligible for the initial party")
         for _, skId in ipairs(actor.skills or {}) do
             check(loader.getSkill(skId), "actor " .. tostring(actor.id) .. " references missing skill '" .. tostring(skId) .. "'")
         end
@@ -777,7 +777,7 @@ validator.run = function(loader)
         -- a cost.item that is not a real promotion key means the ritual charges
         -- for something the player can never be holding.
         for _, evo in ipairs(actor.evolutions or {}) do
-            check(evo.evolvesTo ~= nil and loader.getActor(evo.evolvesTo) ~= nil,
+            check(evo.evolvesTo ~= nil and loader.getUnit(evo.evolvesTo) ~= nil,
                 "actor " .. tostring(actor.id) .. " ('" .. tostring(actor.name)
                 .. "') evolves into missing actor '" .. tostring(evo.evolvesTo) .. "'")
             check(evo.level == nil or type(evo.level) == "number",
@@ -817,7 +817,7 @@ validator.run = function(loader)
         end
         local lastBandEnd = 1
         for bi, band in ipairs(actor.growthBands or {}) do
-            local desc = actorDesc .. " growthBands[" .. bi .. "]"
+            local desc = unitDesc .. " growthBands[" .. bi .. "]"
             check(type(band.from) == "number" and type(band.to) == "number"
                     and band.from >= 2 and band.to >= band.from,
                 desc .. " needs numeric levels with 2 <= from <= to")
@@ -839,30 +839,30 @@ validator.run = function(loader)
         end
         for fi, itemId in ipairs(actor.favoriteFoods or {}) do
             local food = loader.getItem(itemId)
-            check(food ~= nil, actorDesc .. " favoriteFoods[" .. fi .. "] references missing item '" .. tostring(itemId) .. "'")
+            check(food ~= nil, unitDesc .. " favoriteFoods[" .. fi .. "] references missing item '" .. tostring(itemId) .. "'")
             if food then
                 check(food.meal == true or #(food.foodTags or {}) > 0,
-                    actorDesc .. " favorite food '" .. tostring(food.name) .. "' is not tagged as food")
+                    unitDesc .. " favorite food '" .. tostring(food.name) .. "' is not tagged as food")
             end
         end
         for ri, line in ipairs(actor.foodReactions or {}) do
             check(type(line) == "string" and line ~= "",
-                actorDesc .. " foodReactions[" .. ri .. "] must be a non-empty string")
+                unitDesc .. " foodReactions[" .. ri .. "] must be a non-empty string")
         end
         for provenance, outcome in pairs(actor.hatchOutcomes or {}) do
-            check(type(outcome) == "table" and loader.getActor(outcome and outcome.actor),
-                actorDesc .. " hatch outcome '" .. tostring(provenance) .. "' references a missing actor")
+            check(type(outcome) == "table" and loader.getUnit(outcome and outcome.actor),
+                unitDesc .. " hatch outcome '" .. tostring(provenance) .. "' references a missing Unit")
         end
         for ei, eligibleId in ipairs(actor.eligibleFrom or {}) do
-            check(loader.getActor(eligibleId),
-                actorDesc .. " eligibleFrom[" .. ei .. "] references missing actor '" .. tostring(eligibleId) .. "'")
+            check(loader.getUnit(eligibleId),
+                unitDesc .. " eligibleFrom[" .. ei .. "] references missing Unit '" .. tostring(eligibleId) .. "'")
         end
         for si, rule in ipairs(actor.secretTransforms or {}) do
-            local desc = actorDesc .. " secretTransforms[" .. si .. "]"
+            local desc = unitDesc .. " secretTransforms[" .. si .. "]"
             check(type(rule.condition) == "string" and rule.condition ~= "",
                 desc .. ".condition must be a non-empty formula")
-            check(loader.getActor(rule.actor),
-                desc .. " references missing actor '" .. tostring(rule.actor) .. "'")
+            check(loader.getUnit(rule.actor),
+                desc .. " references missing Unit '" .. tostring(rule.actor) .. "'")
             if type(rule.condition) == "string" then
                 local _, err = require("engine.formula").eval(rule.condition, {
                     intrinsic = {
@@ -874,10 +874,10 @@ validator.run = function(loader)
             end
         end
         for ai, rule in ipairs(actor.autoTransforms or {}) do
-            local desc = actorDesc .. " autoTransforms[" .. ai .. "]"
+            local desc = unitDesc .. " autoTransforms[" .. ai .. "]"
             local special = rule.actor == "hatch" or rule.actor == "metamorph" or rule.actor == "revert"
-            check(type(rule.actor) == "string" and (special or loader.getActor(rule.actor)),
-                desc .. " references missing actor '" .. tostring(rule.actor) .. "'")
+            check(type(rule.actor) == "string" and (special or loader.getUnit(rule.actor)),
+                desc .. " references missing Unit '" .. tostring(rule.actor) .. "'")
             check(rule.atLevel == nil or (type(rule.atLevel) == "number" and rule.atLevel >= 1),
                 desc .. ".atLevel must be a positive number")
             check(rule.afterOriginLevels == nil
@@ -1187,7 +1187,7 @@ validator.run = function(loader)
     end
     for name, root in pairs({ scenes = loader.scenes, flows = loader.flows,
         commonEvents = loader.commonEvents, maps = loader.maps, quests = loader.quests,
-        shops = loader.shops, items = loader.items, actors = loader.actors,
+        shops = loader.shops, items = loader.items, units = loader.units,
         system = loader.system }) do
         collectFlags(root, nil, name)
     end
@@ -1221,7 +1221,7 @@ validator.run = function(loader)
     end
     local newGameParty = (sys.newGame and sys.newGame.party) or {}
     for i, m in ipairs(newGameParty.fixedMembers or {}) do
-        check(loader.getActor(m.id), "fixedMember #" .. i .. " references missing actor '" .. tostring(m.id) .. "'")
+        check(loader.getUnit(m.id), "fixedMember #" .. i .. " references missing Unit '" .. tostring(m.id) .. "'")
         if m.slot ~= nil then
             check(type(m.slot) == "number" and m.slot >= 1 and m.slot <= 4,
                 "fixedMember #" .. i .. " slot must be a number 1..4, got " .. tostring(m.slot))
@@ -1268,11 +1268,11 @@ validator.run = function(loader)
                 where .. " treasures[" .. ti .. "] references missing item '" .. tostring(itemId) .. "'")
         end
         for ri, actorId in ipairs(map.recruits or {}) do
-            local actor = loader.getActor(actorId)
+            local actor = loader.getUnit(actorId)
             check(actor ~= nil,
-                where .. " recruits[" .. ri .. "] references missing actor '" .. tostring(actorId) .. "'")
+                where .. " recruits[" .. ri .. "] references missing Unit '" .. tostring(actorId) .. "'")
             check(actor == nil or actor.isRecruitable == true,
-                where .. " recruits[" .. ri .. "] actor '" .. tostring(actorId)
+                where .. " recruits[" .. ri .. "] Unit '" .. tostring(actorId)
                 .. "' is not marked isRecruitable")
         end
         -- A map's encounter table is the floor's roster: a weighted pool of
@@ -1281,8 +1281,8 @@ validator.run = function(loader)
         -- troop owns what a wandering fight is.
         for ei, enc in ipairs(map.encounters or {}) do
             local encWhere = where .. " encounters[" .. ei .. "]"
-            check(type(enc) == "table" and loader.getActor(enc.actor) ~= nil,
-                encWhere .. " references missing actor '"
+            check(type(enc) == "table" and loader.getUnit(enc.actor) ~= nil,
+                encWhere .. " references missing Unit '"
                 .. tostring(type(enc) == "table" and enc.actor or enc) .. "'")
             if type(enc) == "table" then
                 check(type(enc.weight) == "number" and enc.weight > 0 and enc.weight == math.floor(enc.weight),
@@ -1352,7 +1352,7 @@ validator.run = function(loader)
             end
         end
     end
-    for _, actor in ipairs(loader.actors or {}) do
+    for _, actor in ipairs(loader.units or {}) do
         local who = "actor '" .. tostring(actor.name or actor.id) .. "'"
         check(type(actor.smallBattler) == "string" and actor.smallBattler ~= "",
             who .. " must define smallBattler")

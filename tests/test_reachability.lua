@@ -20,7 +20,7 @@ local function runTests()
         },
         maps = {},
         items = {},
-        getActor = function(id)
+        getUnit = function(id)
             for _, a in ipairs({
                 { id = 1, name = "Starter" },
                 { id = 16, name = "Phoenix" },

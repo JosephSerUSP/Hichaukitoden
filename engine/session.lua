@@ -280,7 +280,7 @@ function GameSession.new(loader)
     -- EXP Bank: accrued mostly by sacrificing creatures; spent to summon
     -- creatures above their base level.
     self.expBank = 0
-    self.summoner = Battler.new(loader.getActorByRole("Summoner"), 1)
+    self.summoner = Battler.new(loader.getUnitByRole("Summoner"), 1)
     self.summoner.hp = self.summoner:getMaxHp(self)
     
     -- Party composition: 1-4 active creatures.
@@ -326,7 +326,7 @@ function GameSession:initializeStartingParty()
     -- Setup members
     local members = newgame.rollMembers(self.loader)
     for i, m in ipairs(members) do
-        local actorData = self.loader.getActor(m.id)
+        local actorData = self.loader.getUnit(m.id)
         if actorData then
             local battler = self:createPersistentBattler(actorData, m.level, { name = m.name })
             

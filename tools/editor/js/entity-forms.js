@@ -3,7 +3,7 @@
         // Declarative form definitions for the Database tabs. Each schema is
         // a list of field specs interpreted by buildEntityForm; adding a
         // field to a tab (or a whole new simple tab) means adding a spec
-        // here, not hand-writing DOM. Complex tabs (actors, commonEvents,
+        // here, not hand-writing DOM. Complex tabs (units, commonEvents,
         // animations, quests, themes) still build custom panels in
         // loadFormForItem and can migrate here incrementally.
         //
@@ -399,7 +399,7 @@
                     { kind: 'custom', when: (r, item) => item.id === 'Summoner', build: (c) => {
                         const note = document.createElement('p');
                         note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow);';
-                        note.textContent = 'The engine locates the player character by the "Summoner" role — keep exactly one actor with it.';
+                        note.textContent = 'The engine locates the player character by the "Summoner" role — keep exactly one Unit with it.';
                         c.appendChild(note);
                     } }
                 ]

@@ -95,11 +95,9 @@ function loader.init(root)
     end
     local function J(name) return load_json(loader.root .. "/" .. name) end
 
-    -- #147 terminology seam: authored combat-capable definitions are Units.
-    -- The physical file remains actors.json until its independent storage/ID
-    -- migration; `actors` is a compatibility alias, not a second collection.
-    loader.units = J("actors.json")
-    loader.actors = loader.units
+    -- Authored combat-capable definitions are Units, stored in the Unit
+    -- catalog. Actor is reserved for persistent player-owned identity.
+    loader.units = J("units.json")
 
     loader.elements = J("elements.json")
     loader.items = J("items.json")
@@ -153,7 +151,7 @@ function loader.init(root)
     loader.unitsById = {}
     for index, unit in ipairs(loader.units) do
         if type(unit.id) ~= "string" or unit.id == "" then
-            error("authored unit at actors.json[" .. tostring(index)
+            error("authored unit at units.json[" .. tostring(index)
                 .. "] must have a non-empty symbolic string id")
         end
         if loader.unitsById[unit.id] then
@@ -161,10 +159,6 @@ function loader.init(root)
         end
         loader.unitsById[unit.id] = unit
     end
-    -- Compatibility alias during terminology migration. Both names point at
-    -- the same table; Actor is not a second authored resource type.
-    loader.actorsById = loader.unitsById
-
     loader.itemsById = {}
     for _, item in ipairs(loader.items) do
         loader.itemsById[item.id] = item
@@ -187,9 +181,8 @@ function loader.getMapIndex(id)
     return loader.mapsById[tostring(id)]
 end
 
--- Authored combat-capable definitions are Units. This is the canonical lookup
--- API even while the backing file and many compatibility call sites still say
--- Actor. Allegiance is deliberately absent from this lookup.
+-- Authored combat-capable definitions are Units. Allegiance is deliberately
+-- absent from this lookup.
 function loader.getUnit(id)
     return loader.unitsById and loader.unitsById[id]
 end
@@ -199,16 +192,6 @@ function loader.getUnitByRole(role)
         if unit.role == role then return unit end
     end
     return nil
-end
-
--- Legacy API aliases. Keep these until the runtime terminology cleanup reaches
--- every call site; they must never diverge from the Unit registry.
-function loader.getActor(id)
-    return loader.getUnit(id)
-end
-
-function loader.getActorByRole(role)
-    return loader.getUnitByRole(role)
 end
 
 function loader.getItem(id)

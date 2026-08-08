@@ -29,8 +29,9 @@ Unit data owns facts shared by occurrences of that definition:
 A Unit has no intrinsic battle allegiance. The same Unit may produce a transient
 opponent Battler or a persistent player-owned creature.
 
-`data/actors.json` remains the legacy physical filename for this Unit catalog.
-Renaming or fragmenting that file is a separate storage migration.
+`data/units.json` is the canonical physical monolith for this Unit catalog.
+Fragmenting it through the generalized authored-storage layer remains a separate
+storage migration.
 
 ## 2. Battler
 
@@ -82,7 +83,7 @@ ownership of those fields and all of their callers can move atomically.
 
 ## 4. The legacy Summoner record
 
-`data/actors.json` still contains the old Summoner definition. While that record
+`data/units.json` still contains the old Summoner definition. While that record
 survives, its canonical symbolic ID is `summoner`, not the current display name
 `Alex`.
 
@@ -110,22 +111,9 @@ loader.getUnit(id)
 loader.getUnitByRole(role)
 ```
 
-Legacy Actor-named loader APIs remain temporary aliases to the exact same
-collection and registry:
-
-```text
-loader.actors        -> loader.units
-loader.actorsById    -> loader.unitsById
-loader.getActor      -> loader.getUnit
-loader.getActorByRole -> loader.getUnitByRole
-```
-
-These aliases are not a second authority and may not develop different lookup
-semantics.
-
-New code that means “authored definition” should use Unit vocabulary.
-Actor-named operations may remain where they genuinely mean a persistent
-player-owned creature.
+There is no Actor-named authored-definition loader API. Code that means an
+authored definition uses Unit vocabulary directly. Actor-named operations remain
+only where they genuinely mean a persistent player-owned creature.
 
 ## 6. Canonical Unit identity
 
@@ -249,7 +237,6 @@ Battler `id` and reversible-transform `originForm`.
 The following legacy names can move independently when their responsibility is
 being changed or their storage is migrated:
 
-- `data/actors.json`
 - authored `actor` / `actorId` field names
 - `Battler.actorData`
 - `GameSession:createPersistentBattler`
@@ -282,7 +269,7 @@ Trace actual readers and writers before moving them.
 4. **Actor means persistent player-owned identity, not the authored catalog.**
 5. **Canonical Unit IDs are unique, non-empty symbolic strings.**
 6. **Numeric Unit IDs are not a compatibility surface.**
-7. **Legacy Actor loader APIs are aliases only and may not diverge from Unit.**
+7. **Authored-definition loader APIs use Unit vocabulary only.**
 8. **Unit IDs are opaque handles; behavior and progression structure are explicit data.**
 9. **Transform operation sentinels are not Unit identities.**
 10. **Personal Actor names are never Unit lookup keys.**

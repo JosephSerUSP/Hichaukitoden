@@ -120,7 +120,7 @@
         let selectedEventX = 0;
         let selectedEventY = 0;
 
-        let activeDbTab = 'actors';
+        let activeDbTab = 'units';
         let activeDbItemId = '';
 
         window.addEventListener('mousedown', () => { isMouseDown = true; });

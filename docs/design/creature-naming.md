@@ -43,7 +43,7 @@ desired texture is a lost game's inconsistent but compelling localization.
 
 ## Current roster audit
 
-The following random-name entries in `data/actors.json` are conspicuously
+The following random-name entries in `data/units.json` are conspicuously
 literal and should be revised as a group before the pools are treated as final:
 
 | Current root | Appears in | Possible direction |

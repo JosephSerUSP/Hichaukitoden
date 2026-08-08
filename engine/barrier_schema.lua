@@ -67,7 +67,7 @@ end
 
 function schema.validateData(loader)
     local roots = {
-        actors = loader.actors, items = loader.items, skills = loader.skills,
+        units = loader.units, items = loader.items, skills = loader.skills,
         passives = loader.passives, states = loader.states, flows = loader.flows,
         troops = loader.troops, commonEvents = loader.commonEvents,
         actionSequences = loader.actionSequences, maps = loader.maps, scenes = loader.scenes,

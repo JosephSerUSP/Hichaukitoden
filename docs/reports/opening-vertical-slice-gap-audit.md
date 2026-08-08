@@ -11,11 +11,11 @@
 |---|---|---|---|
 | **Carriage & Threshold Opening Sequence** | `data/commonEvents.json` (Common Event 42) — 91 commands playing cinematic plates (`arrival_ride.png`, `arrival_bell.png`, `arrival_room.png`, etc.) | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Passage House Room 3 Start** | `data/commonEvents.json` CE 42 transfers player to Passage House Room 3 text | `PLAYABLE_AND_VERIFIED` | Authored Content |
-| **Saban Starter Moa (Actor 61)** | `data/actors.json` (Actor 61 Moa); `data/system.json` `newGame.party.fixedMembers` specifies actor 61 at level 3 named Saban, consumed by `engine/newgame.lua` `rollMembers` | `PLAYABLE_AND_VERIFIED` | Authored Content |
+| **Saban Starter Moa (Unit `moa`)** | `data/units.json` (Unit `moa`); `data/system.json` `newGame.party.fixedMembers` specifies Unit `moa` at level 3 named Saban, consumed by `engine/newgame.lua` `rollMembers` | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Registration & Crossing Writ** | `data/items.json` Item 198 (`Crossing Writ`); `commonEvents.json` CE 33/34 checks `hasItem:198` before dungeon entry | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Town Shops (Alicia, Laura, Tankard)** | `data/shops.json` Shops 1 (Bakery), 2 (Forge), 5 (Tankard); `commonEvents.json` CE 37, 38, 39 | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Laura's Lunch Delivery** | `data/commonEvents.json` CE 38 sets `laura_lunch_carried`; CE 39 receives lunch, pays 25G, sets `laura_lunch_delivered` | `PLAYABLE_AND_VERIFIED` | Authored Content |
-| **Cerberus First Contract** | `data/actors.json` Actor 32 (`Cerberus`); `data/maps.json` Map 2 Event 12 (`First Contract`) | `PLAYABLE_AND_VERIFIED` | Balance / Testing |
+| **Cerberus First Contract** | `data/units.json` Unit `cerberus` (`Cerberus`); `data/maps.json` Map 2 Event 12 (`First Contract`) | `PLAYABLE_AND_VERIFIED` | Balance / Testing |
 | **Ines Blue Line Mark** | `data/maps.json` Map 2 Event 11 (`Blue Chalk`); `commonEvents.json` CE 15, 33, 39 dialogue choice "Ines" | `PLAYABLE_AND_VERIFIED` | Presentation |
 | **Incursion Counter Flags & Town Shift** | `data/commonEvents.json` CE 40 (Dungeon Entrance Stairs) tracks `incursion_one_completed`, `incursion_two_completed`, and sets `vigil_ready`. Changes Map 1 presentation to `town_003` with purple dusk fog | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **The Vigil Festival & Chapel Ceremony** | `data/commonEvents.json` CE 35 (Chapel and Vigil) runs the 3-bell ceremony, sets `vigil_held`, changes presentation to night fog | `PLAYABLE_AND_VERIFIED` | Presentation |

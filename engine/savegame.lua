@@ -76,7 +76,7 @@ end
 local function deserializeBattler(data, loader)
     if not data then return nil end
     local session = require("engine.session")
-    local actorData = loader.getActor(data.id)
+    local actorData = loader.getUnit(data.id)
     if not actorData then return nil end
     local b = session.Battler.new(actorData, data.level, data.growthSeed, data.instanceId)
     b.name = data.name or b.name

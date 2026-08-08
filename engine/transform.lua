@@ -46,7 +46,7 @@ end
 -- Ties break on actor id, so the answer never depends on table order.
 function transform.classify(session, battler, eligibleIds)
     local secret = transform.secretDestination(session, battler)
-    if secret and session.loader.getActor(secret) then return secret end
+    if secret and session.loader.getUnit(secret) then return secret end
     local loader = session.loader
     local best, bestScore
     local mine = {}
@@ -55,7 +55,7 @@ function transform.classify(session, battler, eligibleIds)
             + (battler.paramPlus and battler.paramPlus[p] or 0)
     end
     for _, id in ipairs(eligibleIds or {}) do
-        local ad = loader.getActor(id)
+        local ad = loader.getUnit(id)
         if ad then
             local score = 0
             for _, p in ipairs(growth.PARAMS) do
@@ -197,15 +197,15 @@ function transform.applyAutomatic(session, battler)
         local bonus = chosen.bonus
         if chosen.actor == "hatch" then
             local outcome = transform.hatchOutcome(current, actorData)
-            destination = outcome and session.loader.getActor(outcome.actor)
+            destination = outcome and session.loader.getUnit(outcome.actor)
             if outcome and not bonus then bonus = outcome.bonus end
         elseif chosen.actor == "metamorph" then
             local id = transform.classify(session, current, actorData.eligibleFrom)
-            destination = id and session.loader.getActor(id)
+            destination = id and session.loader.getUnit(id)
         elseif chosen.actor == "revert" then
-            destination = current.originForm and session.loader.getActor(current.originForm)
+            destination = current.originForm and session.loader.getUnit(current.originForm)
         else
-            destination = session.loader.getActor(chosen.actor)
+            destination = session.loader.getUnit(chosen.actor)
         end
         if not destination or destination.id == actorData.id then break end
 

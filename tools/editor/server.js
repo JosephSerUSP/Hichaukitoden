@@ -18,7 +18,7 @@ const PROJECT_DIR = path.resolve(__dirname, '../..');
 // Single manifest of database files exposed to the editor. Keep in sync with
 // DATA_FILES in engine/server.lua.
 const DATA_FILES = [
-    'actors', 'elements', 'items', 'maps', 'lore', 'quests', 'shops',
+    'units', 'elements', 'items', 'maps', 'lore', 'quests', 'shops',
     'sounds', 'terms', 'actionSequences', 'system', 'commonEvents',
     'skills', 'passives', 'states', 'roles', 'engine', 'flows', 'scenes', 'animations',
     'troops', 'iconPalettes', 'iconKeyProfiles'
@@ -621,7 +621,7 @@ const server = http.createServer((req, res) => {
                 // the direct write path to every data file the game loads at
                 // runtime with no check beyond payload[name] truthiness. A
                 // client bug that leaves e.g. a list field as the wrong type
-                // would silently overwrite data/actors.json with malformed
+                // would silently overwrite data/units.json with malformed
                 // data. Refuse to flip a file's top-level array-vs-object
                 // shape, checked for every file BEFORE any writes happen so a
                 // bad payload can't leave a partial save on disk.

@@ -42,7 +42,7 @@ needs to be set.
 1. `campaigns/<name>/` bootstraps as a full copy of `data/` (the shared-core
    ruleset ships with every campaign; the campaign is playable and
    validatable after every stage).
-2. Stages run in order — `outline → actors → items → quests → maps → events`
+2. Stages run in order — `outline → units → items → quests → maps → events`
    — each one an LLM call whose prompt embeds the machine-readable contracts
    (command registry, ruleset ids, id manifest of everything generated so
    far, schema-by-example from the real default campaign). The outline stage

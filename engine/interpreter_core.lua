@@ -772,7 +772,7 @@ handlers.TRANSFORM_ACTOR = function(cmd, ctx)
         destId = spec
     end
 
-    local actorData = destId and loader.getActor(destId)
+    local actorData = destId and loader.getUnit(destId)
     if not actorData then
         table.insert(ctx.events, { type = "text",
             text = "[TRANSFORM_ACTOR] no destination for '" .. tostring(spec) .. "'" })
@@ -1188,9 +1188,9 @@ handlers.RECRUIT = function(cmd, ctx)
             actorId = recruits[math.random(#recruits)]
         end
     end
-    actorId = actorId or 1
+    if not actorId then return end
     local loader = ctx.loader or (ctx.session and ctx.session.loader)
-    local actorData = loader and loader.getActor(actorId)
+    local actorData = loader and loader.getUnit(actorId)
     if actorData and actorData.recruitEvent then
         interpreter.run(actorData.recruitEvent, ctx)
     end
@@ -2386,7 +2386,7 @@ local function buildScriptApi(ctx)
     function api.allActors()
         local l = ctx.loader or session.loader
         local list = {}
-        for _, actor in ipairs(l and l.actors or {}) do
+        for _, actor in ipairs(l and l.units or {}) do
             table.insert(list, {
                 id = actor.id,
                 name = actor.name or "",
@@ -2400,7 +2400,7 @@ local function buildScriptApi(ctx)
         return list
     end
     function api.summon(actorId, isReserve, index, level)
-        local actorData = session.loader.getActor(actorId)
+        local actorData = session.loader.getUnit(actorId)
         if not actorData then return false end
         -- Never overwrite an occupied slot: Summon targets an EMPTY slot only
         -- (the Reserve menu offers it solely for empty slots). Returning false
@@ -2434,7 +2434,7 @@ local function buildScriptApi(ctx)
     -- EXP the bank charges to summon this actor at targetLevel (0 at or
     -- below its base level).
     function api.summonExpCost(actorId, targetLevel)
-        local actorData = session.loader.getActor(actorId)
+        local actorData = session.loader.getUnit(actorId)
         if not actorData then return 0 end
         local base = actorData.level or 1
         if not targetLevel or targetLevel <= base then return 0 end
@@ -2444,7 +2444,7 @@ local function buildScriptApi(ctx)
     -- builds a throwaway Battler so traits/params resolve exactly as the
     -- real summon would.
     function api.actorPreview(actorId, level)
-        local actorData = session.loader.getActor(actorId)
+        local actorData = session.loader.getUnit(actorId)
         if not actorData then return nil end
         local b = require("engine.session").Battler.new(actorData, level or actorData.level or 1)
         b.hp = b:getMaxHp(session)
@@ -2547,7 +2547,7 @@ local function buildScriptApi(ctx)
     -- exists could not be authored at all.
     local function evolutionOpen(b, e)
         if not e or not e.evolvesTo then return false end
-        if not session.loader.getActor(e.evolvesTo) then return false end
+        if not session.loader.getUnit(e.evolvesTo) then return false end
         if e.level and b.level < e.level then return false end
         return true
     end
@@ -2605,7 +2605,7 @@ local function buildScriptApi(ctx)
         local target = e and e.evolvesTo or nil
         local cost = e and e.cost or nil
         if not target then return false end
-        local actorData = session.loader.getActor(target)
+        local actorData = session.loader.getUnit(target)
         if not actorData then return false end
         if cost then
             if cost.mp and session.mp < cost.mp then return false end

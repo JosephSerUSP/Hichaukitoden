@@ -1341,7 +1341,7 @@ local function runEventCommands(eventTarget, commands)
                 end
             end
             actorId = actorId or 1
-            local actorData = loader.getActor(actorId)
+            local actorData = loader.getUnit(actorId)
             if actorData then
                 commands = actorData.recruitEvent
                 if not commands then

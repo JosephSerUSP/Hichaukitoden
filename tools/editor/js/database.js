@@ -281,7 +281,7 @@
             listContainer.innerHTML = '';
 
             let items = [];
-            if (activeDbTab === 'actors') items = dbPayload.actors || [];
+            if (activeDbTab === 'units') items = dbPayload.units || [];
             else if (activeDbTab === 'items') items = dbPayload.items || [];
             else if (activeDbTab === 'shops') {
                 const shops = dbPayload.shops || {};
@@ -408,6 +408,7 @@
             // (string-keyed / self-contained array entries), not the numeric
             // Change Maximum flow.
             const STRING_KEYED_NEW = {
+                units: { label: '＋ New Unit', make: () => createNewUnit() },
                 quests: { label: '＋ New Quest', make: () => createNewQuest() },
                 lore: { label: '＋ New Lore Entry', make: () => createNewLore() },
                 actionSequences: { label: '＋ New Sequence', make: () => createNewActionSequence() },
@@ -424,7 +425,7 @@
 
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.getElementById('db-change-max-btn');
-            if (activeDbTab === 'system' || activeDbTab === 'terms'
+            if (activeDbTab === 'system' || activeDbTab === 'terms' || activeDbTab === 'units'
                 || activeDbTab === 'quests' || activeDbTab === 'lore' || activeDbTab === 'actionSequences'
                 || activeDbTab === 'troops') {
                 changeMaxBtn.style.display = 'none';
@@ -435,6 +436,35 @@
             // a fallback but the "＋ New Animation" flow is the intended path.
             const newAnimBtn = document.getElementById('db-new-anim-btn');
             if (newAnimBtn) newAnimBtn.style.display = activeDbTab === 'animations' ? 'block' : 'none';
+        }
+
+        // Add a Unit only after the author chooses its canonical symbolic id.
+        // The editor never derives identity from display name or array position.
+        function createNewUnit() {
+            const coll = dbPayload.units = dbPayload.units || [];
+            const raw = prompt('Stable symbolic Unit ID (snake_case recommended):', '');
+            if (raw === null) return;
+            const id = String(raw).trim();
+            if (!id) { showToast('Unit id cannot be empty.'); return; }
+            if (coll.some(u => u && u.id === id)) {
+                showToast(`Unit id '${id}' already exists.`);
+                return;
+            }
+            // Generated once at authoring time and persisted as explicit mechanic
+            // data. It is intentionally independent of the Unit id spelling.
+            const defaultGrowthSeed = 1 + Math.floor(Math.random() * 2147483646);
+            coll.push({
+                id: id,
+                name: 'New Unit',
+                role: 'Spirit',
+                baseParams: { maxHp: 10, mpd: 2 },
+                elements: [],
+                skills: [],
+                defaultGrowthSeed: defaultGrowthSeed
+            });
+            activeDbItemId = id;
+            setDirty(true);
+            initDatabaseEditor();
         }
 
         // Append a fresh assignable animation with a unique placeholder id and
@@ -590,7 +620,7 @@
                 });
             };
             Object.values(dbPayload.commonEvents || {}).forEach(ce => walk(ce.commands));
-            (dbPayload.actors || []).forEach(a => { if (Array.isArray(a.recruitEvent)) walk(a.recruitEvent); });
+            (dbPayload.units || []).forEach(a => { if (Array.isArray(a.recruitEvent)) walk(a.recruitEvent); });
             (dbPayload.maps || []).forEach(m => (m.events || []).forEach(ev => {
                 walk(ev.commands);
                 (ev.pages || []).forEach(pg => walk(pg.commands));
@@ -634,7 +664,7 @@
             initDatabaseEditor();
         }
 
-        // Editable list of plain strings (actor custom names, quest
+        // Editable list of plain strings (Unit personal-name pools, quest
         // objectives, reward flags), built on the shared buildRowListEditor
         // engine (same click/shift-click/Delete/Ctrl+C/X/V model as every
         // other list in the database editor).
@@ -835,7 +865,7 @@
 
         // --- TROOP FORM ---
         // Two things a troop is: what it is made of, and what happens during
-        // it. Members are slots (a named actor, or a weighted pool with a
+        // it. Members are slots (a named Unit, or a weighted pool with a
         // count); events are ordinary event commands under a condition, edited
         // with the SAME command editor as map events, common events, quest
         // hooks and battle phases -- so a rule can be copied straight from a
@@ -871,7 +901,7 @@
                 const memBox = makeGroupbox(formPanel, 'Members (slots, built in order)');
                 troop.members = troop.members || [];
                 const actorOptions = (sel, current, onPick) => {
-                    (dbPayload.actors || []).forEach(a => {
+                    (dbPayload.units || []).forEach(a => {
                         const o = document.createElement('option');
                         o.value = a.id;
                         o.textContent = a.id + ': ' + a.name;
@@ -894,7 +924,7 @@
                         head.style.cssText = 'display:flex; align-items:center; gap:6px; margin-bottom:3px;';
                         const kind = document.createElement('select');
                         kind.className = 'win98-select';
-                        [['actor', 'Named actor'], ['pool', 'Weighted pool']].forEach(pair => {
+                        [['actor', 'Named Unit'], ['pool', 'Weighted pool']].forEach(pair => {
                             const o = document.createElement('option');
                             o.value = pair[0];
                             o.textContent = pair[1];
@@ -911,7 +941,7 @@
                             } else {
                                 delete slot.pool; delete slot.count;
                                 delete slot.levelMin; delete slot.levelMax;
-                                slot.actor = slot.actor || (((dbPayload.actors || [])[0] || {}).id || 1);
+                                slot.actor = slot.actor || (((dbPayload.units || [])[0] || {}).id || '');
                             }
                             setDirty(true); renderMembers();
                         };
@@ -964,7 +994,7 @@
                             addP.style.marginTop = '2px';
                             addP.textContent = '+ Pool Entry';
                             addP.onclick = () => {
-                                slot.pool.push({ actor: (((dbPayload.actors || [])[0] || {}).id || 1), weight: 1 });
+                                slot.pool.push({ actor: (((dbPayload.units || [])[0] || {}).id || ''), weight: 1 });
                                 setDirty(true); renderMembers();
                             };
                             row.appendChild(addP);
@@ -989,7 +1019,7 @@
                 addSlot.className = 'win98-btn';
                 addSlot.textContent = '+ Add Slot';
                 addSlot.onclick = () => {
-                    troop.members.push({ actor: (((dbPayload.actors || [])[0] || {}).id || 1) });
+                    troop.members.push({ actor: (((dbPayload.units || [])[0] || {}).id || '') });
                     setDirty(true); renderMembers();
                 };
                 memBox.appendChild(addSlot);
@@ -1179,8 +1209,7 @@
         // --- CHANGE MAXIMUM LOGIC ---
         function openChangeMaxDialog() {
             let maxVal = 0;
-            if (activeDbTab === 'actors') maxVal = dbPayload.actors.length;
-            else if (activeDbTab === 'items') maxVal = dbPayload.items.length;
+            if (activeDbTab === 'items') maxVal = dbPayload.items.length;
             else if (activeDbTab === 'shops') maxVal = Object.keys(dbPayload.shops).length;
             else if (activeDbTab === 'commonEvents') maxVal = Object.keys(dbPayload.commonEvents || {}).length;
             else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
@@ -1202,7 +1231,6 @@
         }
 
         function currentCollectionLength(tab) {
-            if (tab === 'actors') return dbPayload.actors.length;
             if (tab === 'items') return dbPayload.items.length;
             if (tab === 'shops') return Object.keys(dbPayload.shops || {}).length;
             if (tab === 'commonEvents') return Object.keys(dbPayload.commonEvents || {}).length;
@@ -1226,26 +1254,7 @@
                 if (!ok) return;
             }
 
-            if (activeDbTab === 'actors') {
-                const currentLen = dbPayload.actors.length;
-                let maxId = 0;
-                dbPayload.actors.forEach(a => { if (a.id > maxId) maxId = a.id; });
-                if (newMax > currentLen) {
-                    for (let i = currentLen + 1; i <= newMax; i++) {
-                        maxId += 1;
-                        dbPayload.actors.push({
-                            id: maxId,
-                            name: `New Actor ${maxId}`,
-                            role: 'Spirit',
-                            baseParams: { maxHp: 10, mpd: 2 },
-                            elements: [],
-                            skills: []
-                        });
-                    }
-                } else if (newMax < currentLen) {
-                    dbPayload.actors = dbPayload.actors.slice(0, newMax);
-                }
-            } else if (activeDbTab === 'items') {
+            if (activeDbTab === 'items') {
                 const currentLen = dbPayload.items.length;
                 let maxId = 0;
                 dbPayload.items.forEach(it => { if (it.id > maxId) maxId = it.id; });

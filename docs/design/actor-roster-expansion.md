@@ -54,7 +54,7 @@ another game's full unit kits.
 | Moa | Strange pink exploration mount | One stage for now |
 
 This table lists planned content, not content currently present in
-`data/actors.json`.
+`data/units.json`.
 
 ## Agreed creature families
 

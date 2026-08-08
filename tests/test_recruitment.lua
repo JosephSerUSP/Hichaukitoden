@@ -36,11 +36,11 @@ mockLoader = {
         local id = (type(a) == "string") and a or b
         return mockLoader.unitsById[id]
     end,
-    getActor = function(a, b)
+    getUnit = function(a, b)
         return mockLoader.getUnit(a, b)
     end,
     getUnitByRole = function(role) return { id = "summoner", name = "Summoner", role = role } end,
-    getActorByRole = function(role) return mockLoader.getUnitByRole(role) end,
+    getUnitByRole = function(role) return mockLoader.getUnitByRole(role) end,
     getItem = function(a, b)
         local id = b ~= nil and b or a
         return mockLoader.items[id]
@@ -54,7 +54,7 @@ mockLoader = {
 for _, id in ipairs({ "pixie", "skeleton", "angel", "ooze", "bat", "egg", "phoenix", "larva" }) do
     table.insert(mockLoader.units, mockLoader.unitsById[id])
 end
-mockLoader.actors = mockLoader.units
+mockLoader.units = mockLoader.units
 
 -- Test 1: recruit events are authored events, not Lua-generated ones.
 -- engine/recruitment.lua used to expand six preset types into command lists at
@@ -64,7 +64,7 @@ local realLoader = require("data.loader")
 realLoader.init()
 
 local recruitables, withBattle = 0, 0
-for _, actorData in ipairs(realLoader.actors) do
+for _, actorData in ipairs(realLoader.units) do
     local ev = actorData.recruitEvent
     if ev ~= nil then
         recruitables = recruitables + 1
