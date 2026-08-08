@@ -220,7 +220,7 @@
     "effects": [
       {
         "type": "recruit_egg",
-        "value": 15,
+        "value": "egg",
         "provenance": "random"
       }
     ],

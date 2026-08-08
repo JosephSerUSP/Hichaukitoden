@@ -166,7 +166,7 @@
     "name": "Challenge: Skeleton",
     "members": [
       {
-        "actor": 3,
+        "actor": "skeleton",
         "level": 1
       }
     ]
@@ -176,7 +176,7 @@
     "name": "Challenge: Golem",
     "members": [
       {
-        "actor": 10,
+        "actor": "golem",
         "level": 2
       }
     ]
@@ -187,7 +187,7 @@
     "description": "Strata 1 climax: a multi-phase Red Dragon at level 10, designed to reach Battle Strain. Tests affinity preparation (bring Blue), MPD budgeting (can you afford the return trip after a 10-round fight?), and the decision to retreat. At level 10 with growth band 1 fully applied: roughly 189 HP, 61 ATK, 50 MAT, 46 DEF. Four authored phases escalate pressure until ending the fight quickly becomes existentially important.",
     "members": [
       {
-        "actor": 35,
+        "actor": "red_dragon",
         "level": 10
       }
     ],

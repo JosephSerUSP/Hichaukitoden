@@ -33,7 +33,7 @@ local function rig(mpdValues)
     local sess = sessionModule.GameSession.new(loader)
     sess.party = {}
     for i, mpd in ipairs(mpdValues) do
-        local b = sessionModule.Battler.new(loader.getActor(3), 1)
+        local b = sessionModule.Battler.new(loader.getUnit("skeleton"), 1)
         local private = {}
         for k, val in pairs(b.actorData) do private[k] = val end
         private.traits = {}

@@ -137,7 +137,7 @@ end
 -- Persistent Recruit Node Management
 -- ---------------------------------------------------------------------------
 
-function recruitment.getOrCreateRecruitNode(session, loader, sourceKey, actorId, level, options)
+function recruitment.getOrCreateRecruitNode(session, loader, sourceKey, unitId, level, options)
     if not session then return nil, "No session" end
     if not sourceKey or sourceKey == "" then
         error("OPEN_RECRUIT requires a stable recruitNodeKey / sourceKey")
@@ -169,9 +169,9 @@ function recruitment.getOrCreateRecruitNode(session, loader, sourceKey, actorId,
             .. "' has no persistent recruit node", 0)
     end
 
-    local actorData = loader.getActor(actorId)
+    local actorData = loader.getUnit(unitId)
     if not actorData then
-        error("Actor " .. tostring(actorId) .. " not found for recruitment")
+        error("Unit " .. tostring(unitId) .. " not found for recruitment")
     end
 
     level = level or options.level or actorData.level or 1

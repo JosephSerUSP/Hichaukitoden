@@ -30,8 +30,8 @@ loader.init()
 -- being overridden rather than the only option available.
 local function rig()
     local sess = sessionModule.GameSession.new(loader)
-    local ally = sess:recruitActor(3, 5)
-    local enemy = sessionModule.Battler.new(loader.getActor(3), 5)
+    local ally = sess:recruitActor("skeleton", 5)
+    local enemy = sessionModule.Battler.new(loader.getUnit("skeleton"), 5)
     enemy.hp = enemy:getMaxHp(sess)
     local b = battleSystem.Battle.new(sess, { enemy })
     return sess, b, sess.party[1] or ally, enemy

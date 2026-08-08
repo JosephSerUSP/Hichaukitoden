@@ -63,11 +63,11 @@ assert(sess.party[1].name == "Saban", "Saban should start in slot 1")
 print("[PASS] Starting party Saban in slot 1")
 
 -- 4. Recruitment with preferred slot and fallback
-local pixie, loc = sess:recruitActor(1, 1, 3) -- preferred slot 3 (back-left)
+local pixie, loc = sess:recruitActor("pixie", 1, 3) -- preferred slot 3 (back-left)
 assert(loc == "party", "recruited to party")
 assert(sess.party[3] == pixie, "recruited to slot 3")
 
-local wolf, loc2 = sess:recruitActor(1, 1, 3) -- preferred slot 3 (occupied!)
+local wolf, loc2 = sess:recruitActor("pixie", 1, 3) -- preferred slot 3 (occupied!)
 assert(loc2 == "party", "recruited to party fallback")
 assert(sess.party[2] == wolf or sess.party[4] == wolf, "recruited to first empty slot")
 
@@ -78,24 +78,24 @@ local interpSess = session.GameSession.new(loader)
 interpSess:initializeStartingParty() -- Saban in slot 1
 local interpCtx = { session = interpSess, events = {} }
 interpreter.runImmediate({
-    { cmd = "OPEN_RECRUIT", actorId = 1, level = 1, suggestedSlot = 3 }
+    { cmd = "OPEN_RECRUIT", actorId = "pixie", level = 1, suggestedSlot = 3 }
 }, interpCtx)
 
-assert(interpSess.party[3] ~= nil and interpSess.party[3].actorData.id == 1, "OPEN_RECRUIT cmd placed Pixie directly into slot 3")
+assert(interpSess.party[3] ~= nil and interpSess.party[3].actorData.id == "pixie", "OPEN_RECRUIT cmd placed Pixie directly into slot 3")
 assert(interpSess.party[2] == nil, "Slot 2 remains empty")
 print("[PASS] Interpreter OPEN_RECRUIT cmd.suggestedSlot parameter wiring")
 
 -- 6. Saban (Slot 1), Slot 2 Empty, Pixie (Slot 3) Sparse Formation End-to-End
 local sparseSess = session.GameSession.new(loader)
-local saban = session.Battler.new(loader.getActor(61), 3)
-local pixie3 = session.Battler.new(loader.getActor(1), 1)
+local saban = session.Battler.new(loader.getUnit("moa"), 3)
+local pixie3 = session.Battler.new(loader.getUnit("pixie"), 1)
 sparseSess.party[1] = saban
 sparseSess.party[2] = nil
 sparseSess.party[3] = pixie3
 sparseSess.party[4] = nil
 
 -- Test getCandidates and resolve find Pixie in slot 3 despite empty slot 2
-local enemyActor = session.Battler.new(loader.getActor(3), 1)
+local enemyActor = session.Battler.new(loader.getUnit("skeleton"), 1)
 local sparseBattle = battle.Battle.new(sparseSess, { enemyActor })
 
 local enemyCandidates = targeting.getCandidates(enemyActor, { side = "enemy" }, sparseBattle)
@@ -127,11 +127,11 @@ print("[PASS] Sparse formation Saban-1 / empty-2 / Pixie-3 targeting, rects, & c
 -- 7. Cover Interception Edge Cases
 -- Case A: Dead protector does NOT cover
 local deadSess = session.GameSession.new(loader)
-local deadSaban = session.Battler.new(loader.getActor(61), 3)
+local deadSaban = session.Battler.new(loader.getUnit("moa"), 3)
 deadSaban.hp = 0
 deadSaban:addState("dead", 1)
 deadSaban:addState("defending", 1)
-local p3Dead = session.Battler.new(loader.getActor(1), 1)
+local p3Dead = session.Battler.new(loader.getUnit("pixie"), 1)
 deadSess.party[1] = deadSaban
 deadSess.party[3] = p3Dead
 local bDead = battle.Battle.new(deadSess, { enemyActor })
@@ -147,10 +147,10 @@ assert(not interceptedDead, "Dead protector does not intercept")
 
 -- Case B: Stunned/Restricted protector does NOT cover
 local stunSess = session.GameSession.new(loader)
-local stunSaban = session.Battler.new(loader.getActor(61), 3)
+local stunSaban = session.Battler.new(loader.getUnit("moa"), 3)
 stunSaban:addState("defending", 1)
 stunSaban.isRestricted = function() return true end
-local p3Stun = session.Battler.new(loader.getActor(1), 1)
+local p3Stun = session.Battler.new(loader.getUnit("pixie"), 1)
 stunSess.party[1] = stunSaban
 stunSess.party[3] = p3Stun
 local bStun = battle.Battle.new(stunSess, { enemyActor })
@@ -166,9 +166,9 @@ assert(not interceptedStun, "Restricted/stunned protector does not intercept")
 
 -- Case C: Wrong-column protector (Slot 2 front-right vs Slot 3 back-left) does NOT cover
 local wrongColSess = session.GameSession.new(loader)
-local wrongColSaban = session.Battler.new(loader.getActor(61), 3)
+local wrongColSaban = session.Battler.new(loader.getUnit("moa"), 3)
 wrongColSaban:addState("defending", 1)
-local p3Wrong = session.Battler.new(loader.getActor(1), 1)
+local p3Wrong = session.Battler.new(loader.getUnit("pixie"), 1)
 wrongColSess.party[2] = wrongColSaban -- slot 2 (front-right)
 wrongColSess.party[3] = p3Wrong     -- slot 3 (back-left)
 local bWrong = battle.Battle.new(wrongColSess, { enemyActor })
@@ -184,9 +184,9 @@ assert(not interceptedWrong, "Wrong column protector (slot 2 vs slot 3) does not
 
 -- Case D: cover = "bypass" ignores cover
 local bypassSess = session.GameSession.new(loader)
-local bypassSaban = session.Battler.new(loader.getActor(61), 3)
+local bypassSaban = session.Battler.new(loader.getUnit("moa"), 3)
 bypassSaban:addState("defending", 1)
-local p3Bypass = session.Battler.new(loader.getActor(1), 1)
+local p3Bypass = session.Battler.new(loader.getUnit("pixie"), 1)
 bypassSess.party[1] = bypassSaban
 bypassSess.party[3] = p3Bypass
 local bBypass = battle.Battle.new(bypassSess, { enemyActor })
@@ -204,10 +204,10 @@ assert(not interceptedBypass, "cover = bypass ignores defender cover")
 print("[PASS] Cover interception edge cases (dead, restricted, wrong column, bypass)")
 
 -- 8. Targeting shapes (row, column, all, random) & cover specs
-local b1 = session.Battler.new(loader.getActor(61), 1) -- slot 1 (front-left)
-local b2 = session.Battler.new(loader.getActor(1), 1)  -- slot 2 (front-right)
-local b3 = session.Battler.new(loader.getActor(1), 1)  -- slot 3 (back-left)
-local b4 = session.Battler.new(loader.getActor(1), 1)  -- slot 4 (back-right)
+local b1 = session.Battler.new(loader.getUnit("moa"), 1) -- slot 1 (front-left)
+local b2 = session.Battler.new(loader.getUnit("pixie"), 1)  -- slot 2 (front-right)
+local b3 = session.Battler.new(loader.getUnit("pixie"), 1)  -- slot 3 (back-left)
+local b4 = session.Battler.new(loader.getUnit("pixie"), 1)  -- slot 4 (back-right)
 
 local shapeSess = session.GameSession.new(loader)
 shapeSess.party[1] = b1
@@ -235,7 +235,7 @@ print("[PASS] Targeting shapes (row, column, all, random)")
 
 -- 9. Real Battle:buildTurnQueue priority, initiative, speed, and equal-speed tie-breaking
 local testSess = session.GameSession.new(loader)
-local fastActor = session.Battler.new(loader.getActor(1), 20)
+local fastActor = session.Battler.new(loader.getUnit("pixie"), 20)
 testSess.party[1] = b1
 testSess.party[2] = b2
 testSess.party[3] = fastActor
@@ -268,14 +268,14 @@ print("[PASS] Action priority ordering and equal-speed tie resolution via real B
 local transform = require("engine.transform")
 local transSess = session.GameSession.new(loader)
 -- Create an isolated actor data object to avoid mutating global loader cache
-local origPixieData = setmetatable({ autoTransforms = { { atLevel = 1, actor = 2 } } }, { __index = loader.getActor(1) })
+local origPixieData = setmetatable({ autoTransforms = { { atLevel = 1, actor = "high_pixie" } } }, { __index = loader.getUnit("pixie") })
 local origPixie = session.Battler.new(origPixieData, 1)
 transSess.party[3] = origPixie
 
 local resultB = transform.applyAutomatic(transSess, origPixie)
 
 assert(transSess.party[3] == resultB, "applyAutomatic replaces original in slot 3 via replaceInSession")
-assert(transSess.party[3].actorData.id == 2, "Transformed battler in slot 3 is actor 2 (High Pixie)")
+assert(transSess.party[3].actorData.id == "high_pixie", "Transformed battler in slot 3 is actor 2 (High Pixie)")
 assert(transSess.party[3].row == "back", "Transformed battler in slot 3 retains back row")
 
 print("[PASS] Promotion/Transformation slot retention via real transform.applyAutomatic pipeline")
@@ -300,8 +300,8 @@ print("[PASS] Validator fixedMembers slot bounds check")
 -- 12. Sparse party STATE_TICKS and TICK_SKILL_TIMERS (slot 3 state decay & skill cooldowns)
 local interpreter = require("engine.interpreter")
 local tickSess = session.GameSession.new(loader)
-local saban1 = session.Battler.new(loader.getActor(61), 5)
-local pixie3 = session.Battler.new(loader.getActor(1), 3)
+local saban1 = session.Battler.new(loader.getUnit("moa"), 5)
+local pixie3 = session.Battler.new(loader.getUnit("pixie"), 3)
 tickSess.party[1] = saban1
 tickSess.party[3] = pixie3
 
@@ -323,8 +323,8 @@ print("[PASS] Sparse party round-end state duration and skill timer ticks (slot 
 
 -- 13. Sparse party victory XP rewards (matching battle.victory flow FOR_EACH living_allies)
 local expSess = session.GameSession.new(loader)
-local expSaban = session.Battler.new(loader.getActor(61), 1)
-local expPixie = session.Battler.new(loader.getActor(1), 1)
+local expSaban = session.Battler.new(loader.getUnit("moa"), 1)
+local expPixie = session.Battler.new(loader.getUnit("pixie"), 1)
 expSess.party[1] = expSaban
 expSess.party[3] = expPixie
 
@@ -357,9 +357,9 @@ print("[PASS] Target 'none' spec safety (Mystic Egg item 11)")
 
 -- 15. Real UI item action shape & cover selectivity (hostile vs support actions)
 local itemCoverSess = session.GameSession.new(loader)
-local coverSaban = session.Battler.new(loader.getActor(61), 5)
+local coverSaban = session.Battler.new(loader.getUnit("moa"), 5)
 coverSaban:addState("defending", 1)
-local coverPixie = session.Battler.new(loader.getActor(1), 1)
+local coverPixie = session.Battler.new(loader.getUnit("pixie"), 1)
 coverPixie.hp = 5 -- Wounded Pixie
 itemCoverSess.party[1] = coverSaban -- slot 1 (front-left)
 itemCoverSess.party[3] = coverPixie -- slot 3 (back-left)
@@ -396,7 +396,7 @@ local coveredHostileTargets = bItemCover:evaluateCover(enemyActor, hostileSpec, 
 assert(#coveredHostileTargets == 1 and coveredHostileTargets[1] == coverSaban, "Hostile single-target attack on back-row Pixie IS intercepted by Defending Saban")
 
 -- D. Charmed ally hostile action cover interception
-local charmedAlly = session.Battler.new(loader.getActor(61), 5)
+local charmedAlly = session.Battler.new(loader.getUnit("moa"), 5)
 charmedAlly:addState("charm", 1)
 charmedAlly.isRestricted = function() return false end
 itemCoverSess.party[2] = charmedAlly -- slot 2 (front-right ally)

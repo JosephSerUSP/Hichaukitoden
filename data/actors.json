@@ -1,6 +1,6 @@
 [
   {
-    "id": 1,
+    "id": "pixie",
     "name": "Pixie",
     "favoriteFoods": [
       179,
@@ -33,7 +33,7 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": 2,
+        "evolvesTo": "high_pixie",
         "bonus": {
           "maxHp": 8,
           "mat": 5,
@@ -63,7 +63,7 @@
             "commands": [
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 1,
+                "actorId": "pixie",
                 "level": 1
               },
               {
@@ -145,10 +145,11 @@
       }
     ],
     "portrait": "pixie",
-    "bigBattler": "pixie"
+    "bigBattler": "pixie",
+    "defaultGrowthSeed": 506952114
   },
   {
-    "id": 2,
+    "id": "high_pixie",
     "name": "High Pixie",
     "favoriteFoods": [
       179,
@@ -176,7 +177,7 @@
     "evolutions": [
       {
         "level": 20,
-        "evolvesTo": 62,
+        "evolvesTo": "titania",
         "bonus": {
           "maxHp": 18,
           "mat": 9,
@@ -255,10 +256,11 @@
       }
     ],
     "portrait": "highPixie",
-    "bigBattler": "highPixie"
+    "bigBattler": "highPixie",
+    "defaultGrowthSeed": 1013904228
   },
   {
-    "id": 3,
+    "id": "skeleton",
     "name": "Skeleton",
     "favoriteFoods": [
       172,
@@ -320,7 +322,7 @@
                         "commands": [
                           {
                             "cmd": "OPEN_RECRUIT",
-                            "actorId": 3,
+                            "actorId": "skeleton",
                             "level": 1
                           },
                           {
@@ -423,10 +425,11 @@
       }
     ],
     "portrait": "skeleton",
-    "bigBattler": "skeleton"
+    "bigBattler": "skeleton",
+    "defaultGrowthSeed": 1520856342
   },
   {
-    "id": 4,
+    "id": "angel",
     "name": "Angel",
     "favoriteFoods": [
       171,
@@ -452,7 +455,7 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": 5,
+        "evolvesTo": "archangel",
         "bonus": {
           "maxHp": 10,
           "mat": 4,
@@ -484,7 +487,7 @@
               },
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 4,
+                "actorId": "angel",
                 "level": 1
               },
               {
@@ -572,10 +575,11 @@
       }
     ],
     "portrait": "angel",
-    "bigBattler": "angel"
+    "bigBattler": "angel",
+    "defaultGrowthSeed": 2027808456
   },
   {
-    "id": 5,
+    "id": "archangel",
     "name": "Archangel",
     "favoriteFoods": [
       171,
@@ -677,10 +681,11 @@
       }
     ],
     "portrait": "archangel",
-    "bigBattler": "archangel"
+    "bigBattler": "archangel",
+    "defaultGrowthSeed": 387276923
   },
   {
-    "id": 6,
+    "id": "demon",
     "name": "Demon",
     "favoriteFoods": [
       180,
@@ -713,7 +718,7 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": 7,
+        "evolvesTo": "incubus",
         "bonus": {
           "maxHp": 10,
           "atk": 4,
@@ -791,10 +796,11 @@
       }
     ],
     "portrait": "demon",
-    "bigBattler": "demon"
+    "bigBattler": "demon",
+    "defaultGrowthSeed": 894229037
   },
   {
-    "id": 7,
+    "id": "incubus",
     "name": "Incubus",
     "favoriteFoods": [
       179,
@@ -892,10 +898,11 @@
       }
     ],
     "portrait": "incubus",
-    "bigBattler": "incubus"
+    "bigBattler": "incubus",
+    "defaultGrowthSeed": 1401181151
   },
   {
-    "id": 8,
+    "id": "nurse",
     "name": "Nurse",
     "favoriteFoods": [
       175,
@@ -941,7 +948,7 @@
             "commands": [
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 8,
+                "actorId": "nurse",
                 "level": 1
               },
               {
@@ -1029,10 +1036,11 @@
       }
     ],
     "portrait": "nurse",
-    "bigBattler": "nurse"
+    "bigBattler": "nurse",
+    "defaultGrowthSeed": 1908133265
   },
   {
-    "id": 9,
+    "id": "imp",
     "name": "Imp",
     "favoriteFoods": [
       176,
@@ -1085,7 +1093,7 @@
               },
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 9,
+                "actorId": "imp",
                 "level": 1
               },
               {
@@ -1161,10 +1169,11 @@
       }
     ],
     "portrait": "imp",
-    "bigBattler": "imp"
+    "bigBattler": "imp",
+    "defaultGrowthSeed": 267601732
   },
   {
-    "id": 10,
+    "id": "golem",
     "name": "Golem",
     "favoriteFoods": [
       171,
@@ -1188,7 +1197,7 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 57
+        "evolvesTo": "talos"
       }
     ],
     "initialParty": true,
@@ -1220,7 +1229,7 @@
                         "commands": [
                           {
                             "cmd": "OPEN_RECRUIT",
-                            "actorId": 10,
+                            "actorId": "golem",
                             "level": 2
                           },
                           {
@@ -1329,10 +1338,11 @@
       }
     ],
     "portrait": "golem",
-    "bigBattler": "golem"
+    "bigBattler": "golem",
+    "defaultGrowthSeed": 774553846
   },
   {
-    "id": 11,
+    "id": "ghoul",
     "name": "Ghoul",
     "favoriteFoods": [
       172,
@@ -1425,10 +1435,11 @@
       }
     ],
     "portrait": "ghoul",
-    "bigBattler": "ghoul"
+    "bigBattler": "ghoul",
+    "defaultGrowthSeed": 1281505960
   },
   {
-    "id": 12,
+    "id": "ooze",
     "name": "Ooze",
     "favoriteFoods": [
       178,
@@ -1475,7 +1486,7 @@
               },
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 12,
+                "actorId": "ooze",
                 "level": 1
               },
               {
@@ -1569,10 +1580,11 @@
       }
     ],
     "portrait": "ooze",
-    "bigBattler": "ooze"
+    "bigBattler": "ooze",
+    "defaultGrowthSeed": 1788458074
   },
   {
-    "id": 13,
+    "id": "bat",
     "name": "Bat",
     "favoriteFoods": [
       179,
@@ -1610,7 +1622,7 @@
             "commands": [
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 13,
+                "actorId": "bat",
                 "level": 1
               },
               {
@@ -1699,10 +1711,11 @@
       }
     ],
     "portrait": "bat",
-    "bigBattler": "bat"
+    "bigBattler": "bat",
+    "defaultGrowthSeed": 147926541
   },
   {
-    "id": 14,
+    "id": "wisp",
     "name": "Wisp",
     "favoriteFoods": [
       179,
@@ -1760,7 +1773,7 @@
               },
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 14,
+                "actorId": "wisp",
                 "level": 1
               },
               {
@@ -1843,10 +1856,11 @@
       }
     ],
     "portrait": "wisp",
-    "bigBattler": "wisp"
+    "bigBattler": "wisp",
+    "defaultGrowthSeed": 654878655
   },
   {
-    "id": 15,
+    "id": "egg",
     "name": "Egg",
     "favoriteFoods": [
       179,
@@ -1882,28 +1896,28 @@
     "evolutions": [],
     "hatchOutcomes": {
       "mystic": {
-        "actor": 16
+        "actor": "phoenix"
       },
       "dungeon_larva": {
-        "actor": 17
+        "actor": "larva"
       },
       "dungeon_angel": {
-        "actor": 4
+        "actor": "angel"
       },
       "dungeon_dragon": {
-        "actor": 34
+        "actor": "dragon"
       },
       "dungeon_moa": {
-        "actor": 61
+        "actor": "moa"
       },
       "dungeon_lamia": {
-        "actor": 63
+        "actor": "lamia"
       },
       "dungeon_cockatrice": {
-        "actor": 65
+        "actor": "cockatrice"
       },
       "default": {
-        "actor": 17
+        "actor": "larva"
       }
     },
     "autoTransforms": [
@@ -1965,10 +1979,11 @@
       "wait"
     ],
     "portrait": "egg",
-    "bigBattler": "egg"
+    "bigBattler": "egg",
+    "defaultGrowthSeed": 1161830769
   },
   {
-    "id": 16,
+    "id": "phoenix",
     "name": "Phoenix",
     "favoriteFoods": [
       172,
@@ -2053,10 +2068,11 @@
       }
     ],
     "portrait": "phoenix",
-    "bigBattler": "phoenix"
+    "bigBattler": "phoenix",
+    "defaultGrowthSeed": 1668782883
   },
   {
-    "id": 17,
+    "id": "larva",
     "name": "Larva",
     "favoriteFoods": [
       171,
@@ -2079,7 +2095,7 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": 18,
+        "evolvesTo": "crimson_lord",
         "bonus": {
           "maxHp": 12,
           "atk": 5,
@@ -2146,10 +2162,11 @@
       }
     ],
     "portrait": "larva",
-    "bigBattler": "larva"
+    "bigBattler": "larva",
+    "defaultGrowthSeed": 28251350
   },
   {
-    "id": 18,
+    "id": "crimson_lord",
     "name": "Crimson Lord",
     "names": [
       "Carmine",
@@ -2232,10 +2249,11 @@
       }
     ],
     "portrait": "vampire",
-    "bigBattler": "vampire"
+    "bigBattler": "vampire",
+    "defaultGrowthSeed": 535203464
   },
   {
-    "id": 19,
+    "id": "flauros",
     "name": "Flauros",
     "names": [
       "Flauros",
@@ -2331,10 +2349,11 @@
       }
     ],
     "portrait": "flauros",
-    "bigBattler": "flauros"
+    "bigBattler": "flauros",
+    "defaultGrowthSeed": 1042155578
   },
   {
-    "id": 20,
+    "id": "candle",
     "name": "Candle",
     "names": [
       "Wick",
@@ -2391,7 +2410,7 @@
             "commands": [
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 20,
+                "actorId": "candle",
                 "level": 1
               },
               {
@@ -2463,10 +2482,11 @@
       }
     ],
     "portrait": "candle",
-    "bigBattler": "candle"
+    "bigBattler": "candle",
+    "defaultGrowthSeed": 1549107692
   },
   {
-    "id": 21,
+    "id": "shadow_stalker",
     "name": "Shadow Stalker",
     "names": [
       "Umbra",
@@ -2557,10 +2577,11 @@
       }
     ],
     "portrait": "ShadowStalker",
-    "bigBattler": "ShadowStalker"
+    "bigBattler": "ShadowStalker",
+    "defaultGrowthSeed": 2056059806
   },
   {
-    "id": 22,
+    "id": "summoner",
     "name": "Alex",
     "names": [
       "Alex"
@@ -2621,10 +2642,11 @@
       }
     ],
     "portrait": "Alex",
-    "bigBattler": "Alex"
+    "bigBattler": "Alex",
+    "defaultGrowthSeed": 415528273
   },
   {
-    "id": 23,
+    "id": "undine",
     "name": "Undine",
     "names": [
       "Nami",
@@ -2655,7 +2677,7 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 24
+        "evolvesTo": "proteus"
       }
     ],
     "initialParty": false,
@@ -2714,10 +2736,11 @@
       "I've had stranger."
     ],
     "portrait": "Undine",
-    "bigBattler": "Undine"
+    "bigBattler": "Undine",
+    "defaultGrowthSeed": 922480387
   },
   {
-    "id": 24,
+    "id": "proteus",
     "name": "Proteus",
     "names": [
       "Nami",
@@ -2807,10 +2830,11 @@
       "I've had stranger."
     ],
     "portrait": "Proteus",
-    "bigBattler": "Proteus"
+    "bigBattler": "Proteus",
+    "defaultGrowthSeed": 1429432501
   },
   {
-    "id": 25,
+    "id": "cocoon",
     "name": "Cocoon",
     "names": [
       "Luma",
@@ -2842,7 +2866,7 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 26
+        "evolvesTo": "notiluca"
       }
     ],
     "initialParty": false,
@@ -2901,10 +2925,11 @@
       "I've had stranger."
     ],
     "portrait": "Cocoon",
-    "bigBattler": "Cocoon"
+    "bigBattler": "Cocoon",
+    "defaultGrowthSeed": 1936384615
   },
   {
-    "id": 26,
+    "id": "notiluca",
     "name": "Notiluca",
     "names": [
       "Luma",
@@ -2993,10 +3018,11 @@
       "I've had stranger."
     ],
     "portrait": "Notiluca",
-    "bigBattler": "Notiluca"
+    "bigBattler": "Notiluca",
+    "defaultGrowthSeed": 295853082
   },
   {
-    "id": 27,
+    "id": "goblin_thief",
     "name": "Gbl. Thief",
     "names": [
       "Pip",
@@ -3031,7 +3057,7 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 28
+        "evolvesTo": "goblin_prince"
       }
     ],
     "initialParty": false,
@@ -3090,10 +3116,11 @@
       "I've had stranger."
     ],
     "portrait": "GblThief",
-    "bigBattler": "GblThief"
+    "bigBattler": "GblThief",
+    "defaultGrowthSeed": 802805196
   },
   {
-    "id": 28,
+    "id": "goblin_prince",
     "name": "Gbl. Prince",
     "names": [
       "Pip",
@@ -3183,10 +3210,11 @@
       "I've had stranger."
     ],
     "portrait": "GblPrince",
-    "bigBattler": "GblPrince"
+    "bigBattler": "GblPrince",
+    "defaultGrowthSeed": 1309757310
   },
   {
-    "id": 29,
+    "id": "homunculus",
     "name": "Homunculus",
     "names": [
       "Aleph",
@@ -3268,62 +3296,62 @@
       "I've had stranger."
     ],
     "eligibleFrom": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      37,
-      39,
-      41,
-      43,
-      45,
-      46,
-      48,
-      50,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62
+      "pixie",
+      "high_pixie",
+      "skeleton",
+      "angel",
+      "archangel",
+      "demon",
+      "incubus",
+      "nurse",
+      "imp",
+      "golem",
+      "ghoul",
+      "ooze",
+      "bat",
+      "wisp",
+      "phoenix",
+      "larva",
+      "crimson_lord",
+      "flauros",
+      "candle",
+      "shadow_stalker",
+      "undine",
+      "proteus",
+      "cocoon",
+      "notiluca",
+      "goblin_thief",
+      "goblin_prince",
+      "mandrake",
+      "alraune",
+      "cerberus",
+      "diablos",
+      "dragon",
+      "red_dragon",
+      "blue_dragon",
+      "green_dragon",
+      "white_dragon",
+      "black_dragon",
+      "giant",
+      "hill_gigas",
+      "atlas",
+      "mimic",
+      "unicorn",
+      "sleipnir",
+      "kirin",
+      "nightmare",
+      "firemane",
+      "talos",
+      "gargoyle",
+      "grotesque",
+      "kappa",
+      "moa",
+      "titania"
     ],
     "secretTransforms": [
       {
         "condition": "intrinsic.maxHp == 666",
-        "actor": 33
+        "actor": "diablos"
       }
     ],
     "autoTransforms": [
@@ -3333,10 +3361,11 @@
       }
     ],
     "portrait": "Homunculus",
-    "bigBattler": "Homunculus"
+    "bigBattler": "Homunculus",
+    "defaultGrowthSeed": 1816709424
   },
   {
-    "id": 30,
+    "id": "mandrake",
     "name": "Mandrake",
     "names": [
       "Raiz",
@@ -3368,7 +3397,7 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 31
+        "evolvesTo": "alraune"
       }
     ],
     "initialParty": false,
@@ -3427,10 +3456,11 @@
       "I've had stranger."
     ],
     "portrait": "Mandrake",
-    "bigBattler": "Mandrake"
+    "bigBattler": "Mandrake",
+    "defaultGrowthSeed": 176177891
   },
   {
-    "id": 31,
+    "id": "alraune",
     "name": "Alraune",
     "names": [
       "Raiz",
@@ -3519,10 +3549,11 @@
       "I've had stranger."
     ],
     "portrait": "Alraune",
-    "bigBattler": "Alraune"
+    "bigBattler": "Alraune",
+    "defaultGrowthSeed": 683130005
   },
   {
-    "id": 32,
+    "id": "cerberus",
     "name": "Cerberus",
     "names": [
       "Fang",
@@ -3610,10 +3641,11 @@
       "I've had stranger."
     ],
     "portrait": "Cerberus",
-    "bigBattler": "Cerberus"
+    "bigBattler": "Cerberus",
+    "defaultGrowthSeed": 1190082119
   },
   {
-    "id": 33,
+    "id": "diablos",
     "name": "Diablos",
     "names": [
       "Diablos"
@@ -3699,10 +3731,11 @@
       "I've had stranger."
     ],
     "portrait": "Diablos",
-    "bigBattler": "Diablos"
+    "bigBattler": "Diablos",
+    "defaultGrowthSeed": 1697034233
   },
   {
-    "id": 34,
+    "id": "dragon",
     "name": "Dragon",
     "names": [
       "Draco",
@@ -3736,23 +3769,23 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 35
+        "evolvesTo": "red_dragon"
       },
       {
         "level": 10,
-        "evolvesTo": 37
+        "evolvesTo": "blue_dragon"
       },
       {
         "level": 10,
-        "evolvesTo": 39
+        "evolvesTo": "green_dragon"
       },
       {
         "level": 10,
-        "evolvesTo": 41
+        "evolvesTo": "white_dragon"
       },
       {
         "level": 10,
-        "evolvesTo": 43
+        "evolvesTo": "black_dragon"
       }
     ],
     "initialParty": false,
@@ -3811,10 +3844,11 @@
       "I've had stranger."
     ],
     "portrait": "Dragon",
-    "bigBattler": "Dragon"
+    "bigBattler": "Dragon",
+    "defaultGrowthSeed": 56502700
   },
   {
-    "id": 35,
+    "id": "red_dragon",
     "name": "Red Dragon",
     "names": [
       "Draco",
@@ -3846,7 +3880,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 36,
+        "evolvesTo": "salamander",
         "cost": {
           "item": 50
         }
@@ -3908,10 +3942,11 @@
       "I've had stranger."
     ],
     "portrait": "RedDragon",
-    "bigBattler": "RedDragon"
+    "bigBattler": "RedDragon",
+    "defaultGrowthSeed": 563454814
   },
   {
-    "id": 36,
+    "id": "salamander",
     "name": "Salamander",
     "names": [
       "Draco",
@@ -4000,10 +4035,11 @@
       "I've had stranger."
     ],
     "portrait": "Salamander",
-    "bigBattler": "Salamander"
+    "bigBattler": "Salamander",
+    "defaultGrowthSeed": 1070406928
   },
   {
-    "id": 37,
+    "id": "blue_dragon",
     "name": "Blue Dragon",
     "names": [
       "Draco",
@@ -4035,7 +4071,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 38,
+        "evolvesTo": "leviathan",
         "cost": {
           "item": 51
         }
@@ -4097,10 +4133,11 @@
       "I've had stranger."
     ],
     "portrait": "BlueDragon",
-    "bigBattler": "BlueDragon"
+    "bigBattler": "BlueDragon",
+    "defaultGrowthSeed": 1577359042
   },
   {
-    "id": 38,
+    "id": "leviathan",
     "name": "Leviathan",
     "names": [
       "Draco",
@@ -4189,10 +4226,11 @@
       "I've had stranger."
     ],
     "portrait": "Leviathan",
-    "bigBattler": "Leviathan"
+    "bigBattler": "Leviathan",
+    "defaultGrowthSeed": 2084311156
   },
   {
-    "id": 39,
+    "id": "green_dragon",
     "name": "Green Dragon",
     "names": [
       "Draco",
@@ -4224,7 +4262,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 40,
+        "evolvesTo": "fafnir",
         "cost": {
           "item": 52
         }
@@ -4286,10 +4324,11 @@
       "I've had stranger."
     ],
     "portrait": "GreenDragon",
-    "bigBattler": "GreenDragon"
+    "bigBattler": "GreenDragon",
+    "defaultGrowthSeed": 443779623
   },
   {
-    "id": 40,
+    "id": "fafnir",
     "name": "Fafnir",
     "names": [
       "Draco",
@@ -4378,10 +4417,11 @@
       "I've had stranger."
     ],
     "portrait": "Fafnir",
-    "bigBattler": "Fafnir"
+    "bigBattler": "Fafnir",
+    "defaultGrowthSeed": 950731737
   },
   {
-    "id": 41,
+    "id": "white_dragon",
     "name": "White Dragon",
     "names": [
       "Draco",
@@ -4414,7 +4454,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 42,
+        "evolvesTo": "bahamut",
         "cost": {
           "item": 53
         }
@@ -4476,10 +4516,11 @@
       "I've had stranger."
     ],
     "portrait": "WhiteDragon",
-    "bigBattler": "WhiteDragon"
+    "bigBattler": "WhiteDragon",
+    "defaultGrowthSeed": 1457683851
   },
   {
-    "id": 42,
+    "id": "bahamut",
     "name": "Bahamut",
     "names": [
       "Draco",
@@ -4568,10 +4609,11 @@
       "I've had stranger."
     ],
     "portrait": "Bahamut",
-    "bigBattler": "Bahamut"
+    "bigBattler": "Bahamut",
+    "defaultGrowthSeed": 1964635965
   },
   {
-    "id": 43,
+    "id": "black_dragon",
     "name": "Black Dragon",
     "names": [
       "Draco",
@@ -4604,7 +4646,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 44,
+        "evolvesTo": "nidhogg",
         "cost": {
           "item": 54
         }
@@ -4666,10 +4708,11 @@
       "I've had stranger."
     ],
     "portrait": "BlackDragon",
-    "bigBattler": "BlackDragon"
+    "bigBattler": "BlackDragon",
+    "defaultGrowthSeed": 324104432
   },
   {
-    "id": 44,
+    "id": "nidhogg",
     "name": "Nidhogg",
     "names": [
       "Draco",
@@ -4758,10 +4801,11 @@
       "I've had stranger."
     ],
     "portrait": "Nidhogg",
-    "bigBattler": "Nidhogg"
+    "bigBattler": "Nidhogg",
+    "defaultGrowthSeed": 831056546
   },
   {
-    "id": 45,
+    "id": "giant",
     "name": "Giant",
     "names": [
       "Brontes",
@@ -4792,11 +4836,11 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 46
+        "evolvesTo": "hill_gigas"
       },
       {
         "level": 10,
-        "evolvesTo": 48
+        "evolvesTo": "atlas"
       }
     ],
     "initialParty": false,
@@ -4855,10 +4899,11 @@
       "I've had stranger."
     ],
     "portrait": "Giant",
-    "bigBattler": "Giant"
+    "bigBattler": "Giant",
+    "defaultGrowthSeed": 1338008660
   },
   {
-    "id": 46,
+    "id": "hill_gigas",
     "name": "Hill Gigas",
     "names": [
       "Brontes",
@@ -4891,7 +4936,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 47,
+        "evolvesTo": "surtr",
         "cost": {
           "item": 55
         }
@@ -4953,10 +4998,11 @@
       "I've had stranger."
     ],
     "portrait": "HillGigas",
-    "bigBattler": "HillGigas"
+    "bigBattler": "HillGigas",
+    "defaultGrowthSeed": 1844960774
   },
   {
-    "id": 47,
+    "id": "surtr",
     "name": "Surtr",
     "names": [
       "Brontes",
@@ -5044,10 +5090,11 @@
       "I've had stranger."
     ],
     "portrait": "Surtr",
-    "bigBattler": "Surtr"
+    "bigBattler": "Surtr",
+    "defaultGrowthSeed": 204429241
   },
   {
-    "id": 48,
+    "id": "atlas",
     "name": "Atlas",
     "names": [
       "Brontes",
@@ -5080,7 +5127,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 49,
+        "evolvesTo": "hyperion",
         "cost": {
           "item": 56
         }
@@ -5142,10 +5189,11 @@
       "I've had stranger."
     ],
     "portrait": "Atlas",
-    "bigBattler": "Atlas"
+    "bigBattler": "Atlas",
+    "defaultGrowthSeed": 711381355
   },
   {
-    "id": 49,
+    "id": "hyperion",
     "name": "Hyperion",
     "names": [
       "Brontes",
@@ -5234,10 +5282,11 @@
       "I've had stranger."
     ],
     "portrait": "Hyperion",
-    "bigBattler": "Hyperion"
+    "bigBattler": "Hyperion",
+    "defaultGrowthSeed": 1218333469
   },
   {
-    "id": 50,
+    "id": "mimic",
     "name": "Mimic",
     "names": [
       "Chester",
@@ -5269,7 +5318,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 51,
+        "evolvesTo": "pandora",
         "cost": {
           "item": 47
         }
@@ -5331,10 +5380,11 @@
       "I've had stranger."
     ],
     "portrait": "Mimic",
-    "bigBattler": "Mimic"
+    "bigBattler": "Mimic",
+    "defaultGrowthSeed": 1725285583
   },
   {
-    "id": 51,
+    "id": "pandora",
     "name": "Pandora",
     "names": [
       "Chester",
@@ -5423,10 +5473,11 @@
       "I've had stranger."
     ],
     "portrait": "Pandora",
-    "bigBattler": "Pandora"
+    "bigBattler": "Pandora",
+    "defaultGrowthSeed": 84754050
   },
   {
-    "id": 52,
+    "id": "unicorn",
     "name": "Unicorn",
     "names": [
       "Celeste",
@@ -5457,14 +5508,14 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 53
+        "evolvesTo": "sleipnir"
       },
       {
         "level": 10,
-        "evolvesTo": 55
+        "evolvesTo": "nightmare"
       },
       {
-        "evolvesTo": 56,
+        "evolvesTo": "firemane",
         "cost": {
           "item": 48
         }
@@ -5526,10 +5577,11 @@
       "I've had stranger."
     ],
     "portrait": "Unicorn",
-    "bigBattler": "Unicorn"
+    "bigBattler": "Unicorn",
+    "defaultGrowthSeed": 591706164
   },
   {
-    "id": 53,
+    "id": "sleipnir",
     "name": "Sleipnir",
     "names": [
       "Celeste",
@@ -5563,7 +5615,7 @@
     "drops": [],
     "evolutions": [
       {
-        "evolvesTo": 54,
+        "evolvesTo": "kirin",
         "cost": {
           "item": 49
         }
@@ -5625,10 +5677,11 @@
       "I've had stranger."
     ],
     "portrait": "Sleipnir",
-    "bigBattler": "Sleipnir"
+    "bigBattler": "Sleipnir",
+    "defaultGrowthSeed": 1098658278
   },
   {
-    "id": 54,
+    "id": "kirin",
     "name": "Kirin",
     "names": [
       "Celeste",
@@ -5718,10 +5771,11 @@
       "I've had stranger."
     ],
     "portrait": "Kirin",
-    "bigBattler": "Kirin"
+    "bigBattler": "Kirin",
+    "defaultGrowthSeed": 1605610392
   },
   {
-    "id": 55,
+    "id": "nightmare",
     "name": "Nightmare",
     "names": [
       "Celeste",
@@ -5809,10 +5863,11 @@
       "I've had stranger."
     ],
     "portrait": "Nightmare",
-    "bigBattler": "Nightmare"
+    "bigBattler": "Nightmare",
+    "defaultGrowthSeed": 2112562506
   },
   {
-    "id": 56,
+    "id": "firemane",
     "name": "Firemane",
     "names": [
       "Celeste",
@@ -5900,10 +5955,11 @@
       "I've had stranger."
     ],
     "portrait": "Firemane",
-    "bigBattler": "Firemane"
+    "bigBattler": "Firemane",
+    "defaultGrowthSeed": 472030973
   },
   {
-    "id": 57,
+    "id": "talos",
     "name": "Talos",
     "names": [
       "Rocky",
@@ -5988,10 +6044,11 @@
       "I've had stranger."
     ],
     "portrait": "Talos",
-    "bigBattler": "Talos"
+    "bigBattler": "Talos",
+    "defaultGrowthSeed": 978983087
   },
   {
-    "id": 58,
+    "id": "gargoyle",
     "name": "Gargoyle",
     "names": [
       "Hugo",
@@ -6025,7 +6082,7 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 59
+        "evolvesTo": "grotesque"
       }
     ],
     "initialParty": false,
@@ -6084,10 +6141,11 @@
       "I've had stranger."
     ],
     "portrait": "Gargoyle",
-    "bigBattler": "Gargoyle"
+    "bigBattler": "Gargoyle",
+    "defaultGrowthSeed": 1485935201
   },
   {
-    "id": 59,
+    "id": "grotesque",
     "name": "Grotesque",
     "names": [
       "Hugo",
@@ -6177,10 +6235,11 @@
       "I've had stranger."
     ],
     "portrait": "Grotesque",
-    "bigBattler": "Grotesque"
+    "bigBattler": "Grotesque",
+    "defaultGrowthSeed": 1992887315
   },
   {
-    "id": 60,
+    "id": "kappa",
     "name": "Kappa",
     "names": [
       "Kawataro",
@@ -6273,10 +6332,11 @@
       }
     ],
     "portrait": "Kappa",
-    "bigBattler": "Kappa"
+    "bigBattler": "Kappa",
+    "defaultGrowthSeed": 352355782
   },
   {
-    "id": 61,
+    "id": "moa",
     "name": "Moa",
     "names": [
       "Momo",
@@ -6363,10 +6423,11 @@
       "I've had stranger."
     ],
     "portrait": "Moa",
-    "bigBattler": "Moa"
+    "bigBattler": "Moa",
+    "defaultGrowthSeed": 859307896
   },
   {
-    "id": 62,
+    "id": "titania",
     "name": "Titania",
     "names": [
       "Ariel",
@@ -6456,10 +6517,11 @@
       "I've had stranger."
     ],
     "portrait": "Titania",
-    "bigBattler": "Titania"
+    "bigBattler": "Titania",
+    "defaultGrowthSeed": 1366260010
   },
   {
-    "id": 63,
+    "id": "lamia",
     "name": "Lamia",
     "favoriteFoods": [
       179,
@@ -6500,7 +6562,7 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": 64,
+        "evolvesTo": "lamia_queen",
         "bonus": {
           "maxHp": 16,
           "mat": 8,
@@ -6550,10 +6612,11 @@
     ],
     "sacrificeRewards": [],
     "portrait": "lamia",
-    "bigBattler": "lamia"
+    "bigBattler": "lamia",
+    "defaultGrowthSeed": 1873212124
   },
   {
-    "id": 64,
+    "id": "lamia_queen",
     "name": "Lamia Queen",
     "favoriteFoods": [
       179,
@@ -6630,10 +6693,11 @@
       }
     ],
     "portrait": "LamiaQueen",
-    "bigBattler": "LamiaQueen"
+    "bigBattler": "LamiaQueen",
+    "defaultGrowthSeed": 232680591
   },
   {
-    "id": 65,
+    "id": "cockatrice",
     "name": "Cockatrice",
     "favoriteFoods": [
       179,
@@ -6713,10 +6777,11 @@
     ],
     "sacrificeRewards": [],
     "portrait": "cockatrice",
-    "bigBattler": "cockatrice"
+    "bigBattler": "cockatrice",
+    "defaultGrowthSeed": 739632705
   },
   {
-    "id": 66,
+    "id": "professor",
     "name": "Professor",
     "favoriteFoods": [
       179,
@@ -6758,7 +6823,7 @@
               },
               {
                 "cmd": "OPEN_RECRUIT",
-                "actorId": 66,
+                "actorId": "professor",
                 "level": 10
               },
               {
@@ -6846,6 +6911,7 @@
       }
     ],
     "portrait": "professor",
-    "bigBattler": "professor"
+    "bigBattler": "professor",
+    "defaultGrowthSeed": 1246584819
   }
 ]

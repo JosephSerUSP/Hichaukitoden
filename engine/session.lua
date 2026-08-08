@@ -410,10 +410,10 @@ function GameSession:remember(battler, cause)
     return record
 end
 
-function GameSession:recruitActor(actorId, level, preferredSlot)
-    local actorData = self.loader.getActor(actorId)
+function GameSession:recruitActor(unitId, level, preferredSlot)
+    local actorData = self.loader.getUnit(unitId)
     if not actorData then
-        return nil, "Actor not found"
+        return nil, "Unit not found"
     end
     level = level or actorData.level or 1
     local battler = self:createPersistentBattler(actorData, level)

@@ -67,7 +67,9 @@ function newgame.rollInventory(loader)
     return ids
 end
 
--- Returns { { id = actorId, level = n }, ... } for the starting party
+-- Returns { { id = unitId, level = n }, ... } for the starting party. These
+-- are authored Unit references; the persistent Actor instances do not exist
+-- until GameSession constructs the party.
 function newgame.rollMembers(loader)
     local ng = ngConf(loader)
     local partyRules = ng.party or {}
@@ -77,7 +79,7 @@ function newgame.rollMembers(loader)
     if partyRules.fixedMembers ~= nil then
         local fixed = {}
         for _, member in ipairs(partyRules.fixedMembers or {}) do
-            if loader.getActor(member.id) then
+            if loader.getUnit(member.id) then
                 table.insert(fixed, {
                     id = member.id,
                     level = member.level or 1,
@@ -90,9 +92,9 @@ function newgame.rollMembers(loader)
     end
 
     local available = {}
-    for _, creature in ipairs(loader.actors) do
-        if creature.initialParty then
-            table.insert(available, creature)
+    for _, unit in ipairs(loader.units) do
+        if unit.initialParty then
+            table.insert(available, unit)
         end
     end
     shuffleArray(available)

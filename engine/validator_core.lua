@@ -105,6 +105,16 @@ validator.run = function(loader)
 
     local validBlendModes = { alpha = true, add = true, multiply = true, screen = true }
 
+    -- Unseeded enemies/previews need a deterministic growth history, but that
+    -- mechanic must not depend on Unit resource-ID spelling. Every authored
+    -- Unit therefore owns an explicit fallback seed.
+    for _, unit in ipairs(loader.units or {}) do
+        local seed = unit.defaultGrowthSeed
+        check(type(seed) == "number" and seed == math.floor(seed)
+                and seed > 0 and seed < 2147483647,
+            "Unit '" .. tostring(unit.id) .. "' defaultGrowthSeed must be an integer in 1..2147483646")
+    end
+
     -- Shared shape check for a fog config table -- used both for a map's
     -- own `fog` (docs/design/fog-presets-and-panorama.md) and for each
     -- entry in engine.fogPresets, since a preset IS a fog config (plus id/
@@ -1429,7 +1439,7 @@ validator.run = function(loader)
     vSession:initializeStartingParty()
     check(#vSession.party > 0, "new game produced an empty party")
 
-    local enemyData = loader.getActor(1)
+    local enemyData = loader.getUnit("pixie")
     if check(enemyData, "actor id 1 missing (needed for validation battle)") then
         local enemy = session.Battler.new(enemyData, 1)
         enemy.hp = enemy:getMaxHp(vSession)
@@ -1452,14 +1462,14 @@ validator.run = function(loader)
         local s = session.GameSession.new(loader)
         -- Level 3: a level-1 spirit's totalExp is 0, which would make the
         -- bank check vacuous.
-        local function mk(id)
-            local b = session.Battler.new(loader.getActor(id), 3)
+        local function mk(unitId)
+            local b = session.Battler.new(loader.getUnit(unitId), 3)
             b.hp = b:getMaxHp(s)
             return b
         end
-        s.party = { mk(2), mk(3), mk(4) }
-        s.reserve = { mk(2), mk(3) }
-        local wb = battleSystem.Battle.new(s, { mk(1) })
+        s.party = { mk("high_pixie"), mk("skeleton"), mk("angel") }
+        s.reserve = { mk("high_pixie"), mk("skeleton") }
+        local wb = battleSystem.Battle.new(s, { mk("pixie") })
         check(s.party[1].row == "front" and s.party[3].row == "back",
             "Battle.new did not assign default rows by slot (1-2 front, 3-4 back)")
 
@@ -1698,7 +1708,7 @@ validator.run = function(loader)
     local mockItemView2 = require("engine.formula").itemView(loader.getItem(2))
     -- Guarded: a campaign missing actor 1 fails its own check above; the
     -- mock must not crash the run before that message is collected.
-    local mockCrafter = loader.getActor(1) and session.Battler.new(loader.getActor(1), 1) or nil
+    local mockCrafter = loader.getUnit("pixie") and session.Battler.new(loader.getUnit("pixie"), 1) or nil
 
     -- Mock context shared by every formula-compiling param check (the
     -- 'formula' type and E7's 'assignments' list-of-pairs type) and by the
@@ -3036,7 +3046,7 @@ elseif paramDef.type == "script" then
     do
         local tSession = session.GameSession.new(loader)
         tSession:initializeStartingParty()
-        local tEnemy = session.Battler.new(loader.getActor(1), 1)
+        local tEnemy = session.Battler.new(loader.getUnit("pixie"), 1)
         tEnemy.hp = tEnemy:getMaxHp(tSession)
         local tCtx = {
             session = tSession,
@@ -3210,7 +3220,7 @@ elseif paramDef.type == "script" then
 
     -- Traits evaluateCondition validation
     local function validateTraitsCondition()
-        local battler = session.Battler.new(loader.getActor(1), 1)
+        local battler = session.Battler.new(loader.getUnit("pixie"), 1)
         local maxHp = traits.getParam(battler, "maxHp", vSession)
 
         check(traits.evaluateCondition(nil, battler, vSession) == true, "nil condition must evaluate to true")

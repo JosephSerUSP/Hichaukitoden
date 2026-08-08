@@ -17,12 +17,12 @@ local function check(cond, msg)
 end
 
 loader.init()
-local PIXIE, HIGH_PIXIE, SKELETON = 1, 2, 3
+local PIXIE, HIGH_PIXIE, SKELETON = "pixie", "high_pixie", "skeleton"
 
-local function rig(actorId, level)
+local function rig(unitId, level)
     local sess = sessionModule.GameSession.new(loader)
     sess.party = {}
-    local b = sessionModule.Battler.new(loader.getActor(actorId), level, 13579)
+    local b = sessionModule.Battler.new(loader.getUnit(unitId), level, 13579)
     b.hp = b:getMaxHp(sess)
     sess.party[1] = b
     return sess, b
@@ -140,14 +140,14 @@ do
 end
 
 do
-    local sess, b = rig(29, 9) -- live Homunculus
+    local sess, b = rig("homunculus", 9) -- live Homunculus
     local intrinsic = (b.actorData.baseParams.maxHp or 0) + (b.growth.maxHp or 0)
     b.paramPlus.maxHp = 666 - intrinsic
     local destination = transform.classify(sess, b, b.actorData.eligibleFrom)
-    check(destination == 33,
+    check(destination == "diablos",
         "an ordered intrinsic secret overrides ordinary Homunculus classification")
     b.equipment[1] = loader.getItem(13) -- equipment must not alter the secret
-    check(transform.classify(sess, b, b.actorData.eligibleFrom) == 33,
+    check(transform.classify(sess, b, b.actorData.eligibleFrom) == "diablos",
         "equipment does not alter a Homunculus intrinsic secret")
 end
 

@@ -177,7 +177,7 @@
     "party": {
       "fixedMembers": [
         {
-          "id": 61,
+          "id": "moa",
           "level": 3,
           "name": "Saban",
           "slot": 1

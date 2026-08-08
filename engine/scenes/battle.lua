@@ -163,12 +163,12 @@ end
 -------------------------------------------------------------------------------
 function battle.triggerTestBattle()
     local enemyList = {}
-    local gData = ldr().getActor(1) or { id = "enemy_1", name = "Test Target A", level = 1 }
+    local gData = ldr().getUnit("pixie") or { id = "enemy_1", name = "Test Target A", level = 1 }
     local b1 = session.Battler.new(gData, 1)
     b1.hp = b1:getMaxHp(sess())
     table.insert(enemyList, b1)
 
-    local pData = ldr().getActor(2) or { id = "enemy_2", name = "Test Target B", level = 1 }
+    local pData = ldr().getUnit("high_pixie") or { id = "enemy_2", name = "Test Target B", level = 1 }
     local b2 = session.Battler.new(pData, 1)
     b2.hp = b2:getMaxHp(sess())
     table.insert(enemyList, b2)

@@ -6,7 +6,7 @@
 -- `encounters` table by SPAWN_ENEMIES. Two systems for one idea.
 --
 -- A troop's `members` is a list of SLOTS instead, and a slot is either a named
--- actor or a weighted pool with a count. A boss is named slots; a wandering
+-- Unit or a weighted pool with a count. A boss is named slots; a wandering
 -- group is one pool slot; a boss with a variable escort is both, which RPG
 -- Maker cannot express at all. There is no rigid/random mode flag, because
 -- there are not two kinds of troop.
@@ -62,7 +62,7 @@ end
 
 -- Build the battlers for one slot. A named slot yields exactly one battler; a
 -- pool slot rolls `count` weighted picks. Level comes from the slot when
--- authored, then the actor's own, so a troop only says what it needs to.
+-- authored, then the Unit's own, so a troop only says what it needs to.
 -- `evalFormula` is supplied by the caller rather than reached for here: the
 -- interpreter owns what a formula can see (battle, party, v...), and building
 -- a second context would be a second answer to the same question.
@@ -70,21 +70,27 @@ local function buildSlot(slot, ctx, out, evalFormula)
     local loader = loaderOf(ctx)
     local sessionMod = require("engine.session")
 
-    local function makeOne(actorId, levelMin, levelMax)
-        local actorData = loader.getActor(actorId)
-        if not actorData then
-            error("troop: slot names missing actor '" .. tostring(actorId) .. "'")
+    local function makeOne(unitId, levelMin, levelMax)
+        local unitData = loader.getUnit(unitId)
+        if not unitData then
+            error("troop: slot names missing unit '" .. tostring(unitId) .. "'")
         end
-        local lo = levelMin or actorData.level or 1
+        local lo = levelMin or unitData.level or 1
         local hi = levelMax or lo
         local level = lo
         if hi > lo then level = math.random(lo, hi) end
-        local b = sessionMod.Battler.new(actorData, level)
+        -- Enemy/ally is a battle relationship, not an authored Unit type. A
+        -- troop therefore constructs the same Battler abstraction used on the
+        -- player side rather than an Enemy-specific data/runtime class.
+        local b = sessionMod.Battler.new(unitData, level)
         b.hp = b:getMaxHp(ctx.session)
         table.insert(out, b)
     end
 
     if slot.actor ~= nil then
+        -- `actor` is retained as the authored field spelling for compatibility;
+        -- its value is a Unit resource id and will be renamed only with the
+        -- dedicated symbolic-reference migration.
         makeOne(slot.actor, slot.level or slot.levelMin, slot.level or slot.levelMax)
         return
     end
@@ -116,7 +122,7 @@ local function buildSlot(slot, ctx, out, evalFormula)
             if roll <= sum then chosen = entry break end
         end
         -- The slot's range is the default for everything it rolls; an entry
-        -- overrides it for the one actor that needs to be tougher.
+        -- overrides it for the one Unit that needs to be tougher.
         makeOne(chosen.actor,
             chosen.levelMin or slot.levelMin,
             chosen.levelMax or slot.levelMax)
@@ -135,7 +141,7 @@ end
 
 -- The troop a wandering encounter on this map fights.
 --
--- The map keeps its own weighted actor table -- that roster is the thing that
+-- The map keeps its own weighted Unit table -- that roster is the thing that
 -- differs floor to floor. What does NOT differ is the shape of a wandering
 -- fight, so one `wandering` troop describes all of them and reads the table
 -- through a `poolFrom: "map"` slot. Turning each map's table into its own

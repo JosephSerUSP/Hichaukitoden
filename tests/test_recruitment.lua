@@ -15,27 +15,32 @@ print("[TEST] Starting creature recruitment system tests...")
 -- Mock loader for testing
 local mockLoader
 mockLoader = {
-    actors = {
-        [1] = { id = 1, name = "Pixie", level = 1, role = "Healer", recruitEvent = { type = "heal" } },
-        [3] = { id = 3, name = "Skeleton", level = 1, role = "Attacker", recruitEvent = { type = "hostile" } },
-        [4] = { id = 4, name = "Angel", level = 2, role = "Support", recruitEvent = { type = "gold", goldCost = 30 } },
-        [12] = { id = 12, name = "Ooze", level = 1, role = "Debuffer", recruitEvent = { type = "aid", itemRequired = 1 } },
-        [13] = { id = 13, name = "Bat", level = 1, role = "Attacker", recruitEvent = { type = "free" } },
-        [15] = { id = 15, name = "CustomCreature", level = 1, recruitEvent = { commands = { { cmd = "TEXT", text = "Custom event!" } } } },
-        [16] = { id = 16, name = "ArrayCreature", level = 1, recruitEvent = { { cmd = "TEXT", text = "Direct array event!" } } },
-        [17] = { id = 17, name = "ScriptIdCreature", level = 1, recruitEvent = 4 },
+    unitsById = {
+        pixie = { id = "pixie", name = "Pixie", level = 1, role = "Healer", recruitEvent = { type = "heal" } },
+        skeleton = { id = "skeleton", name = "Skeleton", level = 1, role = "Attacker", recruitEvent = { type = "hostile" } },
+        angel = { id = "angel", name = "Angel", level = 2, role = "Support", recruitEvent = { type = "gold", goldCost = 30 } },
+        ooze = { id = "ooze", name = "Ooze", level = 1, role = "Debuffer", recruitEvent = { type = "aid", itemRequired = 1 } },
+        bat = { id = "bat", name = "Bat", level = 1, role = "Attacker", recruitEvent = { type = "free" } },
+        egg = { id = "egg", name = "CustomCreature", level = 1, recruitEvent = { commands = { { cmd = "TEXT", text = "Custom event!" } } } },
+        phoenix = { id = "phoenix", name = "ArrayCreature", level = 1, recruitEvent = { { cmd = "TEXT", text = "Direct array event!" } } },
+        larva = { id = "larva", name = "ScriptIdCreature", level = 1, recruitEvent = 4 },
     },
+    units = {},
     commonEvents = {
         ["4"] = { id = "4", name = "Recruit Pixie", commands = { { cmd = "TEXT", text = "Common event recruit!" } } }
     },
     items = {
         [1] = { id = 1, name = "Potion", type = "item" }
     },
-    getActor = function(a, b)
-        local id = (type(a) == "number" or type(a) == "string") and a or b
-        return mockLoader.actors[id]
+    getUnit = function(a, b)
+        local id = (type(a) == "string") and a or b
+        return mockLoader.unitsById[id]
     end,
-    getActorByRole = function(role) return { id = 99, name = "Summoner", role = role } end,
+    getActor = function(a, b)
+        return mockLoader.getUnit(a, b)
+    end,
+    getUnitByRole = function(role) return { id = "summoner", name = "Summoner", role = role } end,
+    getActorByRole = function(role) return mockLoader.getUnitByRole(role) end,
     getItem = function(a, b)
         local id = b ~= nil and b or a
         return mockLoader.items[id]
@@ -44,6 +49,12 @@ mockLoader = {
     formatTerm = function(self, key, default, p1) return (default:gsub("{0}", tostring(p1))) end,
     system = { combat = { encounterChance = 0.1 } }
 }
+
+
+for _, id in ipairs({ "pixie", "skeleton", "angel", "ooze", "bat", "egg", "phoenix", "larva" }) do
+    table.insert(mockLoader.units, mockLoader.unitsById[id])
+end
+mockLoader.actors = mockLoader.units
 
 -- Test 1: recruit events are authored events, not Lua-generated ones.
 -- engine/recruitment.lua used to expand six preset types into command lists at
@@ -104,14 +115,14 @@ assert(#sess.party == 0, "Party should start empty")
 
 -- Recruit up to 4 members into active party
 for i = 1, 4 do
-    local battler, slotType = sess:recruitActor(13, 1)
+    local battler, slotType = sess:recruitActor("bat", 1)
     assert(battler ~= nil, "Failed to recruit Bat #" .. i)
     assert(slotType == "party", "Bat #" .. i .. " should be placed in party")
 end
 assert(#sess.party == 4, "Party should have 4 members")
 
 -- 5th member should be routed to reserve roster
-local battler5, slotType5 = sess:recruitActor(13, 1)
+local battler5, slotType5 = sess:recruitActor("bat", 1)
 assert(battler5 ~= nil, "Failed to recruit 5th Bat")
 assert(slotType5 == "reserve", "5th Bat should be placed in reserve")
 assert(sess.reserve[1] ~= nil, "Reserve slot 1 should hold 5th Bat")
@@ -122,11 +133,11 @@ print("  [PASS] GameSession:recruitActor places members correctly in party and r
 assert(config.MAX_RESERVE_SIZE == 4, "Expedition reserve must contain four slots")
 local capSess = GameSession.new(mockLoader)
 for i = 1, 4 + config.MAX_RESERVE_SIZE do
-    local b, where = capSess:recruitActor(13, 1)
+    local b, where = capSess:recruitActor("bat", 1)
     assert(b and where == (i <= 4 and "party" or "reserve"),
         "Expedition roster slot " .. i .. " did not fill")
 end
-local overflow, overflowWhere = capSess:recruitActor(13, 1)
+local overflow, overflowWhere = capSess:recruitActor("bat", 1)
 assert(overflow == nil and overflowWhere == "Full",
     "Recruitment beyond four party and four reserve slots must fail loudly")
 print("  [PASS] Expedition reserve is capped at four creatures")
@@ -134,7 +145,7 @@ print("  [PASS] Expedition reserve is capped at four creatures")
 -- Town storage is a separate 99-slot collection and survives save/load.
 assert(config.MAX_STORAGE_SIZE == 99, "Town storage must contain 99 slots")
 local storageSess = GameSession.new(mockLoader)
-for i = 1, 8 do assert(storageSess:recruitActor(13, 1)) end
+for i = 1, 8 do assert(storageSess:recruitActor("bat", 1)) end
 local stored = storageSess.party[4]
 storageSess.party[4] = nil
 local storageSlot = assert(storageSess:storeCreature(stored))
@@ -169,11 +180,11 @@ local ctx = { session = sess, events = {} }
 
 interpreter.runImmediate({
     { cmd = "CHANGE_ITEM", item = 1, count = -2 },
-    { cmd = "OPEN_RECRUIT", actorId = 4, level = 2 }
+    { cmd = "OPEN_RECRUIT", actorId = "angel", level = 2 }
 }, ctx)
 
 assert(sess.inventory[1] == 3, "CHANGE_ITEM did not deduct items correctly")
-assert(sess.reserve[2] ~= nil and sess.reserve[2].actorData.id == 4, "OPEN_RECRUIT did not add Angel to reserve")
+assert(sess.reserve[2] ~= nil and sess.reserve[2].actorData.id == "angel", "OPEN_RECRUIT did not add Angel to reserve")
 print("  [PASS] Interpreter commands CHANGE_ITEM and OPEN_RECRUIT executed cleanly")
 
 -- Test 4: ERASE_EVENT removes map event
@@ -223,7 +234,7 @@ print("  [PASS] Condition evaluator correctly handles gold: prefix")
 
 -- Test 7: End-to-end recruitment execution of compiled gold recruit option script
 sess.gold = 30
-sess.activeEvent = { id = "recruit_4", actorId = 4 }
+sess.activeEvent = { id = "recruit_4", actorId = "angel" }
 sess.currentMapData = {
     events = {
         { id = "recruit_4", type = "recruit" }
@@ -234,7 +245,7 @@ sess.currentMapData = {
 -- runs the latter through runImmediate. Mirror that split here.
 -- Straight off the authored event now, rather than off a script the engine
 -- built a moment earlier -- so this exercises what actually ships.
-local angelScript = realLoader.getActor(4).recruitEvent
+local angelScript = realLoader.getUnit("angel").recruitEvent
 local angelOptScript = {}
 for _, c in ipairs(angelScript[2].options[1].commands) do
     if not interpreter.INTERACTIVE_IDS[c.cmd] then
@@ -252,7 +263,7 @@ local itemSess = GameSession.new(mockLoader)
 itemSess.flags.recruit_onboarding_shown = true
 itemSess.inventory[1] = 3
 local itemNode = recruitment.getOrCreateRecruitNode(itemSess, mockLoader,
-    "test:item-cost", 13, 1, {
+    "test:item-cost", "bat", 1, {
         requirement = { type = "item", itemRequired = 1, amount = 2 }
     })
 local itemCtx = {
@@ -276,7 +287,7 @@ local goldSess = GameSession.new(mockLoader)
 goldSess.flags.recruit_onboarding_shown = true
 goldSess.gold = 50
 local goldNode = recruitment.getOrCreateRecruitNode(goldSess, mockLoader,
-    "test:gold-cost", 13, 1, {
+    "test:gold-cost", "bat", 1, {
         requirement = { type = "gold", goldCost = 30 }
     })
 local goldCtx = {
@@ -294,7 +305,7 @@ print("  [PASS] Gold recruitment validates first and charges exactly once")
 -- Deprecated quantity aliases are rejected instead of silently disagreeing.
 local badAmountOk, badAmountErr = pcall(function()
     recruitment.getOrCreateRecruitNode(GameSession.new(mockLoader), mockLoader,
-        "test:obsolete-amount", 13, 1, {
+        "test:obsolete-amount", "bat", 1, {
             requirement = { type = "item", itemRequired = 1, amountRequired = 2 }
         })
 end)
@@ -305,9 +316,9 @@ print("  [PASS] Item requirement has one canonical quantity field")
 -- Test 9: failed or malformed placement is lossless and cannot overwrite.
 local blockedSess = GameSession.new(mockLoader)
 blockedSess.inventory[1] = 2
-local existing = assert(blockedSess:recruitActor(13, 1))
+local existing = assert(blockedSess:recruitActor("bat", 1))
 local blockedNode = recruitment.getOrCreateRecruitNode(blockedSess, mockLoader,
-    "test:blocked-placement", 13, 1, {
+    "test:blocked-placement", "bat", 1, {
         requirement = { type = "item", itemRequired = 1, amount = 2 }
     })
 blockedNode.requirementSatisfied = true
@@ -336,14 +347,14 @@ print("  [PASS] Active-slot substitution is atomic")
 -- Full town storage rejects a reserve replacement without charging.
 local fullSess = GameSession.new(mockLoader)
 for i = 1, config.MAX_PARTY_SIZE + config.MAX_RESERVE_SIZE do
-    assert(fullSess:recruitActor(13, 1))
+    assert(fullSess:recruitActor("bat", 1))
 end
 for i = 1, config.MAX_STORAGE_SIZE do
-    fullSess.storage[i] = fullSess:createPersistentBattler(mockLoader.actors[13], 1)
+    fullSess.storage[i] = fullSess:createPersistentBattler(mockLoader.getUnit("bat"), 1)
 end
 fullSess.gold = 99
 local fullNode = recruitment.getOrCreateRecruitNode(fullSess, mockLoader,
-    "test:full-storage", 13, 1, {
+    "test:full-storage", "bat", 1, {
         requirement = { type = "gold", goldCost = 40 }
     })
 fullNode.requirementSatisfied = true
@@ -361,7 +372,7 @@ print("  [PASS] Full expedition and storage failure is lossless")
 local compileSess = GameSession.new(mockLoader)
 local challengeGraph = interpreter.runInteractive({
     {
-        cmd = "OPEN_RECRUIT", actorId = 13, sourceKey = "test:challenge",
+        cmd = "OPEN_RECRUIT", actorId = "bat", sourceKey = "test:challenge",
         requirement = { type = "challenge" },
         onRequirement = {
             {
@@ -387,7 +398,7 @@ assert(resumeAction.sourceKey == "test:challenge" and resumeAction.committedNode
     "Compiled resume lost source identity or outcome continuation")
 
 local challengeNode = recruitment.getOrCreateRecruitNode(compileSess, mockLoader,
-    "test:challenge", 13, 1, { requirement = { type = "challenge" } })
+    "test:challenge", "bat", 1, { requirement = { type = "challenge" } })
 local challengeInstance = challengeNode.candidate.instanceId
 local resumedNode = recruitment.getOrCreateRecruitNode(compileSess, mockLoader,
     resumeAction.sourceKey, resumeAction.actorId, resumeAction.level,
@@ -410,7 +421,7 @@ print("  [PASS] Stray challenge resume fails loud")
 -- Test 11: unresolved and completed recruit nodes round-trip without duplication.
 local saveSess = GameSession.new(mockLoader)
 local saveNode = recruitment.getOrCreateRecruitNode(saveSess, mockLoader,
-    "test:save-node", 13, 1, { requirement = { type = "free" } })
+    "test:save-node", "bat", 1, { requirement = { type = "free" } })
 local savedInstance = saveNode.candidate.instanceId
 local savePayload = savegame.serialize(saveSess, mockLoader, "map")
 local loadedSaveSess = savegame.deserialize(savePayload, mockLoader)
