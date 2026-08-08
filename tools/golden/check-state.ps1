@@ -21,13 +21,13 @@ foreach ($line in $output) {
 }
 
 if ($report.Count -eq 0) {
-    Write-Host "ENGINE STATE produced no output — is the engine erroring?"
+    Write-Host "ENGINE STATE produced no output -- is the engine erroring?"
     exit 1
 }
 
 $refPath = "docs/ENGINE-STATE.md"
 if (-not (Test-Path $refPath)) {
-    Write-Host "MISSING $refPath — run tools/golden/capture-state.ps1"
+    Write-Host "MISSING $refPath -- run tools/golden/capture-state.ps1"
     exit 1
 }
 

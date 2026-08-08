@@ -216,23 +216,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
-
-          Write-Host "--- hypothesis: 5.1 turns lovec's stderr into a terminating error under EAP=Stop ---"
-          Write-Host "[5.1 EAP=Stop]"
-          powershell -NoProfile -Command "`$ErrorActionPreference='Stop'; `$o = & lovec . engine-state; Write-Host ('  captured lines: ' + `$o.Count)"
-          Write-Host "  exit: $LASTEXITCODE"
-          Write-Host "[5.1 EAP=Continue]"
-          powershell -NoProfile -Command "`$ErrorActionPreference='Continue'; `$o = & lovec . engine-state; Write-Host ('  captured lines: ' + `$o.Count)"
-          Write-Host "  exit: $LASTEXITCODE"
-          Write-Host "--- windows powershell 5.1 (full script) ---"
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check-state.ps1
-          Write-Host "5.1 exit: $LASTEXITCODE"
-          $five = $LASTEXITCODE
-          Write-Host "--- pwsh 7 ---"
-          pwsh -NoProfile -File tools/golden/check-state.ps1
-          Write-Host "pwsh exit: $LASTEXITCODE"
-
-          if ($five -ne 0 -and $LASTEXITCODE -ne 0) { throw "G4 mismatch (5.1=$five, pwsh=$LASTEXITCODE)" }
+          if ($LASTEXITCODE -ne 0) { throw "G4 mismatch (exit $LASTEXITCODE)" }
 
       - name: 'Phase B probe: reachability (informational, never a gate)'
         continue-on-error: true
