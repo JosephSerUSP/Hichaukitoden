@@ -1033,6 +1033,102 @@ function renderer.drawBattlerCard(session, target, x, y, w, h, title, opts)
     ui.drawString(fitStateStr, stateX, stateY, { 0.7, 0.7, 0.7, 1 })
 end
 
+
+function renderer.drawBattlerInspector(session, bv, x, y, w, h)
+    if not bv or not bv.targetSelect then
+        ui.drawPanelTitle("Inspection", x, y)
+        return
+    end
+
+    local targets = getHoveredTargets(bv, bv.combatState, bv.selectedIndex, bv.skillSelect, bv.itemSelect, bv.livingMembers, bv.activeMemberIdx)
+    local target = targets and targets[1]
+    if not target then
+        ui.drawPanelTitle("Inspection", x, y)
+        return
+    end
+
+    local isEnemy = false
+    if bv.battle and bv.battle.enemies then
+        for _, e in ipairs(bv.battle.enemies) do
+            if e == target then isEnemy = true break end
+        end
+    end
+    ui.drawPanelTitle(isEnemy and "Enemy Info" or "Ally Info", x, y)
+
+    -- Left side: Battler card (sprite, name, HP)
+    local cardW = math.floor(w * 0.4)
+    renderer.drawBattlerCard(session, target, x, y, cardW, h, nil, nil)
+
+    -- Right side: States list and desc
+    local listX = x + cardW + 8
+    local listY = y + 16
+    local listW = w - cardW - 16
+
+    ui.drawString("STATES", listX, listY, { 0.8, 0.8, 0.8, 1 })
+    listY = listY + 16
+
+    local states = target.states or {}
+    local numStates = #states
+
+    if numStates == 0 then
+        ui.drawString("Normal", listX, listY, { 0.5, 0.5, 0.5, 1 })
+        return
+    end
+
+    -- Ensure index is bounded
+    local maxIdx = math.max(1, numStates)
+    bv.inspectStateIdx = math.min(maxIdx, math.max(1, bv.inspectStateIdx or 1))
+
+    local visibleRows = 4
+    local startIdx = math.max(1, bv.inspectStateIdx - math.floor(visibleRows / 2))
+    startIdx = math.min(startIdx, math.max(1, numStates - visibleRows + 1))
+
+    for i = startIdx, math.min(numStates, startIdx + visibleRows - 1) do
+        local st = states[i]
+        local def = session and session.loader and session.loader.getState(st.id)
+        local rowY = listY + (i - startIdx) * 16
+
+        if i == bv.inspectStateIdx then
+            ui.drawSelectionRect(listX - 4, rowY - 2, listW + 4, 16)
+        end
+
+        local icon = def and def.icon or 0
+        local cx = listX
+        if icon > 0 then
+            ui.drawIcon(icon, cx, rowY)
+            cx = cx + 16
+        end
+
+        local nameStr = def and def.name or st.id
+        if st.stacks and st.stacks > 1 then
+            nameStr = nameStr .. " x" .. tostring(st.stacks)
+        end
+        ui.drawString(nameStr, cx, rowY, { 1, 1, 1, 1 })
+    end
+
+    -- Description area below list
+    local descY = listY + visibleRows * 16 + 8
+    ui.drawLine(listX, descY - 4, listX + listW, descY - 4, { 0.3, 0.3, 0.3, 1 })
+
+    local selSt = states[bv.inspectStateIdx]
+    if selSt then
+        local def = session and session.loader and session.loader.getState(selSt.id)
+        if def then
+            local descStr = def.description or "No description."
+
+            -- If it's a barrier or ward, we might want to derive description (Stage 3).
+            -- But for now, just show the authored description and exact stacks.
+
+            ui.drawString(descStr, listX, descY, { 0.9, 0.9, 0.9, 1 }, "left", listW)
+
+            -- Source logic can be added here if we track source
+            if selSt.sourceName then
+                ui.drawString("Source: " .. tostring(selSt.sourceName), listX, descY + 40, { 0.6, 0.6, 0.6, 1 }, "left", listW)
+            end
+        end
+    end
+end
+
 function renderer.drawTargetInfoWindow(session, bv, x, y, w, h)
     if not bv or not bv.targetSelect then
         ui.drawPanelTitle("Target", x, y)
