@@ -1,0 +1,37 @@
+# Shared semantic materials for deterministic item batch 53-62
+newmtl old_limestone
+Kd 0.561 0.537 0.467
+
+newmtl rough_limestone
+Kd 0.494 0.467 0.396
+
+newmtl ritual_gold
+Kd 0.569 0.467 0.235
+
+newmtl oxidized_bronze
+Kd 0.337 0.337 0.267
+
+newmtl wrought_iron
+Kd 0.157 0.157 0.149
+
+newmtl dark_wood
+Kd 0.275 0.188 0.133
+
+newmtl aged_cloth
+Kd 0.439 0.353 0.275
+
+newmtl smoked_glass
+Kd 0.196 0.239 0.235
+
+newmtl wet_residue
+Kd 0.196 0.275 0.196
+
+newmtl bone
+Kd 0.745 0.698 0.569
+
+newmtl wax
+Kd 0.608 0.494 0.275
+
+newmtl crystal
+Kd 0.353 0.510 0.588
+
