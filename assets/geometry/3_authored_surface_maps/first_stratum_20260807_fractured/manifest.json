@@ -65,8 +65,8 @@
       "tileAxes": "x",
       "neutral": 128,
       "alphaSemantic": "opaque base coverage",
-      "signedMin": -0.37467,
-      "signedMax": 0.09727,
+      "signedMin": -0.28467,
+      "signedMax": 0.09801,
       "alphaCoverage": 1.0,
       "wrapError": {
         "x": 0.0

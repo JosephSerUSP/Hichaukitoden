@@ -119,8 +119,16 @@ def wall_ashlar_fractured(size: int):
 def wall_limewash_fractured(size: int):
     field, _ = base.wall_limewash(size)
     # Crazing on a rendered surface: denser, shallower, no lip.
-    mask = fracture_mask(size, 8301, cells=10, width=0.008, runtime_texels=1.25)
-    field = cut_fracture(field, mask, depth=0.22)
+    #
+    # The first version used the COMPLETE fine network at depth 0.22 and the model
+    # painted a mosaic of separate stone tiles with grout -- precisely what the
+    # prompt's negatives were written to prevent. The geometry decides and the
+    # prompt cannot overrule it: a complete tessellation cut that deep IS the
+    # paving signal. Partial coverage and a much shallower cut make it read as
+    # craquelure in a render rather than as joints between pieces.
+    mask = fracture_mask(size, 8301, cells=10, width=0.008, fragment_share=0.34,
+                         runtime_texels=1.25)
+    field = cut_fracture(field, mask, depth=0.13)
     return base.force_wrap(gaussian_filter(field, 0.7, mode=("nearest", "wrap")), "x"), np.ones_like(field)
 
 
@@ -152,7 +160,8 @@ def _assert_rules(manifest: dict) -> None:
         assert row["role"] == "baseSurface", f"{name} must be a base surface"
         assert row["alphaCoverage"] == 1.0, f"{name} must be fully opaque"
         # The cut has to actually reach below the surface it is cut into.
-        assert row["signedMin"] < -0.18, (
+        floor = -0.12 if "limewash" in name else -0.18
+        assert row["signedMin"] < floor, (
             f"{name} only reaches {row['signedMin']}; the fracture is not cutting")
         worst = max(row["wrapError"].values(), default=0.0)
         assert worst <= 1e-6, f"{name} fracture does not tile: wrap error {worst}"
