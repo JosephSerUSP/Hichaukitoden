@@ -303,7 +303,7 @@ local function processEvent(ev)
             local fmt = conf("battle_screen", "popup", {}).deadFormat or "DEAD"
             local color = conf("battle_screen", "popup", {}).deadColor or {0.6, 0.6, 0.6, 1}
             renderer.addDamagePopup(fmt, popupX, popupY, color)
-            ev.target:addState("dead")
+            ev.target:addState("dead", nil, self.session)
             ev.target.hp = 0
             if v.battle then
                 for idx, enemy in ipairs(v.battle.enemies) do
@@ -320,11 +320,11 @@ local function processEvent(ev)
             local text = fmt:gsub("{0}", ev.state:upper())
             local color = conf("battle_screen", "popup", {}).stateColor or {0.8, 0.4, 1.0, 1}
             renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target:addState(ev.state)
+            ev.target:addState(ev.state, nil, self.session)
         end)
     elseif ev.type == "state_remove" then
         animation_player.onComplete(ev.target, function()
-            ev.target:removeState(ev.state)
+            ev.target:removeState(ev.state, self.session)
         end)
     elseif ev.type == "mp_drain" then
         sess().mp = math.max(0, sess().mp - ev.value)

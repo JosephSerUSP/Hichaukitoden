@@ -636,7 +636,7 @@ handlers.DAMAGE = function(cmd, ctx)
         target.hp = math.max(cmd.minHp or 0, target.hp - dmg)
         table.insert(ctx.events, { type = "damage", target = target, value = dmg })
         if target.hp <= 0 then
-            target:addState("dead")
+            target:addState("dead", nil, ctx.session)
             table.insert(ctx.events, { type = "death", target = target })
         end
         return
@@ -797,9 +797,9 @@ handlers.SYNC_TRAIT_STATE = function(cmd, ctx)
         if s.id == cmd.state then shown = true break end
     end
     if has and not shown then
-        target:addState(cmd.state, cmd.duration)
+        target:addState(cmd.state, cmd.duration, ctx.session)
     elseif shown and not has then
-        target:removeState(cmd.state)
+        target:removeState(cmd.state, ctx.session)
     end
 end
 
@@ -870,7 +870,7 @@ handlers.STATE_TICKS = function(cmd, ctx)
                     battler.hp = math.max(0, battler.hp - amount)
                     table.insert(ctx.events, { type = "damage", target = battler, value = amount })
                     if battler.hp <= 0 then
-                        battler:addState("dead")
+                        battler:addState("dead", nil, ctx.session)
                         table.insert(ctx.events, { type = "death", target = battler })
                     end
                 end
@@ -1291,7 +1291,7 @@ local function applyWard(b, cand, session, ctx)
     local frac = t.hpFraction or wardConf(session, "reviveHpFraction", 0.25)
     local levelCost = t.levelCost or 0
 
-    b:removeState("dead")
+    b:removeState("dead", ctx.session)
     local maxHp = traits.getParam(b, "maxHp", session)
     b.hp = math.max(1, math.floor(maxHp * frac))
 

@@ -120,6 +120,42 @@ function Battler:getMaxHp(sess)
     return traits.getParam(self, "maxHp", sess)
 end
 
+function Battler:refreshMaxHp(oldMaxHp, newMaxHp)
+    if not oldMaxHp or not newMaxHp then return end
+    if newMaxHp > oldMaxHp then
+        -- Only add the difference if current HP is below the new max HP.
+        -- If already overhealed above the new max HP, do not add HP.
+        -- Example: 130 / 100 + 25 -> 130 / 125.
+        -- Example: 100 / 100 + 25 -> 125 / 125.
+        -- Example: 110 / 100 + 25 -> 125 / 125.
+        local diff = newMaxHp - oldMaxHp
+        if self.hp <= oldMaxHp then
+            self.hp = self.hp + diff
+        else
+            -- Overhealed.
+            -- Example: 130/100, diff 25 -> we want 130/125.
+            -- Example: 110/100, diff 25 -> old HP 110. newMaxHp 125. We want 125/125.
+            -- The rule is: we grant the capacity increase, so we act as if we are at oldMaxHp,
+            -- add diff, but don't lower HP.
+            self.hp = math.max(self.hp, oldMaxHp + diff)
+        end
+    elseif newMaxHp < oldMaxHp then
+        -- When dropping Max HP, we want to maintain any existing valid overheal.
+        -- The cap is newMaxHp * 1.5. If the current HP exceeds that, we clamp it.
+        -- Otherwise we clamp it to newMaxHp IF they were not overhealed over oldMaxHp,
+        -- or if they were, maintain the actual HP up to the new cap.
+        -- Example: 117 / 125 -> 100 / 100 (clamp to maxHp)
+        -- Example: 130 / 125 -> 130 / 100 (overheal drops to new cap 150)
+        local wasOverhealed = self.hp > oldMaxHp
+        local newCap = math.floor(newMaxHp * 1.5)
+        if wasOverhealed then
+            self.hp = math.min(self.hp, newCap)
+        else
+            self.hp = math.min(self.hp, newMaxHp)
+        end
+    end
+end
+
 function Battler:getAtk(sess)
     return traits.getParam(self, "atk", sess)
 end
@@ -143,25 +179,33 @@ local function defaultStateDuration(stateId)
     return (stateData and stateData.duration) or 3
 end
 
-function Battler:addState(stateId, duration)
+function Battler:addState(stateId, duration, session)
+    local oldMaxHp = session and self:getMaxHp(session)
     -- Check if state already exists
     for _, s in ipairs(self.states) do
         if s.id == stateId then
             s.duration = duration or s.maxDuration
+            local newMaxHp = session and self:getMaxHp(session)
+            if oldMaxHp and newMaxHp and oldMaxHp ~= newMaxHp then self:refreshMaxHp(oldMaxHp, newMaxHp) end
             return
         end
     end
     local resolved = duration or defaultStateDuration(stateId)
     table.insert(self.states, { id = stateId, duration = resolved, maxDuration = resolved })
+    local newMaxHp = session and self:getMaxHp(session)
+    if oldMaxHp and newMaxHp and oldMaxHp ~= newMaxHp then self:refreshMaxHp(oldMaxHp, newMaxHp) end
 end
 
-function Battler:removeState(stateId)
+function Battler:removeState(stateId, session)
+    local oldMaxHp = session and self:getMaxHp(session)
     for i = #self.states, 1, -1 do
         if self.states[i].id == stateId then
             table.remove(self.states, i)
             break
         end
     end
+    local newMaxHp = session and self:getMaxHp(session)
+    if oldMaxHp and newMaxHp and oldMaxHp ~= newMaxHp then self:refreshMaxHp(oldMaxHp, newMaxHp) end
 end
 
 function Battler:isDead()

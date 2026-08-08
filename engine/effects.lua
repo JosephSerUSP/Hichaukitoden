@@ -321,7 +321,7 @@ local function tryExecute(a, b, session, events)
     if (b.hp / maxHp) > threshold then return end
 
     b.hp = 0
-    b:addState("dead")
+    b:addState("dead", nil, session)
     table.insert(events, { type = "execution", target = b, actor = a })
     table.insert(events, {
         type = "text",
@@ -362,7 +362,7 @@ function effects.apply(effectData, a, b, session, context)
 
         b.hp = math.max(0, b.hp - finalDmg)
         if b.hp > 0 and b.hasState and b:hasState("sleep") then
-            b:removeState("sleep")
+            b:removeState("sleep", session)
             local ldr = session and session.loader
             local msg = (ldr and ldr.formatTerm) and ldr.formatTerm("status.woke_up", "{0} woke up!", b.name) or (b.name .. " woke up!")
             table.insert(events, { type = "text", text = msg })
@@ -377,7 +377,7 @@ function effects.apply(effectData, a, b, session, context)
             critical = critical or nil
         })
         if b.hp <= 0 then
-            b:addState("dead")
+            b:addState("dead", nil, session)
             table.insert(events, {
                 type = "death",
                 target = b
@@ -398,7 +398,8 @@ function effects.apply(effectData, a, b, session, context)
         local val = evaluateFormula(effectData.formula, a, b, session, events)
             * skillRate * itemRate(b, session, context)
         local maxHp = traits.getParam(b, "maxHp", session)
-        local healVal = math.min(maxHp - b.hp, math.floor(val))
+        local cap = effectData.allowOverheal and math.floor(maxHp * 1.5) or maxHp
+        local healVal = math.max(0, math.min(cap - b.hp, math.floor(val)))
         b.hp = b.hp + healVal
         table.insert(events, {
             type = "heal",
@@ -426,7 +427,7 @@ function effects.apply(effectData, a, b, session, context)
         })
         
         if b.hp <= 0 then
-            b:addState("dead")
+            b:addState("dead", nil, session)
             table.insert(events, {
                 type = "death",
                 target = b
@@ -493,7 +494,7 @@ function effects.apply(effectData, a, b, session, context)
         -- immunity is a trait.
         local roll = math.random()
         if guaranteed or roll < chance then
-            b:addState(effectData.status, effectData.duration)
+            b:addState(effectData.status, effectData.duration, session)
             table.insert(events, {
                 type = "state_add",
                 target = b,
@@ -506,11 +507,12 @@ function effects.apply(effectData, a, b, session, context)
     -- battle and from the field menu.
     elseif effectData.type == "hp" then
         local maxHp = traits.getParam(b, "maxHp", session)
+        local cap = effectData.allowOverheal and math.floor(maxHp * 1.5) or maxHp
         -- Flat + percentage of the recipient's own Max HP. Both parts are
         -- optional, so one effect type covers a 30 HP herb, a "restores a
         -- quarter of HP" meal, and the hybrid foods that are both.
         local raw = (effectData.value or 0) + maxHp * (effectData.percent or 0)
-        local healVal = math.max(0, math.min(maxHp - b.hp,
+        local healVal = math.max(0, math.min(cap - b.hp,
             math.floor(raw * itemRate(b, session, context))))
         b.hp = b.hp + healVal
         table.insert(events, {
@@ -752,7 +754,7 @@ function effects.apply(effectData, a, b, session, context)
     elseif effectData.type == "remove_status" then
         local stateId = effectData.value
         if stateId then
-            b:removeState(stateId)
+            b:removeState(stateId, session)
             table.insert(events, {
                 type = "state_remove",
                 target = b,
