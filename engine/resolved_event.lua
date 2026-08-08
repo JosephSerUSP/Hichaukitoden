@@ -9,7 +9,6 @@
 -- currently delays belong here. Adding a new domain field never requires a
 -- rollback entry; it only needs a resolved event value if/when a UI chooses to
 -- stage that field visually.
-local traits = require("engine.traits")
 local config = require("engine.config")
 
 local resolved_event = {}
@@ -37,10 +36,14 @@ function resolved_event.states(states)
 end
 
 function resolved_event.battler(target, session)
-    if not target then return nil end
+    -- Not every descriptive engine event uses `target` for a Battler. Keep the
+    -- event contract generic: only battler-like tables receive battler facts.
+    if type(target) ~= "table" or type(target.getMaxHp) ~= "function" then
+        return nil
+    end
     return {
         hp = target.hp,
-        maxHp = session and traits.getParam(target, "maxHp", session) or nil,
+        maxHp = target:getMaxHp(session),
         states = resolved_event.states(target.states),
     }
 end
@@ -50,8 +53,8 @@ end
 function resolved_event.attach(ev, session)
     if not ev then return ev end
     local r = ev.resolved or {}
-    if ev.target then
-        local b = resolved_event.battler(ev.target, session)
+    local b = resolved_event.battler(ev.target, session)
+    if b then
         r.hp = b.hp
         r.maxHp = b.maxHp
         r.states = b.states
