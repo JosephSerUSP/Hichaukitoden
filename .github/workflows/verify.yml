@@ -1,10 +1,15 @@
-# Phase A of the repository CI baseline (issue #164).
+# Repository CI baseline (issue #164).
 #
-# Scope is deliberately small: prove that a clean GitHub-hosted Windows runner
-# can execute the project's own deterministic verification entry points. The
-# golden gates (G2/G3/G4) are Phase B and are NOT run here; G5/G6 are explicitly
-# out of scope for hosted CI because they depend on GPU/driver and browser
-# rendering environments.
+# Phase A -- REQUIRED: G1, unit and save run on a clean GitHub-hosted Windows
+# runner and fail the job when red.
+#
+# Phase B -- PROBE ONLY: the golden gates G2/G3/G4 run but cannot fail the job.
+# They are gathering determinism evidence across repeated runs on fresh runners;
+# promoting them to required is a separate, deliberate change.
+#
+# G5/G6 are out of scope for hosted CI entirely: they depend on GPU/driver and
+# browser rendering environments, so an uncontrolled cloud runner would
+# manufacture false regressions.
 #
 # This workflow reports on repository state. It never regenerates a golden
 # reference, never rewrites docs/ENGINE-STATE.md, and asserts afterwards that
