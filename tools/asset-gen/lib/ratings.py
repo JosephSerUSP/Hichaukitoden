@@ -340,6 +340,46 @@ def _context_url(run_path, entry, variant):
     return None
 
 
+def _inpaint_base(staging_root, manifest):
+    """The exact approved tile an inpainted derivative cites, if still staged.
+
+    Cracked tiles are only meaningful relative to the intact tile they vary.
+    `inpaintSource` already records that identity as run#index, so expose that
+    evidence directly instead of making the rater remember or reconstruct it.
+    """
+    source = (manifest.get("provider") or {}).get("inpaintSource") or ""
+    try:
+        source_run, source_index = source.rsplit("#", 1)
+        source_index = int(source_index)
+    except (ValueError, TypeError):
+        return None
+    # A manifest may name another staged run, never an arbitrary filesystem path.
+    if not source_run or os.path.basename(source_run) != source_run:
+        return None
+    source_path = os.path.join(staging_root, source_run)
+    source_manifest = _manifest(source_path)
+    if not source_manifest:
+        return None
+    variant = next((row for row in source_manifest.get("variants") or []
+                    if row.get("index") == source_index), None)
+    if not variant:
+        return None
+    filename = variant.get("file") or ""
+    if not filename or os.path.basename(filename) != filename:
+        return None
+    if not os.path.isfile(os.path.join(source_path, filename)):
+        return None
+    raw = variant.get("raw") or ""
+    return {
+        "run": source_run,
+        "variant": source_index,
+        "image": f"/out/{source_run}/{filename}",
+        "raw": (f"/out/{source_run}/{raw}"
+                if raw and os.path.basename(raw) == raw
+                and os.path.isfile(os.path.join(source_path, raw)) else None),
+    }
+
+
 def queue(staging_root, prefix="", rated=False):
     """Every staged variant, newest run first, as rateable items.
 
@@ -364,6 +404,7 @@ def queue(staging_root, prefix="", rated=False):
         manifest = _manifest(run_path)
         if not manifest:
             continue
+        base = _inpaint_base(staging_root, manifest)
         for variant in manifest.get("variants") or []:
             index = variant.get("index")
             judgement = store.get(key(entry, index))
@@ -376,6 +417,7 @@ def queue(staging_root, prefix="", rated=False):
                 "name": manifest.get("name"),
                 "image": f"/out/{entry}/{variant.get('file')}",
                 "raw": f"/out/{entry}/{variant.get('raw', '')}",
+                "base": base,
                 "context": _context_url(run_path, entry, variant),
                 "contextLabel": variant.get("contextLabel"),
                 "tileAxes": manifest.get("tileAxes", "xy"),

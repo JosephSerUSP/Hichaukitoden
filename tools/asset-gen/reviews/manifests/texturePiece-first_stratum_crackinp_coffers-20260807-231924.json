@@ -1,0 +1,58 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_crackinp_coffers",
+  "surface": "ceiling",
+  "description": "aged limestone coffered ceiling, one region split by open structural cracks with crumbling lips and dark interiors, intact coffers elsewhere, orthographic ceiling material",
+  "options": {},
+  "tokens": {},
+  "provider": {
+    "id": "forge-inpaint",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "denoise": 0.7,
+      "maskBlur": 12,
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "timeout": 300,
+      "seed": 381300,
+      "negativePrompt": "mosaic, tile pattern, crazy paving, grout, mortar joints between separate tiles, inlay, deliberate stonework pattern, new stonework, repaired render, raised ridge, tube, pipe, moulding, applied trim, object lying on the surface, perspective, camera view, scene, framed picture, diagram labels"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/ceiling_wide_coffers.png",
+    "inpaintControl": "tools/asset-gen/out/_crack-control-coffers.png",
+    "inpaintSource": "texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150#3",
+    "inpaintSourceScore": 6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000889,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.683,
+        "y": 1.255,
+        "centre_x": 1.272,
+        "centre_y": 1.565
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: _crack-control-coffers]",
+      "contextSurface": "floor",
+      "contextBuild": 1
+    }
+  ]
+}

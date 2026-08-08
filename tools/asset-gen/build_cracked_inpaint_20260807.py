@@ -55,28 +55,35 @@ SUMMARY = OUT / "cracked-inpaint-20260807-summary.json"
 TARGETS = [
     dict(id="flagstones", surface="floor", cls="texturePiece",
          run_contains="first_stratum_prod_damp_masonry_floor_flagstones_v2",
-         seed=381100, cells=6, share=0.24, depth=0.32,
-         prompt=("worn damp limestone flagstone paving, several slabs split by open "
-                 "cracks with crumbling edges and dark interiors, broken stone, "
+         seed=381100, cells=5, share=0.36, depth=0.44, runtimeTexels=4.0,
+         prompt=("worn damp limestone flagstone paving, major slabs split apart by "
+                 "wide deep jagged fractures, missing slab corners and broken-away "
+                 "chunks, dark recessed cavity walls, loose rubble, "
                  "orthographic floor material seen from directly above")),
     dict(id="slabs", surface="floor", cls="texturePiece",
          run_contains="first_stratum_rich_floor_slabs_varied_restrained",
-         seed=381200, cells=5, share=0.26, depth=0.30,
-         prompt=("cool muted slate and limestone slab floor, several slabs split by "
-                 "open fractures with crumbling lips and dark interiors, broken "
-                 "stone, orthographic floor material seen from directly above")),
+         seed=381200, cells=4, share=0.38, depth=0.44, runtimeTexels=4.0,
+         prompt=("cool muted slate and limestone slab floor, major slabs split apart "
+                 "by wide deep jagged fractures, missing corners and broken-away "
+                 "stone chunks, dark compacted earth and unlit subfloor visible beneath "
+                 "the breaks, dark recessed cavity walls, loose rubble, "
+                 "orthographic floor material seen from directly above")),
     dict(id="coffers", surface="ceiling", cls="texturePiece",
          run_contains="first_stratum_rich_ceiling_wide_coffers",
-         seed=381300, cells=4, share=0.22, depth=0.30,
-         prompt=("aged limestone coffered ceiling, one region split by open structural "
-                 "cracks with crumbling lips and dark interiors, intact coffers "
-                 "elsewhere, orthographic ceiling material")),
+         seed=381300, cells=4, share=0.34, depth=0.40, runtimeTexels=3.5,
+         prompt=("aged limestone coffered ceiling, several coffers structurally broken "
+                 "by wide deep jagged fractures, missing carved corners and fallen-away "
+                 "chunks, dark unlit subterranean stone backing immediately behind the "
+                 "breaks, dark recessed cavity walls, intact coffers elsewhere, "
+                 "orthographic ceiling material")),
     dict(id="ashlar", surface="wall", cls="wallPiece",
          run_contains="first_stratum_rich_wall_broad_ashlar_courses",
-         seed=381400, cells=5, share=0.28, depth=0.26,
-         prompt=("old fitted limestone ashlar wall, fracture lines running across "
-                 "several blocks, split stone faces with chipped crumbling edges and "
-                 "dark crack interiors, quiet undercroft wall material")),
+         seed=381400, cells=4, share=0.42, depth=0.40, runtimeTexels=4.0,
+         prompt=("old fitted limestone ashlar wall, major structural fractures running "
+                 "across several blocks, split and displaced stone faces, missing block "
+                 "corners and broken-away chunks, deep black enclosed masonry backing "
+                 "behind the wall, dark recessed cavity walls, loose rubble, quiet "
+                 "undercroft wall material")),
 ]
 
 # The surrounding albedo is authoritative, including its local value structure.
@@ -84,10 +91,11 @@ TARGETS = [
 # and contact occlusion to read as damage. They do not ask for a global light
 # source or cast shadow, which would bake scene lighting into a reusable tile.
 LOCAL_DAMAGE_GUIDANCE = (
-    "preserve the source material's existing colour, grain, value structure and "
-    "local occlusion; shaded broken walls and contact occlusion inside the crack "
-    "are desired material features, not a global cast shadow; do not flatten or "
-    "bleach the surrounding relief"
+    "outside the damaged region preserve the source material's exact colour, grain, "
+    "value structure and local occlusion; inside the damaged region remove stone "
+    "decisively, with strongly legible broken volume, deep irregular dark fissures, "
+    "shaded cavity walls and local contact occlusion; damage must remain obvious when "
+    "reduced to a small game tile; do not flatten or bleach the surrounding relief"
 )
 
 
@@ -97,6 +105,10 @@ class SourcePruned(RuntimeError):
 
 NEGATIVE = ("mosaic, tile pattern, crazy paving, grout, mortar joints between separate "
             "tiles, inlay, deliberate stonework pattern, new stonework, repaired render, "
+            "hairline crack, faint scratch, subtle damage, surface stain, white crack, "
+            "bright fracture, glowing crack, painted line, chalk line, plaster streak, "
+            "blue sky, sky, daylight, outdoor opening, window, horizon, clouds, sun, "
+            "blue glow, cyan glow, magical light, portal, luminous cavity, "
             "raised ridge, tube, pipe, moulding, applied trim, object lying on the "
             "surface, perspective, camera view, scene, framed picture, diagram labels")
 
@@ -143,7 +155,7 @@ def best_variant(run_contains: str):
             for other in skipped:
                 print(f"    note: skipped {other[2]}#{other[1]} (score {other[0]}) "
                       f"-- {other[3]}")
-    return run, index, score
+            return run, index, score
         skipped.append((score, index, run, " and ".join(missing) + " is no longer in out/"))
     raise SourcePruned(
         f"every rated source matching {run_contains!r} is incomplete in out/; "
@@ -186,13 +198,14 @@ def interior_only(mask: np.ndarray, axes: str, margin: int) -> np.ndarray:
 def crack_inputs(target: dict, size: int, axes: str):
     """The fracture mask and the signed height field for one target."""
     mask = frac.fracture_mask(size, target["seed"], cells=target["cells"],
-                              fragment_share=target["share"])
+                              fragment_share=target["share"],
+                              runtime_texels=target.get("runtimeTexels", 2.0))
     # 6% of the tile: wide enough that mask blur and the VAE round-trip cannot
     # reach the frozen border, since a repainted border is a broken border even
     # if the crack itself stopped short of it.
     mask = interior_only(mask, axes, margin=max(12, int(size * 0.06)))
     field = frac.cut_fracture(np.zeros((size, size)), mask,
-                              depth=target["depth"] * 0.6, lip=0.03)
+                              depth=target["depth"] * 0.9, lip=0.05)
     return mask, np.clip(field, -1.0, 1.0)
 
 
@@ -210,7 +223,7 @@ def source_height_control(source_dir: Path) -> str:
     return str(height).replace("\\", "/")
 
 
-def run_one(target: dict, options: dict, force: bool) -> dict:
+def run_one(target: dict, options: dict, force: bool, variants: int = 1) -> dict:
     run, index, score = best_variant(target["run_contains"])
     source_dir = OUT / run
     raw = source_dir / f"raw-{index}.png"
@@ -220,61 +233,14 @@ def run_one(target: dict, options: dict, force: bool) -> dict:
     init = Image.open(raw).convert("RGB")
     size = init.width
     axes = tile_axes_for(target["surface"])
-
-    mask_bool, field = crack_inputs(target, size, axes)
-    mask = Image.fromarray((mask_bool * 255).astype(np.uint8), mode="L")
-    # The control map is the crack alone over neutral: the intact relief is
-    # already present in the init image, and asking ControlNet to also restate it
-    # would fight the pixels it is supposed to preserve.
-    control_grey = np.clip(np.rint(base.NEUTRAL + field * 127.0), 0, 255).astype(np.uint8)
-    control_path = OUT / f"_crack-control-{target['id']}.png"
-    Image.fromarray(np.dstack([control_grey] * 3), mode="RGB").save(control_path)
-
     name = f"first_stratum_crackinp_{target['id']}"
     run_path = Path(staging.run_dir(str(OUT), target["cls"], name))
     run_path.mkdir(parents=True, exist_ok=True)
-
-    control = provider.controlnet_depth(
-        FORGE, str(control_path), options["controlModel"], weight=options["controlWeight"])
-    opts = dict(options["sampling"], seed=target["seed"], negativePrompt=NEGATIVE)
-
-    # Pass 1: the crack, in the picture's own coordinates.
     prompt = f"{target['prompt']}, {LOCAL_DAMAGE_GUIDANCE}"
-    painted = provider.inpaint_region(FORGE, options["model"], prompt,
-                                      init, mask, opts, control)
-    image = Image.open(io.BytesIO(painted)).convert("RGB")
-
-    # No offset seam pass. With an interior-only mask nothing crosses the wrap, so
-    # there is no join to repair -- and rolling the picture to repair one would
-    # itself round-trip the frozen border through the VAE and break the very
-    # property this variant exists to keep.
-    #
-    # Restore the border from the SOURCE, not from the painted result: inpainting
-    # composites unmasked pixels back through a blurred mask after a full VAE
-    # round-trip, so they drift slightly even when never selected. A border that
-    # drifts is a border that no longer matches the intact tile, which is the whole
-    # failure mode. Taking the original pixels back makes the match exact.
-    final = image
-    ring = max(6, int(size * 0.05))
-    boxes = []
-    if "x" in axes:
-        boxes += [(0, 0, ring, size), (size - ring, 0, size, size)]
-    if "y" in axes:
-        boxes += [(0, 0, size, ring), (0, size - ring, size, size)]
-    for box in boxes:
-        final.paste(init.crop(box), (box[0], box[1]))
-
-    # The property this whole design exists for, asserted rather than assumed.
-    border_delta = _border_delta(np.asarray(init, dtype=np.int16),
-                                np.asarray(final, dtype=np.int16), axes, ring)
-    if border_delta != 0:
-        raise RuntimeError(
-            f"{target['id']}: border differs from its base by {border_delta}; "
-            "the variant would not tile against the tile it is a variant of")
-
-    # Through the project's own pixel pipeline, so the staged tile is produced
-    # exactly as every other run's is.
     ctx = classes.resolve(target["cls"], {})
+    base_tile_path = source_dir / f"variant-{index}.png"
+    sampling_manifest = dict(options["sampling"], seed=target["seed"],
+                             negativePrompt=NEGATIVE)
     manifest = {
         "manifestKind": staging.RUN_KIND, "manifestVersion": staging.RUN_VERSION,
         "class": target["cls"], "name": name,
@@ -282,11 +248,10 @@ def run_one(target: dict, options: dict, force: bool) -> dict:
         "description": prompt,
         "options": {}, "tokens": {},
         "provider": {"id": "forge-inpaint", "model": options["model"],
-                     "sampling": opts,
+                     "sampling": sampling_manifest,
                      # The engine preview must use the approved source geometry.
                      # The crack-only map is a model guide, not a room height map.
                      "heightControl": source_height,
-                     "inpaintControl": str(control_path.relative_to(ROOT)).replace("\\", "/"),
                      "inpaintControlWeight": options["controlWeight"],
                      "inpaintSource": f"{run}#{index}",
                      "inpaintSourceScore": score},
@@ -294,34 +259,85 @@ def run_one(target: dict, options: dict, force: bool) -> dict:
         "targetFile": ctx.get("file", ""), "targetDir": ctx["dir"],
         "tileAxes": axes,
         "variants": [],
+        "variantErrors": [],
     }
-    row = gen._process_variant(_png(final), ctx, str(run_path), 1, verbose=False)
-
-    # `_process_variant` has now applied the exact same resize and palette clamp
-    # that produces the engine tile. Those operations can change an edge based
-    # on the cracked interior (especially the adaptive quantizer), even though
-    # the 512px source edge was frozen above. Restore the processed edge from
-    # the actual base tile, then assert the property at the size the engine
-    # consumes. This is deliberately a copy from the selected base candidate,
-    # not a self-seam repair: variant == base on every shared border.
-    base_tile_path = source_dir / f"variant-{index}.png"
-    variant_path = run_path / row["file"]
-    source_check = verify_source_border(
-        source_dir / f"raw-{index}.png", run_path / row["raw"], axes, ring)
-    row["sourceCompatibility"] = source_check
-    with Image.open(variant_path) as processed_image:
-        processed_border = max(1, int(round(ring * processed_image.width / size)))
-    _restore_variant_border(variant_path, base_tile_path, axes, processed_border)
-    with Image.open(variant_path) as processed_image:
-        row["tileScore"] = postprocess.tile_seam_score(processed_image, axes)
-    compatibility = verify_variant_compatibility(
-        base_tile_path, variant_path, axes, processed_border)
-    row["baseCompatibility"] = compatibility
-    manifest["variants"].append(row)
     staging.write_manifest(str(run_path), manifest)
+
+    generated = []
+    for variant_index in range(1, variants + 1):
+        variant_target = dict(target, seed=target["seed"] + variant_index - 1)
+        try:
+            mask_bool, field = crack_inputs(variant_target, size, axes)
+            mask = Image.fromarray((mask_bool * 255).astype(np.uint8), mode="L")
+            mask_path = run_path / f"inpaint-mask-{variant_index}.png"
+            mask.save(mask_path)
+            # The control map is the crack alone over neutral: the intact relief
+            # is already present in the init image.
+            control_grey = np.clip(
+                np.rint(base.NEUTRAL + field * 127.0), 0, 255).astype(np.uint8)
+            control_path = run_path / f"inpaint-control-{variant_index}.png"
+            Image.fromarray(np.dstack([control_grey] * 3), mode="RGB").save(control_path)
+            control = provider.controlnet_depth(
+                FORGE, str(control_path), options["controlModel"],
+                weight=options["controlWeight"])
+            opts = dict(options["sampling"], seed=variant_target["seed"],
+                        negativePrompt=NEGATIVE)
+
+            painted = provider.inpaint_region(
+                FORGE, options["model"], prompt, init, mask, opts, control)
+            final = Image.open(io.BytesIO(painted)).convert("RGB")
+
+            # Restore shared borders from the source. Inpainting composites
+            # through a blurred mask after a VAE pass, so "unmasked" is not an
+            # exact pixel guarantee without this copy.
+            ring = max(6, int(size * 0.05))
+            for box in _border_boxes(size, axes, ring):
+                final.paste(init.crop(box), (box[0], box[1]))
+            border_delta = _border_delta(np.asarray(init, dtype=np.int16),
+                                         np.asarray(final, dtype=np.int16), axes, ring)
+            if border_delta != 0:
+                raise RuntimeError(
+                    f"{target['id']} variant {variant_index}: border differs from "
+                    f"its base by {border_delta}")
+
+            row = gen._process_variant(
+                _png(final), ctx, str(run_path), variant_index, verbose=False)
+            variant_path = run_path / row["file"]
+            row["seed"] = variant_target["seed"]
+            row["damageMaskCoverage"] = round(float(mask_bool.mean()), 4)
+            row["inpaintMask"] = _relative(mask_path)
+            row["inpaintControl"] = _relative(control_path)
+            row["inpaintControlWeight"] = options["controlWeight"]
+            row["sourceCompatibility"] = verify_source_border(
+                raw, run_path / row["raw"], axes, ring)
+            with Image.open(variant_path) as processed_image:
+                processed_border = max(
+                    1, int(round(ring * processed_image.width / size)))
+            _restore_variant_border(
+                variant_path, base_tile_path, axes, processed_border)
+            with Image.open(variant_path) as processed_image:
+                row["tileScore"] = postprocess.tile_seam_score(processed_image, axes)
+            row["baseCompatibility"] = verify_variant_compatibility(
+                base_tile_path, variant_path, axes, processed_border)
+            manifest["variants"].append(row)
+            generated.append(variant_index)
+            staging.write_manifest(str(run_path), manifest)
+            print(f"    variant {variant_index}/{variants} seed {variant_target['seed']} "
+                  f"damage {row['damageMaskCoverage'] * 100:.1f}% border delta 0")
+        except Exception as err:  # one failed candidate must not discard the others
+            manifest["variantErrors"].append({
+                "index": variant_index,
+                "seed": variant_target["seed"],
+                "error": str(err),
+            })
+            staging.write_manifest(str(run_path), manifest)
+            print(f"    variant {variant_index}/{variants} failed: {err}")
+
+    if not generated:
+        raise RuntimeError(f"{target['id']}: no inpaint variants succeeded")
     return {"id": target["id"], "run": run_path.name, "source": f"{run}#{index}",
             "sourceScore": score, "baseTile": _relative(base_tile_path),
-            "status": "generated"}
+            "variants": generated, "status": "generated"}
 
 
 def _relative(path: Path) -> str:
@@ -463,29 +479,32 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", action="append", help="target id; repeatable")
+    ap.add_argument("--variants", type=int, default=3,
+                    help="distinct candidates per target (default: 3)")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--plan", action="store_true", help="resolve sources and stop")
     ap.add_argument("--verify-existing", action="store_true",
                     help="verify every staged cracked variant against its cited base")
     args = ap.parse_args(argv)
+    if args.variants < 1:
+        ap.error("--variants must be at least 1")
 
     if args.verify_existing:
         return verify_existing()
 
     cfg = classes.load("config.json")
     sampling = {"steps": 26, "cfgScale": 6.5, "sampler": "DPM++ 2M",
-                # 0.70 not 0.82: higher denoise discarded enough of the stone that the
-                # crack interiors came back as flat black voids instead of shadowed
-                # broken material. maskBlur 12 not 5: a hard mask edge is visible AS
-                # an edge, and a crack has no outline.
-                "denoise": 0.70, "maskBlur": 12,
-                "inpaintFullRes": True, "inpaintFullResPadding": 32,
+                # The first localized pass was too conservative at 64px. A little
+                # more denoise lets the wider mask remove real stone volume, while
+                # blur 8 avoids the broad white feathered streaks seen on coffers.
+                "denoise": 0.78, "maskBlur": 8,
+                "inpaintFullRes": True, "inpaintFullResPadding": 40,
                 "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
                 "timeout": 300}
     options = {"model": "ohmenOrigins_ohmenOriginsV3",
                "controlModel": cfg["providers"]["forge-quality"].get(
                    "controlnetDepthModel", "control_v11f1p_sd15_depth"),
-               "controlWeight": 0.38, "sampling": sampling}
+               "controlWeight": 0.50, "sampling": sampling}
 
     targets = [t for t in TARGETS if not args.only or t["id"] in args.only]
     if args.plan:
@@ -495,20 +514,22 @@ def main(argv=None) -> int:
             except SourcePruned as err:
                 print(f"  {t['id']:<12} SKIPPED: {err}")
                 continue
-            print(f"  {t['id']:<12} <- {run}#{index}  (owner score {score})")
+            print(f"  {t['id']:<12} <- {run}#{index}  (owner score {score}; "
+                  f"{args.variants} candidates)")
         return 0
 
     results = []
     for t in targets:
         print(f"=== {t['id']} ({t['surface']})")
         try:
-            results.append(run_one(t, options, args.force))
+            results.append(run_one(t, options, args.force, variants=args.variants))
         except SourcePruned as err:
             print(f"    SKIPPED: {err}")
             results.append({"id": t["id"], "status": "skipped", "reason": str(err)})
             continue
         print(f"    {results[-1]['run']}  from {results[-1]['source']} "
-              f"(score {results[-1]['sourceScore']})  border delta 0")
+              f"(score {results[-1]['sourceScore']})  "
+              f"{len(results[-1]['variants'])} candidate(s)")
     SUMMARY.write_text(json.dumps(
         {"batch": "cracked-inpaint-20260807",
          "updatedAt": dt.datetime.now().isoformat(timespec="seconds"),

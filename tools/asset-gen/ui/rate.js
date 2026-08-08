@@ -158,6 +158,14 @@ function show() {
   }
 
   $("tile").src = item.image;
+  const base = item.base;
+  $("baseFigure").hidden = !base;
+  if (base) {
+    $("base").src = base.image;
+    $("baseLabel").textContent = `approved base tile — ${base.run}#${base.variant}`;
+  } else {
+    $("base").removeAttribute("src");
+  }
   $("raw").src = item.raw;
   $("rawFigure").hidden = !item.raw;
   showContext(item);
@@ -174,6 +182,7 @@ function show() {
   const facets = item.facets;
   $("facets").innerHTML = [
     `<b>${item.name}</b> <span>v${item.variant}</span>`,
+    base ? `<span>base</span> ${base.run}#${base.variant}` : "",
     `<span>model</span> ${facets.model}`,
     `<span>lora</span> ${facets.lora}`,
     `<span>depth</span> ${facets.depthWeight ?? "-"}`,

@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "asset-gen"))
 
 import build_cracked_inpaint_20260807 as cracked  # noqa: E402
-from lib import provider  # noqa: E402
+from lib import provider, ratings, report, staging  # noqa: E402
 
 
 class CrackedInpaintTests(unittest.TestCase):
@@ -88,6 +88,56 @@ class CrackedInpaintTests(unittest.TestCase):
         body = post.call_args.kwargs["json"]
         self.assertTrue(body["inpaint_full_res"])
         self.assertEqual(body["inpaint_full_res_padding"], 32)
+
+    def test_preview_surface_does_not_follow_crack_control_map(self):
+        context = {"defaultSurface": "floor"}
+        manifest = {
+            "surface": "ceiling",
+            "provider": {
+                "heightControl": "tools/asset-gen/out/_crack-control-coffers.png",
+            },
+        }
+        self.assertEqual(cracked.gen._preview_surface(manifest, context), "ceiling")
+
+    def test_rating_and_report_show_the_exact_inpaint_base(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base_run = "texturePiece-approved-base-20260808-010000"
+            crack_run = "texturePiece-cracked-20260808-010100"
+            base_dir = root / base_run
+            crack_dir = root / crack_run
+            base_dir.mkdir()
+            crack_dir.mkdir()
+            Image.new("RGBA", (8, 8), (40, 50, 60, 255)).save(base_dir / "variant-2.png")
+            Image.new("RGBA", (8, 8), (80, 50, 40, 255)).save(crack_dir / "variant-1.png")
+            Image.new("RGB", (8, 8), (80, 50, 40)).save(crack_dir / "raw-1.png")
+            staging.write_manifest(str(base_dir), {
+                "manifestKind": staging.RUN_KIND,
+                "manifestVersion": staging.RUN_VERSION,
+                "class": "texturePiece",
+                "name": "approved_base",
+                "variants": [{"index": 2, "file": "variant-2.png"}],
+            })
+            crack_manifest = {
+                "manifestKind": staging.RUN_KIND,
+                "manifestVersion": staging.RUN_VERSION,
+                "class": "texturePiece",
+                "name": "cracked",
+                "tileAxes": "xy",
+                "provider": {"inpaintSource": f"{base_run}#2"},
+                "variants": [{"index": 1, "file": "variant-1.png", "raw": "raw-1.png"}],
+            }
+            staging.write_manifest(str(crack_dir), crack_manifest)
+
+            with patch.object(ratings, "load", return_value={}):
+                items = ratings.queue(str(root), prefix="cracked")
+            self.assertEqual(items[0]["base"]["run"], base_run)
+            self.assertEqual(items[0]["base"]["variant"], 2)
+            self.assertEqual(items[0]["base"]["image"],
+                             f"/out/{base_run}/variant-2.png")
+
+            section = report.run_section(str(crack_dir), crack_manifest)
+            self.assertIn(f"approved base — {base_run}#2", section)
 
 
 if __name__ == "__main__":

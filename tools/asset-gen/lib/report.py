@@ -19,7 +19,7 @@ import os
 
 from PIL import Image
 
-from . import postprocess, raw_quality
+from . import postprocess, raw_quality, staging
 
 
 def _embed(image, scale=1):
@@ -86,7 +86,33 @@ def _score_block(score):
             f'y {_verdict(score.get("centre_y"))}</div>')
 
 
-def variant_card(run_path, variant, best=False, repeat=3, axes="xy"):
+def _inpaint_base(run_path, manifest):
+    source = (manifest.get("provider") or {}).get("inpaintSource") or ""
+    try:
+        source_run, source_index = source.rsplit("#", 1)
+        source_index = int(source_index)
+    except (ValueError, TypeError):
+        return None, None
+    if not source_run or os.path.basename(source_run) != source_run:
+        return None, None
+    source_path = os.path.join(os.path.dirname(run_path), source_run)
+    try:
+        source_manifest = staging.read_run_manifest(source_path)
+    except (OSError, RuntimeError):
+        return None, None
+    row = next((item for item in source_manifest.get("variants") or []
+                if item.get("index") == source_index), None)
+    if not row:
+        return None, None
+    filename = row.get("file") or ""
+    path = os.path.join(source_path, filename)
+    if not filename or os.path.basename(filename) != filename or not os.path.isfile(path):
+        return None, None
+    return Image.open(path).convert("RGBA"), f"approved base — {source_run}#{source_index}"
+
+
+def variant_card(run_path, variant, best=False, repeat=3, axes="xy",
+                 base_image=None, base_label=None):
     path = os.path.join(run_path, variant["file"])
     tile = Image.open(path)
     score = variant.get("tileScore") or postprocess.tile_seam_score(tile, axes)
@@ -112,6 +138,7 @@ def variant_card(run_path, variant, best=False, repeat=3, axes="xy"):
     <div class="card{' best' if best else ''}">
       <div class="trio">
         <div><div class="label">tile</div><img src="{_embed(tile, 3)}" alt=""></div>
+        {f'<div><div class="label">{html.escape(base_label)}</div><img src="{_embed(base_image, 3)}" alt=""></div>' if base_image else ''}
         <div><div class="label">{repeat}x along {'horizontal' if axes == 'x' else 'both axes'}</div><img src="{_embed(sheet)}" alt=""></div>
         {f'<div><div class="label">{html.escape(raw_label)}</div><img src="{_embed(raw)}" alt=""></div>' if raw else ''}
       </div>
@@ -176,7 +203,10 @@ def run_section(run_path, manifest, rank=None):
                       if negative_prompt else '')
 
     axes = manifest.get("tileAxes", "xy")
-    cards = "\n".join(variant_card(run_path, v, v.get("index") == best_index, axes=axes)
+    base_image, base_label = _inpaint_base(run_path, manifest)
+    cards = "\n".join(variant_card(run_path, v, v.get("index") == best_index,
+                                   axes=axes, base_image=base_image,
+                                   base_label=base_label)
                       for v in variants)
     return f"""
     <h2>{html.escape(str(manifest.get('name')))}

@@ -1,0 +1,244 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_crackinp_slabs",
+  "surface": "floor",
+  "description": "cool muted slate and limestone slab floor, major slabs split apart by wide deep jagged fractures, missing corners and broken-away stone chunks, dark compacted earth and unlit subfloor visible beneath the breaks, dark recessed cavity walls, loose rubble, orthographic floor material seen from directly above, outside the damaged region preserve the source material's exact colour, grain, value structure and local occlusion; inside the damaged region remove stone decisively, with strongly legible broken volume, deep irregular dark fissures, shaded cavity walls and local contact occlusion; damage must remain obvious when reduced to a small game tile; do not flatten or bleach the surrounding relief",
+  "options": {},
+  "tokens": {},
+  "provider": {
+    "id": "forge-inpaint",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "denoise": 0.78,
+      "maskBlur": 8,
+      "inpaintFullRes": true,
+      "inpaintFullResPadding": 40,
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "timeout": 300,
+      "seed": 381200,
+      "negativePrompt": "mosaic, tile pattern, crazy paving, grout, mortar joints between separate tiles, inlay, deliberate stonework pattern, new stonework, repaired render, hairline crack, faint scratch, subtle damage, surface stain, white crack, bright fracture, glowing crack, painted line, chalk line, plaster streak, blue sky, sky, daylight, outdoor opening, window, horizon, clouds, sun, blue glow, cyan glow, magical light, portal, luminous cavity, raised ridge, tube, pipe, moulding, applied trim, object lying on the surface, perspective, camera view, scene, framed picture, diagram labels"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/floor_slabs_varied_restrained.png",
+    "inpaintControlWeight": 0.5,
+    "inpaintSource": "texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418#3",
+    "inpaintSourceScore": 6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000164,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.139,
+        "y": 1.065,
+        "centre_x": 0.551,
+        "centre_y": 0.958
+      },
+      "seed": 381200,
+      "damageMaskCoverage": 0.265,
+      "inpaintMask": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-mask-1.png",
+      "inpaintControl": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-control-1.png",
+      "inpaintControlWeight": 0.5,
+      "sourceCompatibility": {
+        "width": 512,
+        "height": 512,
+        "borderWidth": 25,
+        "borderDelta": 0,
+        "baseRaw": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/raw-3.png"
+      },
+      "baseCompatibility": {
+        "width": 64,
+        "height": 64,
+        "borderWidth": 3,
+        "borderDelta": 0,
+        "baseTile": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/variant-3.png"
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_slabs_varied_restrained]",
+      "contextSurface": "floor",
+      "contextBuild": 3
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.00074,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.179,
+        "y": 0.898,
+        "centre_x": 0.703,
+        "centre_y": 1.062
+      },
+      "seed": 381201,
+      "damageMaskCoverage": 0.2605,
+      "inpaintMask": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-mask-2.png",
+      "inpaintControl": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-control-2.png",
+      "inpaintControlWeight": 0.5,
+      "sourceCompatibility": {
+        "width": 512,
+        "height": 512,
+        "borderWidth": 25,
+        "borderDelta": 0,
+        "baseRaw": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/raw-3.png"
+      },
+      "baseCompatibility": {
+        "width": 64,
+        "height": 64,
+        "borderWidth": 3,
+        "borderDelta": 0,
+        "baseTile": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/variant-3.png"
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_slabs_varied_restrained]",
+      "contextSurface": "floor",
+      "contextBuild": 3
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000591,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.111,
+        "y": 0.881,
+        "centre_x": 0.829,
+        "centre_y": 0.714
+      },
+      "seed": 381202,
+      "damageMaskCoverage": 0.2448,
+      "inpaintMask": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-mask-3.png",
+      "inpaintControl": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-control-3.png",
+      "inpaintControlWeight": 0.5,
+      "sourceCompatibility": {
+        "width": 512,
+        "height": 512,
+        "borderWidth": 25,
+        "borderDelta": 0,
+        "baseRaw": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/raw-3.png"
+      },
+      "baseCompatibility": {
+        "width": 64,
+        "height": 64,
+        "borderWidth": 3,
+        "borderDelta": 0,
+        "baseTile": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/variant-3.png"
+      },
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_slabs_varied_restrained]",
+      "contextSurface": "floor",
+      "contextBuild": 3
+    },
+    {
+      "index": 4,
+      "raw": "raw-4.png",
+      "file": "variant-4.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000755,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.097,
+        "y": 0.76,
+        "centre_x": 0.602,
+        "centre_y": 0.791
+      },
+      "seed": 381203,
+      "damageMaskCoverage": 0.1846,
+      "inpaintMask": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-mask-4.png",
+      "inpaintControl": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-control-4.png",
+      "inpaintControlWeight": 0.5,
+      "sourceCompatibility": {
+        "width": 512,
+        "height": 512,
+        "borderWidth": 25,
+        "borderDelta": 0,
+        "baseRaw": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/raw-3.png"
+      },
+      "baseCompatibility": {
+        "width": 64,
+        "height": 64,
+        "borderWidth": 3,
+        "borderDelta": 0,
+        "baseTile": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/variant-3.png"
+      },
+      "context": "context-4.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_slabs_varied_restrained]",
+      "contextSurface": "floor",
+      "contextBuild": 3
+    },
+    {
+      "index": 5,
+      "raw": "raw-5.png",
+      "file": "variant-5.png",
+      "rawQuality": {
+        "highChromaRatio": 5.7e-05,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.173,
+        "y": 0.982,
+        "centre_x": 0.873,
+        "centre_y": 0.916
+      },
+      "seed": 381204,
+      "damageMaskCoverage": 0.2734,
+      "inpaintMask": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-mask-5.png",
+      "inpaintControl": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_slabs-20260808-002401/inpaint-control-5.png",
+      "inpaintControlWeight": 0.5,
+      "sourceCompatibility": {
+        "width": 512,
+        "height": 512,
+        "borderWidth": 25,
+        "borderDelta": 0,
+        "baseRaw": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/raw-3.png"
+      },
+      "baseCompatibility": {
+        "width": 64,
+        "height": 64,
+        "borderWidth": 3,
+        "borderDelta": 0,
+        "baseTile": "tools/asset-gen/out/texturePiece-first_stratum_rich_floor_slabs_varied_restrained-20260806-194418/variant-3.png"
+      },
+      "context": "context-5.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_slabs_varied_restrained]",
+      "contextSurface": "floor",
+      "contextBuild": 3
+    }
+  ],
+  "variantErrors": []
+}

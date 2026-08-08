@@ -1,0 +1,150 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_crackinp_coffers",
+  "surface": "ceiling",
+  "description": "aged limestone coffered ceiling, several coffers structurally broken by wide deep jagged fractures, missing carved corners and fallen-away chunks, dark recessed cavity walls, intact coffers elsewhere, orthographic ceiling material, outside the damaged region preserve the source material's exact colour, grain, value structure and local occlusion; inside the damaged region remove stone decisively, with strongly legible broken volume, deep irregular dark fissures, shaded cavity walls and local contact occlusion; damage must remain obvious when reduced to a small game tile; do not flatten or bleach the surrounding relief",
+  "options": {},
+  "tokens": {},
+  "provider": {
+    "id": "forge-inpaint",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "denoise": 0.78,
+      "maskBlur": 8,
+      "inpaintFullRes": true,
+      "inpaintFullResPadding": 40,
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "timeout": 300,
+      "seed": 381300,
+      "negativePrompt": "mosaic, tile pattern, crazy paving, grout, mortar joints between separate tiles, inlay, deliberate stonework pattern, new stonework, repaired render, hairline crack, faint scratch, subtle damage, surface stain, white crack, bright fracture, glowing crack, painted line, chalk line, plaster streak, raised ridge, tube, pipe, moulding, applied trim, object lying on the surface, perspective, camera view, scene, framed picture, diagram labels"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/ceiling_wide_coffers.png",
+    "inpaintControlWeight": 0.5,
+    "inpaintSource": "texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150#3",
+    "inpaintSourceScore": 6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000488,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.807,
+        "y": 1.414,
+        "centre_x": 1.043,
+        "centre_y": 1.344
+      },
+      "seed": 381300,
+      "damageMaskCoverage": 0.2246,
+      "inpaintMask": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_coffers-20260808-001551/inpaint-mask-1.png",
+      "inpaintControl": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_coffers-20260808-001551/inpaint-control-1.png",
+      "inpaintControlWeight": 0.5,
+      "sourceCompatibility": {
+        "width": 512,
+        "height": 512,
+        "borderWidth": 25,
+        "borderDelta": 0,
+        "baseRaw": "tools/asset-gen/out/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150/raw-3.png"
+      },
+      "baseCompatibility": {
+        "width": 64,
+        "height": 64,
+        "borderWidth": 3,
+        "borderDelta": 0,
+        "baseTile": "tools/asset-gen/out/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150/variant-3.png"
+      }
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000675,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.763,
+        "y": 1.23,
+        "centre_x": 0.991,
+        "centre_y": 1.089
+      },
+      "seed": 381301,
+      "damageMaskCoverage": 0.2245,
+      "inpaintMask": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_coffers-20260808-001551/inpaint-mask-2.png",
+      "inpaintControl": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_coffers-20260808-001551/inpaint-control-2.png",
+      "inpaintControlWeight": 0.5,
+      "sourceCompatibility": {
+        "width": 512,
+        "height": 512,
+        "borderWidth": 25,
+        "borderDelta": 0,
+        "baseRaw": "tools/asset-gen/out/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150/raw-3.png"
+      },
+      "baseCompatibility": {
+        "width": 64,
+        "height": 64,
+        "borderWidth": 3,
+        "borderDelta": 0,
+        "baseTile": "tools/asset-gen/out/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150/variant-3.png"
+      }
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000385,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.742,
+        "y": 1.153,
+        "centre_x": 1.581,
+        "centre_y": 1.297
+      },
+      "seed": 381302,
+      "damageMaskCoverage": 0.2166,
+      "inpaintMask": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_coffers-20260808-001551/inpaint-mask-3.png",
+      "inpaintControl": "tools/asset-gen/out/texturePiece-first_stratum_crackinp_coffers-20260808-001551/inpaint-control-3.png",
+      "inpaintControlWeight": 0.5,
+      "sourceCompatibility": {
+        "width": 512,
+        "height": 512,
+        "borderWidth": 25,
+        "borderDelta": 0,
+        "baseRaw": "tools/asset-gen/out/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150/raw-3.png"
+      },
+      "baseCompatibility": {
+        "width": 64,
+        "height": 64,
+        "borderWidth": 3,
+        "borderDelta": 0,
+        "baseTile": "tools/asset-gen/out/texturePiece-first_stratum_rich_ceiling_wide_coffers-20260806-200150/variant-3.png"
+      }
+    }
+  ],
+  "variantErrors": []
+}

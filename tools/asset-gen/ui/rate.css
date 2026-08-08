@@ -17,7 +17,7 @@ body.rating main { flex-direction: column; gap: 10px; }
   display: block; border: 1px solid #322d47; background: #0d0c11;
   image-rendering: pixelated;
 }
-#tile { width: 256px; height: 256px; }
+#tile, #base { width: 256px; height: 256px; }
 /* Square cells in BOTH modes. A wall that joins only left-to-right still has
    square tiles; stretching one to fill the pane's height invented vertical
    distortion that is not in the texture and is not what the engine draws. The

@@ -1916,6 +1916,187 @@
    "repeat"
   ]
  },
+ "texturePiece-first_stratum_crackinp_coffers-20260807-231924#1": {
+  "at": "2026-08-08T00:26:13",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260807-231924.json",
+   "sha256": "a8e1aff88e19067ac2cfd6782a7e877fc3afb2a967dcb801c56a6aa74c5ac025"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_coffers-20260807-233753#1": {
+  "at": "2026-08-08T00:30:50",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260807-233753.json",
+   "sha256": "643db0a4eb35fb7e7c7a3e234340a1ce4f11935bddcaf65fcaa81ff4c89df3dd"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_coffers-20260808-000008#1": {
+  "at": "2026-08-08T00:05:15",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260808-000008.json",
+   "sha256": "fe648d488c0395411cd43607130c9a4337a7e41982109c44cd5d8c073c8e4642"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_coffers-20260808-001551#1": {
+  "at": "2026-08-08T00:25:32",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260808-001551.json",
+   "sha256": "25e8b1f157a970b3f76a7da7f1ef162f3de838aa84605bac343f45d14084a168"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_coffers-20260808-001551#2": {
+  "at": "2026-08-08T00:25:33",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260808-001551.json",
+   "sha256": "b89e746c63a605b33fde6b8bd41d1e17d4905fe0aa788453a7979e0f9e93f051"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_coffers-20260808-001551#3": {
+  "at": "2026-08-08T00:25:34",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260808-001551.json",
+   "sha256": "9d5729cf7107469a2c53f92884ecb070c494d3a1d5ddbb90f9b01fe2227d5b4d"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_coffers-20260808-002109#1": {
+  "at": "2026-08-08T00:24:56",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260808-002109.json",
+   "sha256": "4022f724a05976037b2c7e02b51ac9a9726006149ad1f319eda7aa22d3883e7d"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_coffers-20260808-002109#2": {
+  "at": "2026-08-08T00:25:00",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260808-002109.json",
+   "sha256": "a262a7765b8dbe752f068322974286da7f8d743edd2c3c688908b81c2fbda0ef"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_coffers-20260808-002109#3": {
+  "at": "2026-08-08T00:25:06",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_coffers-20260808-002109.json",
+   "sha256": "6dd6955a4d1a0e2824cfe5fd585b190bdb7875e5f69ac3e20d45778a03fde897"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260807-231849#1": {
+  "at": "2026-08-08T00:05:31",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260807-231849.json",
+   "sha256": "ae686dbbf2a7d09d50282a62c45e8007952c5a3858d439473efc96130723d498"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260807-233718#1": {
+  "at": "2026-08-08T00:30:48",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260807-233718.json",
+   "sha256": "815e3e1639167780e4f007a9f40abb4e769d568bddf78134f4d3328f671f8653"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260807-235930#1": {
+  "at": "2026-08-08T00:05:27",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260807-235930.json",
+   "sha256": "214d3ba4dcc35ddeed59fcf7777f50f8fdfc5b61aec4de41b9ec6044559b1ddb"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260808-001349#1": {
+  "at": "2026-08-08T00:26:05",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260808-001349.json",
+   "sha256": "2460a97dd39eba6e10eca2f26830d207b408582766407ae763dcc24cf586a553"
+  },
+  "note": "It's odd that, at least in the previews, I'm not really seeing any change in the heightfields at all, just in the albedo.",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260808-001349#2": {
+  "at": "2026-08-08T00:26:07",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260808-001349.json",
+   "sha256": "a0ce8d710e844c830d7d0d964b161dcb2485d42e1806c1233977a4ee91db44b2"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260808-001349#3": {
+  "at": "2026-08-08T00:26:10",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260808-001349.json",
+   "sha256": "9f7fcdc78240be0504e2b731e7a2c56060f00e89a7288e075d85b67f324b07db"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260808-002401#1": {
+  "at": "2026-08-08T00:30:22",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260808-002401.json",
+   "sha256": "794a9341c4253e032dd77ba73c1e53efab4c11d3e2852a0183326d96c96b5110"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260808-002401#2": {
+  "at": "2026-08-08T00:30:24",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260808-002401.json",
+   "sha256": "02334e3aa5f0610a9215bcb38b04098bca9255707189057e50479bed0cb73f81"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260808-002401#3": {
+  "at": "2026-08-08T00:30:26",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260808-002401.json",
+   "sha256": "61f95af30193050eb9930807f234f1f635e1875190fd345e634abc8240e02f25"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260808-002401#4": {
+  "at": "2026-08-08T00:30:28",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260808-002401.json",
+   "sha256": "c76fd4c2f65e66a759fad5a302efc5725ce0cf9f78f4851ed051008acdde79b2"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_crackinp_slabs-20260808-002401#5": {
+  "at": "2026-08-08T00:30:30",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_crackinp_slabs-20260808-002401.json",
+   "sha256": "16336a9f7b014529d2d9180b295a34057b0874de0fbbccf572e9608ebddc51cb"
+  },
+  "score": 4,
+  "tags": []
+ },
  "texturePiece-first_stratum_fixture_ceiling_drip_boss-20260806-202352#1": {
   "at": "2026-08-06T22:47:44",
   "evidence": {
@@ -2109,6 +2290,87 @@
   "evidence": {
    "manifest": "manifests/texturePiece-first_stratum_followup_fixture_floor_bronze_rite_inlay_soft-20260807-210843.json",
    "sha256": "0e1c9ae5177fef7137154d38d36f7c79e4dd2a5e8fc286419ef21dc3794898a1"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313#1": {
+  "at": "2026-08-08T00:31:26",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313.json",
+   "sha256": "85bd62ac749dfab2cf997e5cd62be5809c89c1016100117426ad68525f55ffca"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313#2": {
+  "at": "2026-08-08T00:31:26",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313.json",
+   "sha256": "e7283e4e3eeea20608388cc9f86f69150ec0d07985e9af21f6fc64a7fe78ed60"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313#3": {
+  "at": "2026-08-08T00:31:27",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_followup_floor_slabs_denser-20260807-205313.json",
+   "sha256": "291d6479fb81d53c8a2ff373e7244098116e7e340266ceeeb5b6b7ee07226963"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600#1": {
+  "at": "2026-08-08T00:31:03",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600.json",
+   "sha256": "062a845bbf5390d742c52cc8ccc2ad8a33a7293fff36771c3805210a5741ba75"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600#2": {
+  "at": "2026-08-08T00:30:57",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600.json",
+   "sha256": "847603c6abd0bca74f627d8ae3b6d40f699cd126cc25fe0ea11231d95ebf5250"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600#3": {
+  "at": "2026-08-08T00:30:58",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_frac_ceiling_coffers_fractured-20260807-221600.json",
+   "sha256": "226d4fa1eeb14c2e34825073c339b2343ec328c4fa2fc7483f96a245a066f438"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907#1": {
+  "at": "2026-08-08T00:31:13",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907.json",
+   "sha256": "73ef6188ce2985891aaf4e35864a9c8102b53890da64197e3d002cce22b1e30a"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907#2": {
+  "at": "2026-08-08T00:31:14",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907.json",
+   "sha256": "41b6a9f8aa0281110d6dacafb6442dcbdbcf4418b4df0af0942388bee6b2c8c2"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907#3": {
+  "at": "2026-08-08T00:31:15",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_frac_floor_flagstones_fractured-20260807-223907.json",
+   "sha256": "d44a36a129d5c05bf0528b9ca541e195971b432c2196bdf4fb6837a8e8260608"
   },
   "score": 4,
   "tags": []
@@ -6966,6 +7228,69 @@
   "score": 6,
   "tags": []
  },
+ "wallPiece-first_stratum_crackinp_ashlar-20260807-231959#1": {
+  "at": "2026-08-08T00:30:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_crackinp_ashlar-20260807-231959.json",
+   "sha256": "d5b29587b4eedf61c98d97d8667df4293fe5adbeaf71ef97b6075cee03f906b1"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_crackinp_ashlar-20260807-233829#1": {
+  "at": "2026-08-08T00:30:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_crackinp_ashlar-20260807-233829.json",
+   "sha256": "1d2ab9672b75d553d73b4c16cb6ecc81c48acd40bbcccc8bf375db74904c1a9d"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-first_stratum_crackinp_ashlar-20260807-234455#1": {
+  "at": "2026-08-07T23:57:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_crackinp_ashlar-20260807-234455.json",
+   "sha256": "5ac8cae9e702cc3e0bac42f40094e5e8602a8bc21005e2567496ce5875d253d5"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_crackinp_ashlar-20260808-000044#1": {
+  "at": "2026-08-08T00:05:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_crackinp_ashlar-20260808-000044.json",
+   "sha256": "8087ab2162fa87f0aaf2d9ebeeb3402f823dff58dff42c718199393600ce3496"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_crackinp_ashlar-20260808-001748#1": {
+  "at": "2026-08-08T00:25:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_crackinp_ashlar-20260808-001748.json",
+   "sha256": "c67bf76afec290d5446fce4047c5185044df8c919f6c89aa5078b520c2025b29"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_crackinp_ashlar-20260808-001748#2": {
+  "at": "2026-08-08T00:25:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_crackinp_ashlar-20260808-001748.json",
+   "sha256": "b8b024cf3edc4bfe093b7a626e24e46dc38f27c149cc3c4b01b8aec6858f2795"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-first_stratum_crackinp_ashlar-20260808-001748#3": {
+  "at": "2026-08-08T00:25:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_crackinp_ashlar-20260808-001748.json",
+   "sha256": "d8efb006838ab6255088298e72925bd06773399e25ae1bcf03613854c456c97c"
+  },
+  "score": 4,
+  "tags": []
+ },
  "wallPiece-first_stratum_fixture_wall_breach_socket-20260806-201043#1": {
   "at": "2026-08-06T22:50:43",
   "evidence": {
@@ -7129,6 +7454,114 @@
   "evidence": {
    "manifest": "manifests/wallPiece-first_stratum_followup_fixture_wall_votive_relief_soft-20260807-210323.json",
    "sha256": "dccabd61a4a6c83f74d46c8816fca669395fbbe3e34b0c004c0a1e45ce1102fc"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825#1": {
+  "at": "2026-08-08T00:31:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825.json",
+   "sha256": "31ee085f812be0a81fc354a67ae5bc1d2bc381621dc3ac783e0d70e7324e662c"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825#2": {
+  "at": "2026-08-08T00:31:31",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825.json",
+   "sha256": "0678b4796eea79905c536590859a8a94b38378a6b630cec8b672b6805580e47d"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825#3": {
+  "at": "2026-08-08T00:31:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_followup_wall_ashlar_irregular_courses-20260807-205825.json",
+   "sha256": "93f7b7f91c6b3e986b7f06427140f4aa11e9f1609e47956cd9950f5ab95ab930"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200#1": {
+  "at": "2026-08-08T00:31:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200.json",
+   "sha256": "032d36e02b39b447ee009e73336ef851191fa6b399320a58f0c349cf8be2db5c"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200#2": {
+  "at": "2026-08-08T00:31:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200.json",
+   "sha256": "a7bd1ed47d1416f94e13df491ef5128b4aab97eacd665edcb9ebf159929c4daf"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200#3": {
+  "at": "2026-08-08T00:31:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_ashlar_fractured-20260807-222200.json",
+   "sha256": "35d7a40d188ee9b7011b87be92c8857c2b612c5d17f3304c0399e5df79f05aa7"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900#1": {
+  "at": "2026-08-08T00:31:09",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900.json",
+   "sha256": "78a4217851693b76d2a2034e645465bd71c1e289aac788ae409012d0e2657752"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900#2": {
+  "at": "2026-08-08T00:31:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900.json",
+   "sha256": "18cb4072c61eb38d1a3bfbab6a8f8833a40033e3591624e05acabd66509f067b"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900#3": {
+  "at": "2026-08-08T00:31:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-222900.json",
+   "sha256": "cf5d9ca36c42e517b1ae25a06260057e03b14b1f18b2c27656f6ce4233241d03"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805#1": {
+  "at": "2026-08-08T00:31:22",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805.json",
+   "sha256": "0c266a37649dca92f20dd4abde1ece48ae440152ca913344cb293b949fd001c3"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805#2": {
+  "at": "2026-08-08T00:31:16",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805.json",
+   "sha256": "df3404d29f74cdc84639098284e1e9249972a30f8b6bdfb7391d1f712357a2a8"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805#3": {
+  "at": "2026-08-08T00:31:41",
+  "evidence": {
+   "manifest": "manifests/wallPiece-first_stratum_frac_wall_limewash_fractured-20260807-224805.json",
+   "sha256": "a2cd0bbdc564aca99efebc7780fb6eb2549e9897c20b21b6c5b3bc93f84aeeea"
   },
   "score": 3,
   "tags": []
