@@ -19,7 +19,7 @@ foreach ($line in $output) {
 }
 
 if ($report.Count -eq 0) {
-    Write-Host "ENGINE STATE capture produced no output — is the engine erroring?"
+    Write-Host "ENGINE STATE capture produced no output - is the engine erroring?"
     exit 1
 }
 
