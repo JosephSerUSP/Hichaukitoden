@@ -1,0 +1,56 @@
+{
+  "id": "dungeon_ffxii_wall_recess_compare",
+  "name": "FFXII Wall + Shrine Recess Compare",
+  "texture": "assets/tilesets/dungeon_001.png",
+  "tileWidth": 64,
+  "tileHeight": 64,
+  "base": {
+    "walls": [
+      {
+        "id": "ffxii_regular_wall",
+        "role": "base_wall",
+        "middle": [
+          1,
+          1
+        ],
+        "geometry": "assets/geometry/sd_ffxii_regular_wall",
+        "weight": 100
+      }
+    ],
+    "floors": [
+      {
+        "id": "ffxii_compare_floor",
+        "role": "base_floor",
+        "atlas": [
+          0,
+          1
+        ],
+        "weight": 100,
+        "heightOffset": 0
+      }
+    ],
+    "ceilings": [
+      {
+        "id": "ffxii_compare_ceiling",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          2
+        ],
+        "weight": 100
+      }
+    ]
+  },
+  "doors": [],
+  "features": [
+    {
+      "id": "ffxii_shrine_recess",
+      "role": "wall_feature",
+      "geometry": "assets/geometry/shrine_recess",
+      "injectProbability": 1,
+      "where": {
+        "zone": "shrine"
+      }
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "id": "template_tileset",
+  "name": "Template Tileset",
+  "texture": "assets/tilesets/template_tileset.png",
+  "tileWidth": 64,
+  "tileHeight": 64,
+  "base": {
+    "walls": [
+      {
+        "id": "wall_base_1",
+        "role": "base_wall",
+        "middle": [
+          1,
+          0
+        ],
+        "leftEdge": [
+          1,
+          1,
+          0
+        ],
+        "rightEdge": [
+          1,
+          1,
+          32
+        ],
+        "weight": 70
+      }
+    ],
+    "floors": [
+      {
+        "id": "floor_stone",
+        "role": "base_floor",
+        "atlas": [
+          3,
+          0
+        ],
+        "weight": 80,
+        "heightOffset": 0
+      }
+    ],
+    "ceilings": [
+      {
+        "id": "ceiling_stone",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          0
+        ],
+        "weight": 100
+      }
+    ]
+  },
+  "doors": [
+    {
+      "id": "door_standard",
+      "role": "door",
+      "atlas": [
+        2,
+        0
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "wall_torch",
+      "role": "wall_feature",
+      "atlas": [
+        1,
+        3
+      ],
+      "injectProbability": 0.12,
+      "where": {
+        "adjacent": "floor"
+      },
+      "emitsLight": {
+        "color": [
+          1,
+          0.58,
+          0.22
+        ],
+        "radius": 4,
+        "falloff": 2
+      }
+    }
+  ]
+}

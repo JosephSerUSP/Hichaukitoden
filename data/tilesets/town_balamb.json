@@ -1,0 +1,82 @@
+{
+  "id": "town_balamb",
+  "name": "Balamb Town",
+  "texture": "assets/tilesets/town_balamb.png",
+  "tileWidth": 64,
+  "tileHeight": 64,
+  "base": {
+    "walls": [
+      {
+        "id": "balamb_wall_base",
+        "role": "base_wall",
+        "middle": [
+          1,
+          0
+        ],
+        "leftEdge": [
+          1,
+          1,
+          0
+        ],
+        "rightEdge": [
+          1,
+          1,
+          32
+        ],
+        "weight": 100
+      }
+    ],
+    "floors": [
+      {
+        "id": "tile_3_0",
+        "role": "base_floor",
+        "atlas": [
+          3,
+          0
+        ],
+        "weight": 100,
+        "heightOffset": 0
+      }
+    ],
+    "ceilings": [
+      {
+        "id": "ceiling_1",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          0
+        ],
+        "weight": 100
+      },
+      {
+        "id": "ceiling_2",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          1
+        ],
+        "weight": 100
+      },
+      {
+        "id": "ceiling_3",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          2
+        ],
+        "weight": 100
+      },
+      {
+        "id": "ceiling_4",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          3
+        ],
+        "weight": 100
+      }
+    ]
+  },
+  "doors": [],
+  "features": []
+}

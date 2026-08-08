@@ -1,0 +1,54 @@
+{
+  "id": "dungeon_hand_authored_height_compare",
+  "name": "Hand-authored Tileset Height Compare",
+  "texture": "assets/tilesets/dungeon_001.png",
+  "heightMap": "assets/geometry/0_hand_authored_depth_maps/tiled_wall_with_column.png",
+  "heightMapScale": {
+    "wall": 0.1,
+    "floor": 0,
+    "ceiling": 0
+  },
+  "heightMapMeshColumns": 16,
+  "heightMapMeshRows": 16,
+  "heightMapTriangleBudget": 96,
+  "tileWidth": 64,
+  "tileHeight": 64,
+  "base": {
+    "walls": [
+      {
+        "id": "hand_authored_wall",
+        "role": "base_wall",
+        "middle": [
+          1,
+          1
+        ],
+        "weight": 100
+      }
+    ],
+    "floors": [
+      {
+        "id": "hand_authored_floor",
+        "role": "base_floor",
+        "atlas": [
+          0,
+          1
+        ],
+        "weight": 100,
+        "heightOffset": 0
+      }
+    ],
+    "ceilings": [
+      {
+        "id": "hand_authored_ceiling",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          0
+        ],
+        "weight": 100
+      }
+    ]
+  },
+  "doors": [],
+  "features": []
+}

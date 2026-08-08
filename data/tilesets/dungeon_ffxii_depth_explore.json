@@ -1,0 +1,139 @@
+{
+  "id": "dungeon_ffxii_depth_explore",
+  "name": "FFXII Depth Explore (3x3)",
+  "texture": "assets/tilesets/dungeon_ffxii_depth_explore_3x3.png",
+  "tileWidth": 64,
+  "tileHeight": 64,
+  "base": {
+    "walls": [
+      {
+        "id": "ffxii_homosimile_wall",
+        "role": "base_wall",
+        "middle": [
+          0,
+          0
+        ],
+        "leftEdge": [
+          0,
+          0,
+          0
+        ],
+        "rightEdge": [
+          0,
+          0,
+          32
+        ],
+        "geometry": "assets/geometry/sd_ffxii_homosimile_wall",
+        "weight": 25
+      },
+      {
+        "id": "ffxii_alunardream_wall",
+        "role": "base_wall",
+        "middle": [
+          1,
+          0
+        ],
+        "leftEdge": [
+          1,
+          0,
+          0
+        ],
+        "rightEdge": [
+          1,
+          0,
+          32
+        ],
+        "geometry": "assets/geometry/sd_ffxii_alunardream_wall",
+        "weight": 25
+      },
+      {
+        "id": "ffxii_lyriel_wall",
+        "role": "base_wall",
+        "middle": [
+          2,
+          0
+        ],
+        "leftEdge": [
+          2,
+          0,
+          0
+        ],
+        "rightEdge": [
+          2,
+          0,
+          32
+        ],
+        "geometry": "assets/geometry/sd_ffxii_lyriel_wall",
+        "weight": 25
+      },
+      {
+        "id": "ffxii_dreamshaper_wall",
+        "role": "base_wall",
+        "middle": [
+          2,
+          0
+        ],
+        "leftEdge": [
+          2,
+          0,
+          0
+        ],
+        "rightEdge": [
+          2,
+          0,
+          32
+        ],
+        "geometry": "assets/geometry/sd_ffxii_dreamshaper_wall",
+        "weight": 25
+      }
+    ],
+    "floors": [
+      {
+        "id": "ffxii_sd15_floor",
+        "role": "base_floor",
+        "atlas": [
+          0,
+          1
+        ],
+        "geometry": "assets/geometry/sd_ffxii_floor_sd15",
+        "weight": 50,
+        "heightOffset": 0
+      },
+      {
+        "id": "ffxii_retro_floor",
+        "role": "base_floor",
+        "atlas": [
+          1,
+          1
+        ],
+        "geometry": "assets/geometry/sd_ffxii_floor_retro",
+        "weight": 50,
+        "heightOffset": 0
+      }
+    ],
+    "ceilings": [
+      {
+        "id": "ffxii_retro_ceiling",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          2
+        ],
+        "geometry": "assets/geometry/sd_ffxii_ceiling_retro",
+        "weight": 50
+      },
+      {
+        "id": "ffxii_sd15_ceiling",
+        "role": "base_ceiling",
+        "atlas": [
+          1,
+          2
+        ],
+        "geometry": "assets/geometry/sd_ffxii_ceiling_sd15",
+        "weight": 50
+      }
+    ]
+  },
+  "doors": [],
+  "features": []
+}

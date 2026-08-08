@@ -1,5 +1,5 @@
 local json = require("data.json")
-local collection_loader = require("data.collection_loader")
+local authored_storage = require("data.authored_storage")
 
 local loader = {}
 
@@ -97,7 +97,7 @@ function loader.init(root)
     loader.actors = J("actors.json")
     loader.elements = J("elements.json")
     loader.items = J("items.json")
-    loader.maps, loader.mapsStorage = collection_loader.load(loader.root, "maps")
+    loader.maps, loader.mapsStorage = authored_storage.loadOrderedCollection(loader.root, "maps")
     loader.mapsById = {}
     for index, map in ipairs(loader.maps) do
         local key = tostring(map.id)
@@ -127,7 +127,7 @@ function loader.init(root)
     loader.troops = J("troops.json")
     -- Scenes configuration. Optional replacements are applied before the
     -- lookup registry is built, so every consumer sees one canonical scene.
-    loader.scenes, loader.scenesStorage = collection_loader.load(loader.root, "scenes")
+    loader.scenes, loader.scenesStorage = authored_storage.loadOrderedCollection(loader.root, "scenes")
     applySceneOverrides()
 
     -- overhaul-7 A1: animations data loaded from JSON
@@ -135,8 +135,10 @@ function loader.init(root)
     local animation_player = require("presentation.animation_player")
     animation_player.load(loader.animations)
 
-    -- Decoupled tilesets data registry
-    loader.tilesets = J("tilesets.json")
+    -- Decoupled tilesets data registry. The monolith remains authoritative
+    -- until every writer is registry-fragment aware; authored_storage owns the
+    -- activation boundary and canonical-id validation.
+    loader.tilesets, loader.tilesetsStorage = authored_storage.loadRegistry(loader.root, "tilesets")
 
     -- Icon palettes and key profiles
     loader.iconPalettes = J("iconPalettes.json")
