@@ -15,7 +15,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | id | kind | draw | world | windows | hooks |
 |---|---|---|---|---|---|
 | `1` | menu | windows | - | 7 | 8 |
-| `battle` | battle | windows | - | 9 | 7 |
+| `battle` | battle | windows | - | 13 | 8 |
 | `cinematic` | menu | windows | - | 0 | 2 |
 | `controls` | menu | windows | - | 2 | 6 |
 | `datalog` | menu | windows | - | 3 | 4 |
@@ -84,4 +84,3 @@ are what's left:
   and never authoritative.
 - Design docs under `docs/design/` and `docs/game design/` describe
   intent. Where they state implementation status, trust THIS file.
-
