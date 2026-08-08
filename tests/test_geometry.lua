@@ -188,6 +188,18 @@ check(model.groups[1].mesh ~= nil and model.groups[1].texture ~= nil,
 check(geometry.load(FIXTURES .. "valid_plane") == model,
     "an identical composition is compiled once and reused")
 
+-- Quality belongs in the cache key, but selecting another quality must not
+-- destroy the earlier keyed variant. A -> B -> A should compile only B.
+local geometryQuality = require("engine.geometry.quality")
+local originalDensity = geometryQuality.density()
+geometryQuality.setDensity(originalDensity * 1.5)
+local alternateQualityModel = geometry.load(FIXTURES .. "valid_plane")
+check(alternateQualityModel ~= model,
+    "a different geometry quality compiles a distinct model")
+geometryQuality.setDensity(originalDensity)
+check(geometry.load(FIXTURES .. "valid_plane") == model,
+    "returning to a geometry quality reuses its retained compiled variant")
+
 local sharedHeightSpec = {
     id = "shared_tileset_height",
     label = "shared tileset height fixture",

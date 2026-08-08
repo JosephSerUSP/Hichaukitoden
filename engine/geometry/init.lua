@@ -23,6 +23,43 @@ local buildProfiler = require("engine.map_build_profiler")
 local geometry = {}
 
 local compiled = {}
+local compiledAccess = {}
+local compiledCount = 0
+local accessClock = 0
+
+-- Quality is part of every compiled key, so switching quality can retain a
+-- previous valid variant. Bound that reuse because custom quality values are
+-- continuous and must not grow an authoring session's cache without limit.
+-- Eviction only drops the cache reference; a live caller keeps its model valid.
+geometry.MAX_COMPILED_CACHE_ENTRIES = 128
+
+local function cachedModel(key)
+    local model = compiled[key]
+    if model then
+        accessClock = accessClock + 1
+        compiledAccess[key] = accessClock
+    end
+    return model
+end
+
+local function cacheModel(key, model)
+    if not compiled[key] then compiledCount = compiledCount + 1 end
+    compiled[key] = model
+    accessClock = accessClock + 1
+    compiledAccess[key] = accessClock
+    while compiledCount > geometry.MAX_COMPILED_CACHE_ENTRIES do
+        local oldestKey, oldestAccess
+        for candidate, accessed in pairs(compiledAccess) do
+            if candidate ~= key and (not oldestAccess or accessed < oldestAccess) then
+                oldestKey, oldestAccess = candidate, accessed
+            end
+        end
+        if not oldestKey then break end
+        compiled[oldestKey] = nil
+        compiledAccess[oldestKey] = nil
+        compiledCount = compiledCount - 1
+    end
+end
 
 -- Warnings are advisory and reported by the validator; they never block a
 -- build. Hard problems raise instead, per the project's fail-loud rule.
@@ -171,9 +208,10 @@ end
 function geometry.load(assetPaths)
     if type(assetPaths) == "string" then assetPaths = { assetPaths } end
     local key = geometry.compositionKey(assetPaths)
-    if compiled[key] then
+    local cached = cachedModel(key)
+    if cached then
         buildProfiler.cache("geometry.compiled", true)
-        return compiled[key]
+        return cached
     end
     buildProfiler.cache("geometry.compiled", false)
     buildProfiler.add("geometry.uniqueCompiles", 1)
@@ -233,7 +271,7 @@ function geometry.load(assetPaths)
     model.specs = specs
     model.assetPath = assetPaths[1]
     model.assetPaths = assetPaths
-    compiled[key] = model
+    cacheModel(key, model)
     buildProfiler.add("geometry.finalVertices", model.vertexCount or 0)
     buildProfiler.add("geometry.finalTriangles", math.floor((model.vertexCount or 0) / 3))
     compileSpan()
@@ -254,9 +292,10 @@ function geometry.loadAtlasSurface(cacheKey, spec, heightData, texture, uv)
     end
     local key = "atlas:" .. tostring(cacheKey) .. "|" ..
         require("engine.geometry.quality").key()
-    if compiled[key] then
+    local cached = cachedModel(key)
+    if cached then
         buildProfiler.cache("geometry.compiled", true)
-        return compiled[key]
+        return cached
     end
     buildProfiler.cache("geometry.compiled", false)
     buildProfiler.add("geometry.uniqueCompiles", 1)
@@ -274,7 +313,7 @@ function geometry.loadAtlasSurface(cacheKey, spec, heightData, texture, uv)
     model.specs = { spec }
     model.assetPath = cacheKey
     model.assetPaths = { cacheKey }
-    compiled[key] = model
+    cacheModel(key, model)
     buildProfiler.add("geometry.finalVertices", model.vertexCount or 0)
     buildProfiler.add("geometry.finalTriangles", math.floor((model.vertexCount or 0) / 3))
     compileSpan()
@@ -329,6 +368,9 @@ end
 
 function geometry.forget()
     compiled = {}
+    compiledAccess = {}
+    compiledCount = 0
+    accessClock = 0
     images.forget()
 end
 

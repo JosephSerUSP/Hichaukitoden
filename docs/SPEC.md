@@ -110,6 +110,12 @@ Everything in Sec.1 follows from that goal rather than the reverse:
     approximations. `lovec . profile-3d <mapId> <frames>` profiles this live
     path against a deterministic generated-map topology and reports structural
     batches, dynamic sources, dynamic mesh draws, timing percentiles and memory.
+    Image-authored source geometry is cached by source revision, compiler
+    version and geometry-quality key. Changing quality retains earlier valid
+    variants, so an A -> B -> A quality sequence recompiles only B; a 128-entry
+    least-recently-used bound prevents continuous custom quality values from
+    growing the compiled cache indefinitely. Per-session prepared world
+    structures still invalidate when their quality key changes.
     The
     old `town` scene — legacy-drawn, unreachable,
     superseded by the town *map* — was deleted in the purge.
