@@ -791,6 +791,19 @@ end
 -------------------------------------------------------------------------------
 function battle.showMessage(text)
     local v = battle.getState()
+
+    -- Input validation is not a combat event. The only current caller is the
+    -- skill submenu rejecting a blocked row (cooldown, warmup, condition,
+    -- charge/HP gate). Sending that through the battle log used to leave the
+    -- command phase, and the log's ordinary return path rebuilt living members
+    -- and cleared `collectedActions`; missing actions then fell through to the
+    -- basic-attack fallback. Keep the player exactly where they are and let the
+    -- existing context-help bar carry the rejection reason instead.
+    if v.combatState == "input" then
+        v.currentHelpText = text
+        return
+    end
+
     v.eventsQueue = { { type = "text", text = text } }
     v.eventQueueIndex = 1
     v.combatLog = {}
