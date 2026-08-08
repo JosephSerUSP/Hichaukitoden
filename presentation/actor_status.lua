@@ -20,6 +20,7 @@ local small_battlers = require("presentation.small_battlers")
 local battle_layout = require("presentation.battle_layout")
 local battler_geometry = require("presentation.battler_geometry")
 local animation_player = require("presentation.animation_player")
+local battle_view = require("presentation.battle_view")
 
 local actor_status = {}
 
@@ -207,9 +208,13 @@ actor_status.gridSlot = battler_geometry.gridSlot
 -- name and gauge.
 local STATE_ICON_CYCLE_SECONDS = 0.9
 
+local function visibleStates(battler)
+    return battle_view.statesFor(battler)
+end
+
 local function stateDisplayList(battler, session)
     local list = {}
-    for _, stateInfo in ipairs(battler.states or {}) do
+    for _, stateInfo in ipairs(visibleStates(battler)) do
         local def = session and session.loader and session.loader.getState(stateInfo.id)
         if def and def.icon and def.icon > 0 and not (def.display and def.display.hideIcon) then
             table.insert(list, def)
@@ -225,13 +230,14 @@ local function stateDisplayList(battler, session)
     return list
 end
 
--- Keeps each active state's looped animation running and drops the ones whose
--- state has expired. Polled from draw rather than hooked into addState/
--- removeState so it self-corrects after a load, a swap, or an equipment change.
+-- Keeps each visible state's looped animation running and drops the ones whose
+-- projected state has expired. This remains presentation polling, but during a
+-- battle log it now follows BattleView rather than observing the engine's
+-- already-final state before its visual beat has arrived.
 function actor_status.syncStateAnimations(battler, session)
     if not battler then return end
     local wanted = {}
-    for _, stateInfo in ipairs(battler.states or {}) do
+    for _, stateInfo in ipairs(visibleStates(battler)) do
         local def = session and session.loader and session.loader.getState(stateInfo.id)
         local entryId = def and def.display and def.display.animation
         if entryId then
@@ -251,9 +257,9 @@ function actor_status.syncStateAnimations(battler, session)
     battler.stateAnimsPlaying = playing
 end
 
--- True when an active state pins the sprite still (petrification, sleep).
+-- True when a visible state pins the sprite still (petrification, sleep).
 function actor_status.spriteIsStatic(battler, session)
-    for _, stateInfo in ipairs(battler and battler.states or {}) do
+    for _, stateInfo in ipairs(visibleStates(battler)) do
         local def = session and session.loader and session.loader.getState(stateInfo.id)
         if def and def.display and def.display.sprite and def.display.sprite.static then
             return true
@@ -287,8 +293,8 @@ function actor_status.draw(battler, x, y, isSelected, session, panelX, panelY, p
     -- text and gauges inside its right-hand interior edge (exclusive).
     local slotContentEndX = x + colW - 8
 
-    local maxHp = battler:getMaxHp(session)
-    local dead = battler:isDead()
+    local maxHp = battle_view.maxHpFor(battler, session)
+    local dead = battle_view.isDead(battler)
     local color = isSelected and { 1, 1, 0.5, 1 } or (dead and { 0.5, 0.5, 0.5, 1 } or { 1, 1, 1, 1 })
     local hpColor = dead and { 0.5, 0.5, 0.5, 1 } or { 0.9, 0.9, 0.9, 1 }
 
