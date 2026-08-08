@@ -1,7 +1,39 @@
 local traits = require("engine.traits")
 local formulaEngine = require("engine.formula")
+local barriers = require("engine.barriers")
 
 local effects = {}
+
+-- Stack barriers (#165) absorb one matching resolved instance. This lives inside
+-- damage resolution rather than above it: the reduction has to be known before
+-- the HP write, because death, kill rewards and drain recovery are all decided
+-- from the post-hit HP. A caller wrapping effects.apply could only unwind a
+-- death that a surviving target never suffered.
+--
+-- Nothing here names an element, skill or creature: `match` comes from the
+-- authored barrier, and the hit's kind from the stat it scales off.
+local function damageKind(effectData)
+    if effectData.damageKind then return effectData.damageKind end
+    if effectData.power == "atk" then return "physical_damage" end
+    if effectData.power == "mat" then return "magical_damage" end
+    return nil
+end
+
+local function absorbWithBarrier(effectData, b, finalDmg, events)
+    local kind = damageKind(effectData)
+    if not b or not kind or finalDmg <= 0 or not barriers.has(b, kind) then return finalDmg end
+    local barrier, consumeEvents, consume = barriers.consume(b, kind)
+    for _, ev in ipairs(consumeEvents or {}) do table.insert(events, ev) end
+    if not barrier then return finalDmg end
+    local reduction = barrier.reduction or 0
+    local adjusted = reduction >= 1 and 0
+        or math.max(0, math.floor(finalDmg * (1 - reduction)))
+    if consume then
+        consume.prevented = math.max(0, finalDmg - adjusted)
+        consume.blocked = adjusted == 0
+    end
+    return adjusted
+end
 
 -- Elemental affinity. Elements do double duty and the two jobs are separate
 -- channels (docs/SPEC.md, "Elements"):
@@ -359,6 +391,7 @@ function effects.apply(effectData, a, b, session, context)
 
     if effectData.type == "hp_damage" then
         local finalDmg, critical = resolveDamage(effectData, a, b, session, context, events)
+        finalDmg = absorbWithBarrier(effectData, b, finalDmg, events)
 
         b.hp = math.max(0, b.hp - finalDmg)
         if b.hp > 0 and b.hasState and b:hasState("sleep") then
@@ -408,6 +441,8 @@ function effects.apply(effectData, a, b, session, context)
         
     elseif effectData.type == "hp_drain" then
         local finalDmg, critical = resolveDamage(effectData, a, b, session, context, events)
+        -- Absorbed damage is never dealt, so it is never drained either.
+        finalDmg = absorbWithBarrier(effectData, b, finalDmg, events)
 
         b.hp = math.max(0, b.hp - finalDmg)
         a.hp = math.min(traits.getParam(a, "maxHp", session), a.hp + finalDmg)
@@ -493,6 +528,24 @@ function effects.apply(effectData, a, b, session, context)
         -- immunity is a trait.
         local roll = math.random()
         if guaranteed or roll < chance then
+            -- A hostile-status ward is consulted only once the status has
+            -- actually won its own roll. Consulting it earlier would spend a
+            -- stack on a status that was never going to land.
+            if barriers.has(b, "hostile_status")
+                    and barriers.isHostileState(session and session.loader, effectData.status) then
+                local barrier, consumeEvents, consume = barriers.consume(b, "hostile_status")
+                for _, ev in ipairs(consumeEvents or {}) do table.insert(events, ev) end
+                if barrier then
+                    -- A partial ward is a per-instance chance to refuse.
+                    local blocked = barrier.reduction >= 1 or math.random() < (barrier.reduction or 0)
+                    if consume then
+                        consume.state = effectData.status
+                        consume.prevented = blocked and 1 or 0
+                        consume.blocked = blocked
+                    end
+                    if blocked then return events end
+                end
+            end
             b:addState(effectData.status, effectData.duration)
             table.insert(events, {
                 type = "state_add",
@@ -759,6 +812,13 @@ function effects.apply(effectData, a, b, session, context)
                 target = b,
                 state = stateId
             })
+        end
+
+    elseif effectData.type == "barrier" then
+        -- The effect carries the whole authored spec, so granting a barrier
+        -- names no element, skill or creature.
+        for _, ev in ipairs(barriers.grant(b or a, effectData, session, context or {})) do
+            table.insert(events, ev)
         end
     end
 

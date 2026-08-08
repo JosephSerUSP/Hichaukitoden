@@ -2485,6 +2485,95 @@
       ],
       "interactive": false,
       "description": "Counts one completed battle against the target's active Favorite Food Savor and clears it at zero."
+    },
+    {
+      "id": "BARRIER",
+      "category": "Battle",
+      "label": "Grant Barrier",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "id",
+          "type": "text"
+        },
+        {
+          "key": "match",
+          "type": "select",
+          "options": [
+            "physical_damage",
+            "magical_damage",
+            "hostile_status"
+          ]
+        },
+        {
+          "key": "stacks",
+          "type": "number",
+          "min": 1
+        },
+        {
+          "key": "reduction",
+          "type": "number",
+          "min": 1e-06,
+          "max": 1
+        },
+        {
+          "key": "maxStacks",
+          "type": "number",
+          "optional": true,
+          "min": 1
+        },
+        {
+          "key": "duration",
+          "type": "number",
+          "optional": true,
+          "min": 1
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "optional": true,
+          "options": [
+            "add",
+            "set",
+            "refresh"
+          ]
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Grants/adds/sets/refreshes a stack barrier on a battler using the same schema as the barrier effect."
+    },
+    {
+      "id": "BARRIER_SYNC",
+      "category": "Battle",
+      "label": "Sync Barriers",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "trigger",
+          "type": "select",
+          "options": [
+            "battle_start",
+            "round_start",
+            "round_end"
+          ]
+        }
+      ],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Barrier lifecycle hook. battle_start clears encounter-local stacks and grants BARRIER_GRANT traits; round_start refreshes producers; round_end ages optional durations."
     }
   ],
   "elementRules": {
@@ -2600,7 +2689,8 @@
         "power",
         "defense",
         "penetration",
-        "formula"
+        "formula",
+        "damageKind"
       ],
       "description": "Relative damage when `power` names an attacker stat: potency * power^2 / (power + defense), where `defense` defaults to the stat `power` is paired with (atk vs def, mat vs mdf). Elemental affinity, then criticals, then DAMAGE_RATE apply after, and the result floors at 1. Authoring `formula` INSTEAD of `power` is direct damage: the authored number lands as-is, unreduced -- that is what a trap or a poison tick is.",
       "display": {
@@ -2632,7 +2722,8 @@
         "penetration",
         "formula",
         "overheal",
-        "overhealCap"
+        "overhealCap",
+        "damageKind"
       ],
       "description": "Resolves damage exactly as hp_damage does -- one shared implementation, so a drain can never drift from the curve -- and heals the user for what it dealt.",
       "display": {
@@ -2814,6 +2905,25 @@
       "display": {
         "short": "Escape Battle",
         "polarity": "higher"
+      }
+    },
+    {
+      "id": "barrier",
+      "label": "Stack Barrier",
+      "params": [
+        "id",
+        "match",
+        "stacks",
+        "reduction",
+        "maxStacks",
+        "duration",
+        "mode"
+      ],
+      "description": "Grants or updates an encounter-local stack barrier. `match` is physical_damage, magical_damage, or hostile_status; each matching resolved instance consumes one stack. `reduction` is 0..1 (1 = full negate). `mode` is add, set, or refresh; refresh raises the stack count to at least `stacks` without blind accumulation. `duration` is optional and measured in completed rounds.",
+      "display": {
+        "short": "Barrier",
+        "polarity": "higher",
+        "value": "none"
       }
     }
   ],
@@ -3282,6 +3392,27 @@
       "display": {
         "short": "MP on Kill",
         "value": "signed",
+        "polarity": "higher"
+      }
+    },
+    {
+      "code": "BARRIER_GRANT",
+      "label": "Barrier Grant",
+      "usesDataId": false,
+      "params": [
+        "id",
+        "match",
+        "stacks",
+        "reduction",
+        "maxStacks",
+        "duration",
+        "mode",
+        "at"
+      ],
+      "description": "Grants a generic stack barrier from an actor, passive, equipment piece, or state. `at` is battle_start or round_start; round_start defaults to refresh semantics so producers can restore a minimum without stockpiling.",
+      "display": {
+        "short": "Barrier",
+        "value": "none",
         "polarity": "higher"
       }
     }

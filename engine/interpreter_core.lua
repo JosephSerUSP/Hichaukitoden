@@ -21,6 +21,7 @@
 -- here and by the validator (SPEC S3).
 local traits = require("engine.traits")
 local effects = require("engine.effects")
+local barriers = require("engine.barriers")
 local formulaEngine = require("engine.formula")
 local config = require("engine.config")
 local conditions = require("engine.conditions")
@@ -800,6 +801,25 @@ handlers.SYNC_TRAIT_STATE = function(cmd, ctx)
         target:addState(cmd.state, cmd.duration)
     elseif shown and not has then
         target:removeState(cmd.state)
+    end
+end
+
+-- Barriers (#165) are a generic stack resource, not a spell. Both handlers stay
+-- neutral to element, skill and creature: everything specific is authored in the
+-- command or in the BARRIER_GRANT trait that produced it.
+handlers.BARRIER = function(cmd, ctx)
+    local target = resolveRef(cmd.target, ctx)
+    if not target then return end
+    for _, ev in ipairs(barriers.grant(target, cmd, ctx.session, ctx)) do
+        table.insert(ctx.events, ev)
+    end
+end
+
+handlers.BARRIER_SYNC = function(cmd, ctx)
+    local target = resolveRef(cmd.target, ctx)
+    if not target then return end
+    for _, ev in ipairs(barriers.sync(target, cmd.trigger, ctx.session, ctx)) do
+        table.insert(ctx.events, ev)
     end
 end
 

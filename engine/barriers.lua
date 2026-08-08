@@ -1,11 +1,13 @@
+-- Stack barriers (#165): a generic combat-state resource, neutral to element,
+-- skill name and creature. The authored vocabulary (barrier effect, BARRIER /
+-- BARRIER_SYNC commands, BARRIER_GRANT trait) lives in data/engine.json, and the
+-- battle lifecycle hooks are ordinary authored phases in data/flows.json. This
+-- module owns only the runtime semantics.
 local traits = require("engine.traits")
 local schema = require("engine.barrier_schema")
-local registry = require("engine.barrier_registry")
 local barriers = {
     validateSpec = schema.validateSpec,
     validateData = schema.validateData,
-    installRegistry = registry.installEngine,
-    installFlowHooks = registry.installFlows,
 }
 
 local function store(target)
@@ -54,6 +56,16 @@ end
 
 function barriers.get(target, id)
     return target and target.barriers and target.barriers[tostring(id)] or nil
+end
+
+-- Does this target carry a live barrier for `match`? Callers use this to decide
+-- whether to interpose on a hit at all: with no matching barrier there is
+-- nothing to absorb, and the hit must take the ordinary path untouched.
+function barriers.has(target, match)
+    for _, b in pairs((target and target.barriers) or {}) do
+        if b.match == match and (b.stacks or 0) > 0 then return true end
+    end
+    return false
 end
 
 function barriers.reset(target)
