@@ -10,9 +10,18 @@ local vitality = require("engine.vitality")
 local interpreter = {}
 for k, v in pairs(core) do interpreter[k] = v end
 
-local function hasCommand(commands, id)
-    for _, cmd in ipairs(commands or {}) do
-        if cmd.cmd == id then return true end
+-- STATE_TICKS is normally a top-level round-end phase command, but immediate
+-- command lists may contain nested IF/branch command tables too. Watch the
+-- whole authored tree so a future data-only rearrangement cannot bypass the
+-- Max-HP expiry reconciliation.
+local function hasCommand(node, id, seen)
+    if type(node) ~= "table" then return false end
+    seen = seen or {}
+    if seen[node] then return false end
+    seen[node] = true
+    if node.cmd == id then return true end
+    for _, value in pairs(node) do
+        if type(value) == "table" and hasCommand(value, id, seen) then return true end
     end
     return false
 end
