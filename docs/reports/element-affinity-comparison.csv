@@ -1,0 +1,145 @@
+group,case,user_elements,skill_element,target_elements,model,multiplier,interpretation
+affinity shape,R -> Green,Red,-,Green,Current,1.150000,mildly strong
+affinity shape,R -> Green,Red,-,Green,Signed net / separate,1.150000,mildly strong
+affinity shape,R -> Green,Red,-,Green,Signed RMS / separate,1.150000,mildly strong
+affinity shape,R -> Green,Red,-,Green,Weighted signed / joint,1.154253,mildly strong
+affinity shape,R -> Blue,Red,-,Blue,Current,0.900000,mildly weak
+affinity shape,R -> Blue,Red,-,Blue,Signed net / separate,0.900000,mildly weak
+affinity shape,R -> Blue,Red,-,Blue,Signed RMS / separate,0.900000,mildly weak
+affinity shape,R -> Blue,Red,-,Blue,Weighted signed / joint,0.889320,mildly weak
+affinity shape,R -> Red,Red,-,Red,Current,1.000000,neutral
+affinity shape,R -> Red,Red,-,Red,Signed net / separate,1.000000,neutral
+affinity shape,R -> Red,Red,-,Red,Signed RMS / separate,1.000000,neutral
+affinity shape,R -> Red,Red,-,Red,Weighted signed / joint,1.000000,neutral
+affinity shape,RR -> Green,Red+Red,-,Green,Current,1.270000,strong
+affinity shape,RR -> Green,Red+Red,-,Green,Signed net / separate,1.270000,strong
+affinity shape,RR -> Green,Red+Red,-,Green,Signed RMS / separate,1.202972,mildly strong
+affinity shape,RR -> Green,Red+Red,-,Green,Weighted signed / joint,1.294230,strong
+affinity shape,RR -> Blue,Red+Red,-,Blue,Current,0.810000,mildly weak
+affinity shape,RR -> Blue,Red+Red,-,Blue,Signed net / separate,0.810000,mildly weak
+affinity shape,RR -> Blue,Red+Red,-,Blue,Signed RMS / separate,0.861567,mildly weak
+affinity shape,RR -> Blue,Red+Red,-,Blue,Weighted signed / joint,0.790891,mildly weak
+affinity shape,RG -> Red,Red+Green,-,Red,Current,0.900000,mildly weak
+affinity shape,RG -> Red,Red+Green,-,Red,Signed net / separate,0.900000,mildly weak
+affinity shape,RG -> Red,Red+Green,-,Red,Signed RMS / separate,0.928206,mildly weak
+affinity shape,RG -> Red,Red+Green,-,Red,Weighted signed / joint,0.889320,mildly weak
+affinity shape,RG -> Green,Red+Green,-,Green,Current,1.150000,mildly strong
+affinity shape,RG -> Green,Red+Green,-,Green,Signed net / separate,1.150000,mildly strong
+affinity shape,RG -> Green,Red+Green,-,Green,Signed RMS / separate,1.109476,mildly strong
+affinity shape,RG -> Green,Red+Green,-,Green,Weighted signed / joint,1.154253,mildly strong
+affinity shape,RG -> Blue,Red+Green,-,Blue,Current,1.035000,near-neutral
+affinity shape,RG -> Blue,Red+Green,-,Blue,Signed net / separate,1.000000,neutral
+affinity shape,RG -> Blue,Red+Green,-,Blue,Signed RMS / separate,1.000000,neutral
+affinity shape,RG -> Blue,Red+Green,-,Blue,Weighted signed / joint,1.000000,neutral
+affinity shape,RB -> Red,Red+Blue,-,Red,Current,1.150000,mildly strong
+affinity shape,RB -> Red,Red+Blue,-,Red,Signed net / separate,1.150000,mildly strong
+affinity shape,RB -> Red,Red+Blue,-,Red,Signed RMS / separate,1.109476,mildly strong
+affinity shape,RB -> Red,Red+Blue,-,Red,Weighted signed / joint,1.154253,mildly strong
+affinity shape,RB -> Green,Red+Blue,-,Green,Current,1.035000,near-neutral
+affinity shape,RB -> Green,Red+Blue,-,Green,Signed net / separate,1.000000,neutral
+affinity shape,RB -> Green,Red+Blue,-,Green,Signed RMS / separate,1.000000,neutral
+affinity shape,RB -> Green,Red+Blue,-,Green,Weighted signed / joint,1.000000,neutral
+affinity shape,RB -> Blue,Red+Blue,-,Blue,Current,0.900000,mildly weak
+affinity shape,RB -> Blue,Red+Blue,-,Blue,Signed net / separate,0.900000,mildly weak
+affinity shape,RB -> Blue,Red+Blue,-,Blue,Signed RMS / separate,0.928206,mildly weak
+affinity shape,RB -> Blue,Red+Blue,-,Blue,Weighted signed / joint,0.889320,mildly weak
+affinity shape,RRG -> Red,Red+Red+Green,-,Red,Current,0.900000,mildly weak
+affinity shape,RRG -> Red,Red+Red+Green,-,Red,Signed net / separate,0.900000,mildly weak
+affinity shape,RRG -> Red,Red+Red+Green,-,Red,Signed RMS / separate,0.940983,mildly weak
+affinity shape,RRG -> Red,Red+Red+Green,-,Red,Weighted signed / joint,0.889320,mildly weak
+affinity shape,RRG -> Green,Red+Red+Green,-,Green,Current,1.270000,strong
+affinity shape,RRG -> Green,Red+Red+Green,-,Green,Signed net / separate,1.270000,strong
+affinity shape,RRG -> Green,Red+Red+Green,-,Green,Signed RMS / separate,1.170359,mildly strong
+affinity shape,RRG -> Green,Red+Red+Green,-,Green,Weighted signed / joint,1.294230,strong
+affinity shape,RRG -> Blue,Red+Red+Green,-,Blue,Current,0.931500,mildly weak
+affinity shape,RRG -> Blue,Red+Red+Green,-,Blue,Signed net / separate,0.900000,mildly weak
+affinity shape,RRG -> Blue,Red+Red+Green,-,Blue,Signed RMS / separate,0.940983,mildly weak
+affinity shape,RRG -> Blue,Red+Red+Green,-,Blue,Weighted signed / joint,0.889320,mildly weak
+affinity shape,RGB -> Red,Red+Green+Blue,-,Red,Current,1.035000,near-neutral
+affinity shape,RGB -> Red,Red+Green+Blue,-,Red,Signed net / separate,1.000000,neutral
+affinity shape,RGB -> Red,Red+Green+Blue,-,Red,Signed RMS / separate,1.000000,neutral
+affinity shape,RGB -> Red,Red+Green+Blue,-,Red,Weighted signed / joint,1.000000,neutral
+affinity shape,RGB -> Green,Red+Green+Blue,-,Green,Current,1.035000,near-neutral
+affinity shape,RGB -> Green,Red+Green+Blue,-,Green,Signed net / separate,1.000000,neutral
+affinity shape,RGB -> Green,Red+Green+Blue,-,Green,Signed RMS / separate,1.000000,neutral
+affinity shape,RGB -> Green,Red+Green+Blue,-,Green,Weighted signed / joint,1.000000,neutral
+affinity shape,RGB -> Blue,Red+Green+Blue,-,Blue,Current,1.035000,near-neutral
+affinity shape,RGB -> Blue,Red+Green+Blue,-,Blue,Signed net / separate,1.000000,neutral
+affinity shape,RGB -> Blue,Red+Green+Blue,-,Blue,Signed RMS / separate,1.000000,neutral
+affinity shape,RGB -> Blue,Red+Green+Blue,-,Blue,Weighted signed / joint,1.000000,neutral
+affinity shape,White -> Black,White,-,Black,Current,1.150000,mildly strong
+affinity shape,White -> Black,White,-,Black,Signed net / separate,1.150000,mildly strong
+affinity shape,White -> Black,White,-,Black,Signed RMS / separate,1.150000,mildly strong
+affinity shape,White -> Black,White,-,Black,Weighted signed / joint,1.154253,mildly strong
+affinity shape,Black -> White,Black,-,White,Current,1.150000,mildly strong
+affinity shape,Black -> White,Black,-,White,Signed net / separate,1.150000,mildly strong
+affinity shape,Black -> White,Black,-,White,Signed RMS / separate,1.150000,mildly strong
+affinity shape,Black -> White,Black,-,White,Weighted signed / joint,1.154253,mildly strong
+multi-element target,R -> RG,Red,-,Red+Green,Current,1.150000,mildly strong
+multi-element target,R -> RG,Red,-,Red+Green,Signed net / separate,1.150000,mildly strong
+multi-element target,R -> RG,Red,-,Red+Green,Signed RMS / separate,1.109476,mildly strong
+multi-element target,R -> RG,Red,-,Red+Green,Weighted signed / joint,1.154253,mildly strong
+multi-element target,R -> RB,Red,-,Red+Blue,Current,0.900000,mildly weak
+multi-element target,R -> RB,Red,-,Red+Blue,Signed net / separate,0.900000,mildly weak
+multi-element target,R -> RB,Red,-,Red+Blue,Signed RMS / separate,0.928206,mildly weak
+multi-element target,R -> RB,Red,-,Red+Blue,Weighted signed / joint,0.889320,mildly weak
+multi-element target,R -> RGB,Red,-,Red+Green+Blue,Current,1.035000,near-neutral
+multi-element target,R -> RGB,Red,-,Red+Green+Blue,Signed net / separate,1.000000,neutral
+multi-element target,R -> RGB,Red,-,Red+Green+Blue,Signed RMS / separate,1.000000,neutral
+multi-element target,R -> RGB,Red,-,Red+Green+Blue,Weighted signed / joint,1.000000,neutral
+multi-element target,RG -> RG,Red+Green,-,Red+Green,Current,1.035000,near-neutral
+multi-element target,RG -> RG,Red+Green,-,Red+Green,Signed net / separate,1.000000,neutral
+multi-element target,RG -> RG,Red+Green,-,Red+Green,Signed RMS / separate,1.000000,neutral
+multi-element target,RG -> RG,Red+Green,-,Red+Green,Weighted signed / joint,1.000000,neutral
+multi-element target,RG -> RB,Red+Green,-,Red+Blue,Current,0.931500,mildly weak
+multi-element target,RG -> RB,Red+Green,-,Red+Blue,Signed net / separate,0.900000,mildly weak
+multi-element target,RG -> RB,Red+Green,-,Red+Blue,Signed RMS / separate,0.948683,mildly weak
+multi-element target,RG -> RB,Red+Green,-,Red+Blue,Weighted signed / joint,0.889320,mildly weak
+multi-element target,RG -> RGB,Red+Green,-,Red+Green+Blue,Current,1.028700,near-neutral
+multi-element target,RG -> RGB,Red+Green,-,Red+Green+Blue,Signed net / separate,1.000000,neutral
+multi-element target,RG -> RGB,Red+Green,-,Red+Green+Blue,Signed RMS / separate,1.000000,neutral
+multi-element target,RG -> RGB,Red+Green,-,Red+Green+Blue,Weighted signed / joint,1.000000,neutral
+multi-element target,RGB -> RG,Red+Green+Blue,-,Red+Green,Current,1.028700,near-neutral
+multi-element target,RGB -> RG,Red+Green+Blue,-,Red+Green,Signed net / separate,1.000000,neutral
+multi-element target,RGB -> RG,Red+Green+Blue,-,Red+Green,Signed RMS / separate,1.000000,neutral
+multi-element target,RGB -> RG,Red+Green+Blue,-,Red+Green,Weighted signed / joint,1.000000,neutral
+multi-element target,RGB -> RB,Red+Green+Blue,-,Red+Blue,Current,1.028700,near-neutral
+multi-element target,RGB -> RB,Red+Green+Blue,-,Red+Blue,Signed net / separate,1.000000,neutral
+multi-element target,RGB -> RB,Red+Green+Blue,-,Red+Blue,Signed RMS / separate,1.000000,neutral
+multi-element target,RGB -> RB,Red+Green+Blue,-,Red+Blue,Weighted signed / joint,1.000000,neutral
+multi-element target,RGB -> RGB,Red+Green+Blue,-,Red+Green+Blue,Current,0.995814,near-neutral
+multi-element target,RGB -> RGB,Red+Green+Blue,-,Red+Green+Blue,Signed net / separate,1.000000,neutral
+multi-element target,RGB -> RGB,Red+Green+Blue,-,Red+Green+Blue,Signed RMS / separate,1.000000,neutral
+multi-element target,RGB -> RGB,Red+Green+Blue,-,Red+Green+Blue,Weighted signed / joint,1.000000,neutral
+skill/user interaction,R + Red skill -> G (agree advantage),Red,Red,Green,Current,1.725000,strong
+skill/user interaction,R + Red skill -> G (agree advantage),Red,Red,Green,Signed net / separate,1.725000,strong
+skill/user interaction,R + Red skill -> G (agree advantage),Red,Red,Green,Signed RMS / separate,1.725000,strong
+skill/user interaction,R + Red skill -> G (agree advantage),Red,Red,Green,Weighted signed / joint,1.607977,strong
+skill/user interaction,"R + Green skill -> B (skill wins, innate opposes)",Red,Green,Blue,Current,1.350000,strong
+skill/user interaction,"R + Green skill -> B (skill wins, innate opposes)",Red,Green,Blue,Signed net / separate,1.350000,strong
+skill/user interaction,"R + Green skill -> B (skill wins, innate opposes)",Red,Green,Blue,Signed RMS / separate,1.350000,strong
+skill/user interaction,"R + Green skill -> B (skill wins, innate opposes)",Red,Green,Blue,Weighted signed / joint,1.381010,strong
+skill/user interaction,R + Red skill -> B (agree disadvantage),Red,Red,Blue,Current,0.585000,weak
+skill/user interaction,R + Red skill -> B (agree disadvantage),Red,Red,Blue,Signed net / separate,0.585000,weak
+skill/user interaction,R + Red skill -> B (agree disadvantage),Red,Red,Blue,Signed RMS / separate,0.585000,weak
+skill/user interaction,R + Red skill -> B (agree disadvantage),Red,Red,Blue,Weighted signed / joint,0.578058,weak
+skill/user interaction,RG + Red skill -> G (matching skill + one favorable innate),Red+Green,Red,Green,Current,1.725000,strong
+skill/user interaction,RG + Red skill -> G (matching skill + one favorable innate),Red+Green,Red,Green,Signed net / separate,1.725000,strong
+skill/user interaction,RG + Red skill -> G (matching skill + one favorable innate),Red+Green,Red,Green,Signed RMS / separate,1.664214,strong
+skill/user interaction,RG + Red skill -> G (matching skill + one favorable innate),Red+Green,Red,Green,Weighted signed / joint,1.607977,strong
+skill/user interaction,"RB + Green skill -> B (skill wins, innate opposes)",Red+Blue,Green,Blue,Current,1.350000,strong
+skill/user interaction,"RB + Green skill -> B (skill wins, innate opposes)",Red+Blue,Green,Blue,Signed net / separate,1.350000,strong
+skill/user interaction,"RB + Green skill -> B (skill wins, innate opposes)",Red+Blue,Green,Blue,Signed RMS / separate,1.392310,strong
+skill/user interaction,"RB + Green skill -> B (skill wins, innate opposes)",Red+Blue,Green,Blue,Weighted signed / joint,1.381010,strong
+skill/user interaction,"RGB + Red skill -> G (broad caster, favorable skill)",Red+Green+Blue,Red,Green,Current,1.552500,strong
+skill/user interaction,"RGB + Red skill -> G (broad caster, favorable skill)",Red+Green+Blue,Red,Green,Signed net / separate,1.500000,strong
+skill/user interaction,"RGB + Red skill -> G (broad caster, favorable skill)",Red+Green+Blue,Red,Green,Signed RMS / separate,1.500000,strong
+skill/user interaction,"RGB + Red skill -> G (broad caster, favorable skill)",Red+Green+Blue,Red,Green,Weighted signed / joint,1.500000,strong
+skill/user interaction,"RGB + Blue skill -> G (broad caster, unfavorable skill)",Red+Green+Blue,Blue,Green,Current,0.672750,weak
+skill/user interaction,"RGB + Blue skill -> G (broad caster, unfavorable skill)",Red+Green+Blue,Blue,Green,Signed net / separate,0.650000,weak
+skill/user interaction,"RGB + Blue skill -> G (broad caster, unfavorable skill)",Red+Green+Blue,Blue,Green,Signed RMS / separate,0.650000,weak
+skill/user interaction,"RGB + Blue skill -> G (broad caster, unfavorable skill)",Red+Green+Blue,Blue,Green,Weighted signed / joint,0.650000,weak
+skill/user interaction,White + White skill -> Black,White,White,Black,Current,1.725000,strong
+skill/user interaction,White + White skill -> Black,White,White,Black,Signed net / separate,1.725000,strong
+skill/user interaction,White + White skill -> Black,White,White,Black,Signed RMS / separate,1.725000,strong
+skill/user interaction,White + White skill -> Black,White,White,Black,Weighted signed / joint,1.607977,strong

@@ -940,6 +940,27 @@ drift from the curve:
 relative damage -> potency -> element -> critical x1.5 -> DAMAGE_RATE -> floor 1
 ```
 
+**Elemental affinity is signed before it is multiplied (08.08.2026).**
+`effects.elementMultiplier` in `engine/effects_core.lua` is the single runtime
+authority. Skill element and acting-creature identity remain two independent
+channels. Inside either channel every authored source/target relationship from
+`data/elements.json` contributes `+1` when strong, `-1` when weak, and `0` when
+neutral. The channel sums those relations first, so favorable and unfavorable
+pairings cancel exactly before any multiplier is produced. A positive net score
+uses that channel's diminishing strong curve from `data/engine.json::elementRules`;
+a negative score uses its multiplicative weak curve and `weakFloor`; zero is
+exactly `1.0`. The resolved skill and innate multipliers then multiply together.
+
+This makes repeated colors **depth** and distinct colors **breadth** without a
+named-combination rule: `Red, Green` versus Blue is innately neutral, while
+`Red, Red, Green` versus Blue retains one net unfavorable relation. RGB receives
+no special treatment; its clean cancellation against the RGB cycle follows from
+the same signed count. Explicit target `ELEMENT_RATE` traits are applied only
+after these two affinity channels as their own modifier layer. Relationship
+shape stays authored in `elements.json`, all numeric strengths/decays/floors stay
+in `engine.json`, and broad damage/skill retuning is deliberately a later balance
+pass rather than part of this aggregation rule.
+
 **Stat pairing.** `power` names the attacker's stat and `defense` defaults to
 the stat it is paired with: `atk` meets `def`, `mat` meets `mdf`. An
 exceptional skill may author `defense` to cross them. This matters more than it
@@ -1044,8 +1065,8 @@ departure clears the completed route and begins a fresh expedition.
 
 Every generated floor has two physical landmarks. Common event 1 is the lower
 stair and loads the next map with `LOAD_MAP arrival: entrance`. Common event 40
-is the upper stair: Floor 1 returns to the safe map, while deeper floors load
-the previous map with `arrival: exit`. Arrival is always on a passable adjacent
+is the upper stair: Floor 1 returns to the safe map, while deeper floors load the
+previous map with `arrival: exit`. Arrival is always on a passable adjacent
 tile facing the relevant stair, never on top of its event.
 
 `LOAD_MAP.arrival` is registry-authored (`entrance`, `exit`, `resume`).

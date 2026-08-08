@@ -341,38 +341,93 @@ The primary basic attacks should teach their colors immediately:
 Thunder is intentionally not represented by Wind Blade. Thunder owns Green's
 volatile burst space instead.
 
-## 11. Multi-element affinity is unresolved
+## 11. Multi-element affinity: signed cancellation, separate channels
 
-The current affinity implementation cross-multiplies the acting creature's own
-elements against the target's elements and separately applies the skill's
-element against the target. This can produce mathematically tidy but
-player-hostile near-neutral values: a creature with both favorable and
-unfavorable relationships may land at something like `1.035x` rather than a
-clean, readable neutral result.
+**Owner decision, 08.08.2026.** The general affinity rule is signed-net
+aggregation with the skill and creature layers kept separate.
 
-Several conclusions are already decided:
+Elements still do two distinct jobs:
 
-- creatures may have **two or three elements**, including RGB creatures;
-- repeated elements should be allowed to matter;
-- RGB should **not** receive a bespoke "complete tricolor" rule merely to fix
-  the current math;
-- replacing innate-element interaction wholesale with a simple
-  skill-resonance bonus is also **not adopted**;
-- one general rule should accommodate mono-, dual-, repeated- and
-  three-element creatures;
-- outcomes should be readable enough that the player can anticipate them from
-  the displayed element icons;
-- awkward values that are "almost neutral but not neutral" are a design smell.
+- the **creature / user layer** asks how the acting creature's own element list
+  relates to the target's element list — **who you are**;
+- the **skill layer** asks how the skill or item's element relates to the
+  target's element list — **what you wield**.
 
-A promising direction is to resolve elemental relationships into a **signed
-score first** — favorable pairings contribute positive values, unfavorable
-pairings negative values — and only then convert the aggregate score into a
-single multiplier. This is elegant because contrary relationships can cancel
-before multiplication creates numerical residue.
+Within each layer, every relationship is resolved before multiplier math:
 
-The exact aggregation rule, weighting of repeated elements, skill-vs-user
-layers and final multiplier curve remain open design work. Do not implement a
-new affinity formula from this document alone.
+```text
+strong  = +1
+neutral =  0
+weak    = -1
+
+score = sum(all relationships in this layer)
+```
+
+For the creature layer this means the full attacker-element × target-element
+cross-product. For the skill layer it means the skill element against every
+target element. Positive and negative relationships **cancel first**.
+
+Only the remaining signed depth is converted to a multiplier using the existing
+authored `elementRules` curve:
+
+- positive depth uses the existing diminishing strong-bonus curve;
+- negative depth uses the existing multiplicative weak curve and floor;
+- zero is exactly `1.0`.
+
+The two resulting layer multipliers then combine. `ELEMENT_RATE` remains an
+explicit, separate target modifier after ordinary affinity; it is not folded
+into the signed score.
+
+### 11.1 Player-facing consequences
+
+The intended reading is:
+
+> **Opposing relationships cancel. Repeated relationships deepen what remains.**
+
+Examples under the current tuning:
+
+- `Red -> Green` remains `1.15x` from innate identity;
+- `Red, Red -> Green` remains `1.27x`, so repeated alignment still expresses
+  intensity;
+- `Red, Green -> Blue` is exactly `1.0x`: Red is weak, Green is strong, and the
+  two visible relations cancel;
+- `Red, Red, Green -> Blue` is `0.90x`: two weak Red relations and one strong
+  Green relation leave one weak relation;
+- `RGB -> Red`, `RGB -> Green`, and `RGB -> Blue` are exactly neutral in the
+  innate layer without any special RGB rule;
+- an innate-neutral RGB creature using a favorable Red skill against Green gets
+  exactly the skill's `1.5x` rather than inheriting arithmetic residue from its
+  mixed identity.
+
+This is deliberately **not** normalized by element count. Breadth and depth are
+allowed to mean different things: mixed breadth can cancel, while repeated
+alignment carries stronger intensity. If later balance shows cross-product
+depth itself is too strong, that is a tuning/design follow-up rather than a
+reason to obscure the cancellation rule.
+
+### 11.2 What was rejected
+
+The pre-#168 implementation added strong bonuses and multiplied weak penalties
+inside the same layer before cancellation was possible. A strong and weak
+innate relation therefore produced `1.15 * 0.90 = 1.035x`: mathematically
+continuous, but not a readable elemental verdict.
+
+The comparison in `docs/reports/element-affinity-comparison.md` also evaluated:
+
+- RMS-normalizing signed scores by pair count; rejected because it weakens the
+  already-useful meaning of repeated elemental depth and adds a harder-to-read
+  normalization rule;
+- merging skill and innate identity into one weighted signed score; rejected
+  because it blurs the established distinction between what the creature **is**
+  and what it currently **wields**.
+
+No named combination receives a special case. In particular, RGB neutrality is
+an emergent consequence of the general relationship graph, not a completion
+bonus or tricolor exception.
+
+Numeric strong/weak values are intentionally **not** rebalanced as part of this
+decision. Aggregation shape is settled first; potency and affinity magnitudes can
+be tuned later against actual combat balance.
 
 ## 12. Authoring rules
 
