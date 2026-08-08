@@ -55,3 +55,6 @@ docs/reports/second-rite-model-census/failed-models.md
 docs/reports/second-rite-model-census/contact-sheet-*.png
 docs/reports/second-rite-model-census/failed-models-contact-sheet.png
 docs/reports/second-rite-model-census/material-swatches.png
+
+# Local Codex review worktrees, never part of the repository.
+.codex-work-*/
