@@ -84,4 +84,3 @@ are what's left:
   and never authoritative.
 - Design docs under `docs/design/` and `docs/game design/` describe
   intent. Where they state implementation status, trust THIS file.
-

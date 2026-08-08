@@ -12,7 +12,7 @@ local PATH = "data/input.json"
 
 local DEFAULTS = {
     A = "return", B = "escape", X = "x", Y = "z",
-    L = "q", R = "e", START = "space", SELECT = "tab",
+    L = "q", R = "e", START = "space", SELECT = "lshift",
     UP = "up", DOWN = "down", LEFT = "left", RIGHT = "right",
 }
 
@@ -33,8 +33,8 @@ input_map.BUTTON_TO_HOOK = {
     -- SELECT is bound to "tab" by default, and the pre-input_map hardcoded
     -- dispatch treated q/e/tab identically (all three fired on_page) --
     -- mapped here too so unrebound players see byte-for-byte the same
-    -- behavior as before this refactor. SELECT dispatches inspection while
-    -- target selection is active; X/Y remain hookless.
+    -- behavior as before this refactor (X/Y are the only truly hookless
+    -- buttons, per the no-invented-hooks rule; on_page already existed).
     SELECT = "on_inspect",
     UP = "on_up",
     DOWN = "on_down",
