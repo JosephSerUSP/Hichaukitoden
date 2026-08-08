@@ -7,6 +7,7 @@ local compareIds = require("engine.inventory").compareIds
 local usability = require("engine.usability")
 local skill_cost = require("engine.skill_cost")
 local formation = require("engine.formation")
+local resolved_event = require("engine.resolved_event")
 
 local battle = {}
 
@@ -114,18 +115,21 @@ function Battle:tryDeployWave(roundEvents)
     local deployed = session:fillEmptySlotsFromReserve()
     for _, d in ipairs(deployed) do
         d.outgoing = outgoingBySlot[d.slot]
+        -- The engine has already committed this identity transition. These
+        -- fields describe the resolved fact so presentation can delay only its
+        -- visibility, not the session write itself (#179).
+        d.partyBefore = d.outgoing
+        d.partyAfter = d.battler
+        d.reserveBefore = d.battler
+        d.reserveAfter = nil
     end
     self.allies = session.party
 
-    -- `deployed` rides on the event ({battler, slot, reserveKey, outgoing}
-    -- per entry) so the presentation layer can play the swap as a proper
-    -- per-slot flip (outgoing shrinks, incoming grows), staggered, timed
-    -- to when the log actually reveals this event rather than the instant
-    -- resolveRound ran — see engine/scenes/battle.lua's resolveRound
-    -- (party/reserve backup+restore) and processEvent's "wave" handler.
     local names = {}
     for _, d in ipairs(deployed) do table.insert(names, d.battler.name or "?") end
-    table.insert(roundEvents, { type = "wave", pending = deployed })
+    local waveEvent = { type = "wave", pending = deployed }
+    resolved_event.attachRoster(waveEvent, session)
+    table.insert(roundEvents, waveEvent)
     table.insert(roundEvents, {
         type = "text",
         text = session.loader.formatTerm("battle.reserve_wave",
@@ -487,7 +491,7 @@ function Battle:executeTurn(turn, roundEvents)
             local paid = skill_cost.spend(turn.skill, turn.actor, self.session, isEnemy)
             skill_cost.startCooldown(turn.skill, turn.actor)
             if paid == "overcast" then
-                table.insert(roundEvents, {
+                local overcastEvent = {
                     type = "overcast",
                     actor = turn.actor,
                     skill = turn.skill,
@@ -495,7 +499,13 @@ function Battle:executeTurn(turn, roundEvents)
                     text = loader.formatTerm("battle.overcast",
                         "- {0} overcasts {1}! ({2} MP)", turn.actor.name,
                         turn.skill.name, turn.skill.overcast and turn.skill.overcast.mp or 0),
-                })
+                }
+                -- skill_cost.spend already committed MP. Publish the resulting
+                -- value so live presentation can reveal it without replaying
+                -- the cost (the old snapshot wrapper accidentally made
+                -- Overcast free in live battles).
+                resolved_event.attach(overcastEvent, self.session)
+                table.insert(roundEvents, overcastEvent)
             end
 
             table.insert(roundEvents, {
@@ -700,8 +710,9 @@ function Battle:applyItem(action, actor, target)
         table.insert(events, ev)
     end
 
-    -- Consume one. Persists: session.inventory is outside the per-round
-    -- hp/state/mp backup/restore the scene host does around resolveRound.
+    -- Consumption is authoritative alongside every other round mutation. The
+    -- scene no longer snapshots selected fields and therefore cannot leave
+    -- inventory on a different clock from HP/MP/state.
     session:addItem(item.id, -1)
     return events
 end
