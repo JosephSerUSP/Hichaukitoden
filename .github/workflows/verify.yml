@@ -216,8 +216,23 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
+
+          Write-Host "--- diagnostics ---"
+          Write-Host "cwd: $(Get-Location)"
+          Write-Host "docs/ENGINE-STATE.md present: $(Test-Path docs/ENGINE-STATE.md)"
+          powershell -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+          Write-Host "--- engine-state output shape ---"
+          $raw = & $env:LOVEC . engine-state 2>&1
+          Write-Host "lines: $($raw.Count) | has BEGIN: $([bool]($raw -match 'ENGINE STATE BEGIN')) | has END: $([bool]($raw -match 'ENGINE STATE END'))"
+          Write-Host "--- windows powershell 5.1 ---"
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check-state.ps1
-          if ($LASTEXITCODE -ne 0) { throw "G4 mismatch (exit $LASTEXITCODE)" }
+          Write-Host "5.1 exit: $LASTEXITCODE"
+          $five = $LASTEXITCODE
+          Write-Host "--- pwsh 7 ---"
+          pwsh -NoProfile -File tools/golden/check-state.ps1
+          Write-Host "pwsh exit: $LASTEXITCODE"
+
+          if ($five -ne 0 -and $LASTEXITCODE -ne 0) { throw "G4 mismatch (5.1=$five, pwsh=$LASTEXITCODE)" }
 
       - name: 'Phase B probe: reachability (informational, never a gate)'
         continue-on-error: true
