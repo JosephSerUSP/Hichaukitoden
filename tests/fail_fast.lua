@@ -39,6 +39,17 @@ end
 --- Called by main.lua once every suite has run. Exits the process itself, so
 --- no caller can forget to and the exit code always matches what was printed.
 function M.finish()
+    -- #179's architecture test is intentionally attached to the canonical
+    -- unittest finish hook rather than the long main.lua suite list: it tests
+    -- the cross-layer invariant itself and must run even if an older checkout's
+    -- explicit suite enumeration has not been regenerated.
+    local authorityOk, authorityErr = pcall(function()
+        require("tests.test_battle_presentation_authority").run()
+    end)
+    if not authorityOk then
+        M.crashed("tests.test_battle_presentation_authority", authorityErr)
+    end
+
     -- Keep repository hygiene in the canonical unittest entry point so local
     -- verification and hosted CI enforce the same invariant.
     local hygieneOk, hygieneErr = pcall(function()
