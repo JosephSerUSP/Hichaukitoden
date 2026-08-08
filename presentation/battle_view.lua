@@ -70,6 +70,18 @@ local function captureBattler(b)
     entry.states = copy(b.states or {})
 end
 
+-- Move an existing view entry's semantic targets to current authoritative
+-- values while preserving its in-flight displayedHp interpolation. This is
+-- used only at boundaries that were already immediate in the old scene (for
+-- example victory rewards/ward saves), never to fake an event-timed beat.
+local function syncBattler(b, session)
+    if not b then return end
+    local entry = ensureBattler(b)
+    entry.hp = b.hp or 0
+    entry.maxHp = b.getMaxHp and b:getMaxHp(session or sourceSession) or entry.maxHp
+    entry.states = copy(b.states or {})
+end
+
 function battle_view.clear()
     sourceSession = nil
     active = false
@@ -121,6 +133,28 @@ function battle_view.apply(ev, channels)
         if channels.states and r.states ~= nil then entry.states = copy(r.states) end
     end
     if channels.mp and r.mp ~= nil then mp = r.mp end
+end
+
+-- Some post-round engine phases have always become visible immediately once
+-- the battle log is finished (victory rewards, ward saves, state cleanup).
+-- While reap animations still need the old roster on screen, converge every
+-- non-roster field to authoritative truth without exposing the already-removed
+-- party slots early.
+function battle_view.syncNonRoster(battle, session)
+    if not active then return end
+    session = session or sourceSession
+    if battle and battle.getAllActiveBattlers then
+        for _, b in ipairs(battle:getAllActiveBattlers()) do syncBattler(b, session) end
+    end
+    for i = 1, config.MAX_PARTY_SIZE do
+        syncBattler(party[i], session)
+        syncBattler(session and session.party and session.party[i], session)
+    end
+    for i = 1, config.MAX_RESERVE_SIZE do
+        syncBattler(reserve[i], session)
+        syncBattler(session and session.reserve and session.reserve[i], session)
+    end
+    if session then mp = session.mp end
 end
 
 -- Wave events carry resolved before/after identities per slot. Applying one
