@@ -402,6 +402,20 @@ do
     check(#segs == 1 and segs[1].text == "12HP" and segs[1].color == "hp",
         "an HP cost shows in the HP colour")
 
+    -- Battle timers are part of what the row needs to communicate, not hidden
+    -- state. This is Darting Peck's visible contract: after use, the menu must
+    -- show the remaining unavailable turns before the player tries to select it.
+    local timed = { id = "timed", cooldown = 2 }
+    skill_cost.startCooldown(timed, caster)
+    segs = skill_cost.displayCost(timed, caster, sess, false)
+    check(#segs == 1 and segs[1].text == "2T",
+        "a cooling-down skill exposes its remaining turns in the cost column")
+    skill_cost.tick(caster) -- arming round-end: still 2
+    skill_cost.tick(caster) -- one subsequent round elapsed: now 1
+    segs = skill_cost.displayCost(timed, caster, sess, false)
+    check(#segs == 1 and segs[1].text == "1T",
+        "the visible cooldown marker counts down with the authoritative timer")
+
     check(#skill_cost.displayCost({ id = "free" }, caster, sess, false) == 0,
         "a free skill shows no cost at all")
 end
