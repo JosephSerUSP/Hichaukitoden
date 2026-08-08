@@ -1,10 +1,13 @@
 import json
+import sys
 from pathlib import Path
 try:
     from PIL import Image
 except ImportError:
     Image=None
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tools" / "data"))
+import authored_storage  # noqa: E402
 
 
 def diagnostic(kind, path, message):
@@ -69,7 +72,10 @@ def snapshot(root=ROOT):
         return json.loads(path.read_text(encoding="utf-8"))
 
     items = walk_models(read("data/items.json"), "data/items.json")
-    worlds = walk_models(read("data/tilesets.json"), "data/tilesets.json")
+    tilesets, _ = authored_storage.load_registry(root / "data", "tilesets")
+    # Keep the existing logical source label stable so a physical storage
+    # migration does not invalidate the asset-regression baseline by itself.
+    worlds = walk_models(tilesets, "data/tilesets.json")
     refs = sorted(items + worlds, key=lambda x: (x["source"], x["jsonPath"], x["model"]))
     assets = []
     for ap in sorted((root / "assets/geometry").rglob("asset.json")):

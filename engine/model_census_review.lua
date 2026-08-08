@@ -14,6 +14,7 @@
 local model_census_review = {}
 
 local json = require("data.json")
+local authored_storage = require("data.authored_storage")
 local session = require("engine.session")
 local viewport_3d = require("presentation.viewport_3d")
 local obj_model = require("presentation.obj_model")
@@ -237,7 +238,9 @@ function model_census_review.verifyAndHashDependencies(manifestPath)
     requireHash(manifestPath)
     requireHash("assets/authoring/second_rite_census/asset-set.json")
     requireHash("assets/tilesets/dungeon_001.png")
-    requireHash("data/tilesets.json")
+    for _, tilesetPath in ipairs(authored_storage.authoritativeFiles("data", "tilesets", "registry")) do
+        requireHash(tilesetPath)
+    end
     requireHash("data/maps.json")
     requireHash("data/engine.json")
     requireHash("presentation/viewport_3d.lua")

@@ -1,0 +1,128 @@
+{
+  "id": "dungeon_default",
+  "name": "Standard Dungeon",
+  "texture": "assets/tilesets/dungeon_001.png",
+  "heightMap": "assets/tilesets/dungeon_001_heightmap.png",
+  "heightMapScale": {
+    "wall": 0.12,
+    "floor": 0.08,
+    "ceiling": 0.08
+  },
+  "heightMapMeshColumns": 24,
+  "heightMapMeshRows": 24,
+  "heightMapTriangleBudget": 384,
+  "tileWidth": 64,
+  "tileHeight": 64,
+  "base": {
+    "walls": [
+      {
+        "id": "dungeon_wall_1",
+        "role": "base_wall",
+        "middle": [
+          1,
+          0
+        ],
+        "weight": 100
+      }
+    ],
+    "floors": [
+      {
+        "id": "dungeon_floor_1",
+        "role": "base_floor",
+        "atlas": [
+          0,
+          1
+        ],
+        "weight": 100,
+        "heightOffset": 0
+      }
+    ],
+    "ceilings": [
+      {
+        "id": "dungeon_ceiling",
+        "role": "base_ceiling",
+        "atlas": [
+          0,
+          0
+        ],
+        "weight": 100
+      }
+    ]
+  },
+  "doors": [
+    {
+      "id": "dungeon_door",
+      "role": "door",
+      "atlas": [
+        1,
+        1
+      ]
+    }
+  ],
+  "fixturePrefabs": [
+    {
+      "id": "wall_beside_floor",
+      "name": "Wall beside walkable floor",
+      "where": {
+        "adjacent": "floor"
+      },
+      "probability": {
+        "min": 0.05,
+        "max": 0.5,
+        "default": 0.12
+      }
+    }
+  ],
+  "features": [
+    {
+      "id": "wall_torch",
+      "role": "wall_feature",
+      "atlas": [
+        1,
+        0
+      ],
+      "model": "assets/models/dungeon/dungeon_torch_bracket.obj",
+      "injectProbability": 0.33,
+      "prefab": "wall_beside_floor",
+      "emitsLight": {
+        "color": [
+          1,
+          0.58,
+          0.22
+        ],
+        "radius": 4,
+        "falloff": 4
+      }
+    },
+    {
+      "id": "dungeon_column",
+      "role": "floor_feature",
+      "model": "assets/models/dungeon/dungeon_column.obj",
+      "injectProbability": 0.15,
+      "blocksMovement": true
+    },
+    {
+      "id": "dungeon_chest",
+      "role": "floor_feature",
+      "model": "assets/models/dungeon/dungeon_chest.obj",
+      "injectProbability": 0.1,
+      "blocksMovement": true
+    },
+    {
+      "id": "ruins_crystal",
+      "role": "floor_feature",
+      "model": "assets/models/ruins/ruins_crystal_cluster.obj",
+      "injectProbability": 0.08,
+      "emitsLight": {
+        "color": [
+          0.2,
+          0.7,
+          0.95
+        ],
+        "radius": 3,
+        "falloff": 3
+      },
+      "blocksMovement": true
+    }
+  ]
+}

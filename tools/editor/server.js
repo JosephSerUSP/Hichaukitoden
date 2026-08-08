@@ -1,6 +1,7 @@
  const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const authoredStorage = require('./authored-storage');
 const { exec } = require('child_process');
 
 // Campaign generator bridge state (one run at a time; keys in memory only)
@@ -231,47 +232,64 @@ const server = http.createServer((req, res) => {
             res.end(JSON.stringify({ error: 'Invalid directory' }));
         }
     } else if (req.method === 'GET' && req.url === '/api/tilesets') {
-        const tilesetsJsonPath = path.join(PROJECT_DIR, 'data', 'tilesets.json');
-        let tilesetsMap = {};
         try {
-            tilesetsMap = JSON.parse(fs.readFileSync(tilesetsJsonPath, 'utf8'));
-        } catch (e) {}
+            const root = dataDir();
+            const loaded = authoredStorage.loadRegistry(root, 'tilesets');
+            const version = authoredStorage.versionToken(root, 'tilesets');
+            const tilesetsDir = path.join(PROJECT_DIR, 'assets', 'tilesets');
+            let pngFiles = [];
+            try {
+                pngFiles = fs.readdirSync(tilesetsDir).filter(f => /\.png$/i.test(f));
+            } catch (e) {}
 
-        const tilesetsDir = path.join(PROJECT_DIR, 'assets', 'tilesets');
-        let pngFiles = [];
-        try {
-            pngFiles = fs.readdirSync(tilesetsDir).filter(f => /\.png$/i.test(f));
-        } catch (e) {}
+            // _storageVersion is editor transport metadata, not authored data.
+            // Tileset Studio deep-copies this record and naturally posts the
+            // token back on save; successful saves reload the list and receive
+            // a fresh compound token.
+            const tilesets = Object.keys(loaded.records).sort().map(id =>
+                Object.assign({}, loaded.records[id], { _storageVersion: version })
+            );
 
-        const tilesets = Object.keys(tilesetsMap).map(id => {
-            const def = tilesetsMap[id];
-            return Object.assign({ id, name: def.name || id }, def);
-        });
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ tilesets, textures: pngFiles }));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ tilesets, textures: pngFiles, storage: loaded.storage }));
+        } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: e.message }));
+        }
     } else if (req.method === 'POST' && req.url === '/api/tilesets/save') {
         let body = '';
         req.on('data', c => { body += c; });
         req.on('end', () => {
             try {
                 const p = JSON.parse(body);
-                const id = p.id || p.name;
+                const expectedVersion = typeof p._storageVersion === 'string' ? p._storageVersion : null;
+                delete p._storageVersion;
+                const id = p.id;
                 if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
                     throw new Error('Invalid tileset ID.');
                 }
-                const tilesetsJsonPath = path.join(PROJECT_DIR, 'data', 'tilesets.json');
-                let tilesetsMap = {};
-                try {
-                    tilesetsMap = JSON.parse(fs.readFileSync(tilesetsJsonPath, 'utf8'));
-                } catch (e) {}
 
-                tilesetsMap[id] = p;
-                fs.writeFileSync(tilesetsJsonPath, JSON.stringify(tilesetsMap, null, 4) + '\n', 'utf8');
-
+                const result = authoredStorage.writeRegistryRecord(
+                    dataDir(), 'tilesets', p, expectedVersion
+                );
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, id }));
+                res.end(JSON.stringify({
+                    success: true,
+                    id,
+                    version: result.version,
+                    storage: result.storage
+                }));
             } catch (e) {
+                if (e && e.code === 'STALE_AUTHORED_DATA') {
+                    res.writeHead(409, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: false,
+                        stale: true,
+                        version: e.currentVersion,
+                        message: 'Save blocked: tilesets changed on disk after this record was loaded. Reload Tileset Studio before saving.'
+                    }));
+                    return;
+                }
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, message: e.message }));
             }
@@ -286,13 +304,9 @@ const server = http.createServer((req, res) => {
                 if (!name || !/^[a-zA-Z0-9_-]+$/.test(name)) {
                     throw new Error('Invalid tileset name.');
                 }
-                const tilesetsJsonPath = path.join(PROJECT_DIR, 'data', 'tilesets.json');
-                let tilesetsMap = {};
-                try {
-                    tilesetsMap = JSON.parse(fs.readFileSync(tilesetsJsonPath, 'utf8'));
-                } catch (e) {}
 
-                if (tilesetsMap[name]) {
+                const loaded = authoredStorage.loadRegistry(dataDir(), 'tilesets');
+                if (loaded.records[name]) {
                     throw new Error(`Tileset '${name}' already exists.`);
                 }
 
@@ -305,7 +319,7 @@ const server = http.createServer((req, res) => {
                     fs.copyFileSync(tmplPng, targetPng);
                 }
 
-                tilesetsMap[name] = {
+                const record = {
                     id: name,
                     name: p.displayName || name,
                     texture: `assets/tilesets/${name}.png`,
@@ -313,15 +327,29 @@ const server = http.createServer((req, res) => {
                     tileHeight: 64,
                     base: { walls: [], floors: [], ceilings: [] },
                     doors: [],
-                    features: [],
-                    tiles: {}
+                    features: []
                 };
-
-                fs.writeFileSync(tilesetsJsonPath, JSON.stringify(tilesetsMap, null, 4) + '\n', 'utf8');
+                const result = authoredStorage.writeRegistryRecord(dataDir(), 'tilesets', record, null);
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, name, id: name }));
+                res.end(JSON.stringify({
+                    success: true,
+                    name,
+                    id: name,
+                    version: result.version,
+                    storage: result.storage
+                }));
             } catch (e) {
+                if (e && e.code === 'STALE_AUTHORED_DATA') {
+                    res.writeHead(409, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: false,
+                        stale: true,
+                        version: e.currentVersion,
+                        message: 'Create blocked: tilesets changed on disk while the new record was being created. Reload Tileset Studio and try again.'
+                    }));
+                    return;
+                }
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, message: e.message }));
             }

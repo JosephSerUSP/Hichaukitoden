@@ -23,6 +23,7 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 from PIL import Image, ImageColor
 
@@ -34,6 +35,8 @@ if hasattr(sys.stdout, "reconfigure"):
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import (classes, postprocess, provider, ratings, raw_quality,  # noqa: E402
                  report, staging)
+sys.path.insert(0, os.path.join(classes.ROOT, "tools", "data"))
+import authored_storage  # noqa: E402
 
 
 def _config():
@@ -559,12 +562,19 @@ def _height_map_manifests():
 # distinguish the source engine height map from their crack-only ControlNet map.
 CONTEXT_PREVIEW_BUILD = 3
 
-TILESET_DATA = "data/tilesets.json"
 SURFACE_KEY = {"wall": "walls", "floor": "floors", "ceiling": "ceilings"}
 
 
+def _tilesets_registry():
+    """Load the authored tileset registry without knowing its physical shape."""
+    tilesets, _storage = authored_storage.load_registry(
+        Path(classes.ROOT) / "data", "tilesets"
+    )
+    return tilesets
+
+
 def _surface_cells(tileset_id, surface):
-    """Atlas cells a surface draws from, as (col, row), from tilesets.json.
+    """Atlas cells a surface draws from, as (col, row), from the tileset registry.
 
     Two things this gets right that a hand-written cell in classes.json did not.
 
@@ -581,12 +591,7 @@ def _surface_cells(tileset_id, surface):
     """
     if not tileset_id:
         return []
-    try:
-        with open(os.path.join(classes.ROOT, TILESET_DATA), "r", encoding="utf-8") as handle:
-            tilesets = json.load(handle)
-    except (OSError, json.JSONDecodeError):
-        return []
-    entry = tilesets.get(tileset_id) or {}
+    entry = _tilesets_registry().get(tileset_id) or {}
     cells = []
     for variant in (entry.get("base") or {}).get(SURFACE_KEY.get(surface, ""), []):
         coord = variant.get("atlas") or variant.get("middle")
@@ -605,12 +610,7 @@ def _atlas_tile_size(tileset_id):
     default = (64, 64)
     if not tileset_id:
         return default
-    try:
-        with open(os.path.join(classes.ROOT, TILESET_DATA), "r", encoding="utf-8") as handle:
-            tilesets = json.load(handle)
-    except (OSError, json.JSONDecodeError):
-        return default
-    entry = tilesets.get(tileset_id) or {}
+    entry = _tilesets_registry().get(tileset_id) or {}
     return (int(entry.get("tileWidth") or default[0]),
             int(entry.get("tileHeight") or default[1]))
 

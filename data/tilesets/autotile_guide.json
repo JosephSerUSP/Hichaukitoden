@@ -1,0 +1,72 @@
+{
+  "id": "autotile_guide",
+  "name": "Autotile Visual Guide",
+  "texture": "assets/tilesets/autotile_guide.png",
+  "tileWidth": 64,
+  "tileHeight": 64,
+  "base": {
+    "walls": [
+      {
+        "id": "guide_wall_base",
+        "role": "base_wall",
+        "middle": [
+          1,
+          0
+        ],
+        "leftEdge": [
+          1,
+          1,
+          0
+        ],
+        "rightEdge": [
+          1,
+          1,
+          32
+        ],
+        "weight": 100
+      }
+    ],
+    "floors": [
+      {
+        "id": "guide_floor",
+        "role": "base_floor",
+        "atlas": [
+          3,
+          0
+        ],
+        "weight": 100
+      }
+    ],
+    "ceilings": []
+  },
+  "doors": [
+    {
+      "id": "guide_door",
+      "role": "door",
+      "atlas": [
+        2,
+        0
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "guide_torch",
+      "role": "wall_feature",
+      "atlas": [
+        1,
+        3
+      ],
+      "injectProbability": 0.15,
+      "emitsLight": {
+        "color": [
+          1,
+          0.6,
+          0.2
+        ],
+        "radius": 4,
+        "falloff": 2
+      }
+    }
+  ]
+}

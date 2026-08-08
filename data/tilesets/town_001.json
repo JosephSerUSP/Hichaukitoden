@@ -1,0 +1,54 @@
+{
+  "id": "town_001",
+  "name": "Town 001",
+  "texture": "assets/tilesets/town_001.png",
+  "tileWidth": 64,
+  "tileHeight": 64,
+  "base": {
+    "walls": [
+      {
+        "id": "town_wall_base",
+        "role": "base_wall",
+        "middle": [
+          1,
+          0
+        ],
+        "leftEdge": [
+          1,
+          1,
+          0
+        ],
+        "rightEdge": [
+          1,
+          1,
+          32
+        ],
+        "weight": 100
+      }
+    ],
+    "floors": [
+      {
+        "id": "tile_3_0",
+        "role": "base_floor",
+        "atlas": [
+          3,
+          0
+        ],
+        "weight": 100,
+        "heightOffset": 0
+      }
+    ],
+    "ceilings": []
+  },
+  "doors": [
+    {
+      "id": "tile_2_0",
+      "role": "door",
+      "atlas": [
+        2,
+        0
+      ]
+    }
+  ],
+  "features": []
+}

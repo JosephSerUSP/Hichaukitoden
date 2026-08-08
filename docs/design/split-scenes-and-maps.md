@@ -22,6 +22,9 @@ Activating fragments before all writers agree would create two sources of truth:
 the runtime could read the directory while the editor continued overwriting the
 old monolith.
 
+The general rules shared with unordered registries are defined in
+`docs/design/authored-data-storage.md`.
+
 ## Target format
 
 Each ordered collection becomes a directory with an explicit manifest:
@@ -61,13 +64,13 @@ ordering.
 
 ### Phase 1 — runtime compatibility and deterministic tooling
 
-This branch implements Phase 1:
+The first phase establishes the generalized storage capability:
 
-- `data.collection_loader` can assemble `maps` and `scenes` from an indexed
+- `data.authored_storage` assembles ordered `maps` and `scenes` from an indexed
   directory when the monolith is absent;
 - the existing monolith remains authoritative while both forms exist;
 - `tools/data/split_json_collection.py` deterministically emits fragments and
-  verifies a byte-semantic round trip;
+  verifies a semantic round trip;
 - no production data is moved yet.
 
 The monolith-first rule is intentional. It allows review fragments to be

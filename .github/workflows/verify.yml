@@ -156,6 +156,17 @@ jobs:
           Write-Host $info.Trim()
           if ($info -notmatch "renderer:") { throw "LOVE could not create an OpenGL context" }
 
+      - name: Authored storage tool tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          node --check tools/editor/authored-storage.js
+          if ($LASTEXITCODE -ne 0) { throw "authored-storage.js syntax check failed (exit $LASTEXITCODE)" }
+          node --check tools/editor/server.js
+          if ($LASTEXITCODE -ne 0) { throw "editor server syntax check failed (exit $LASTEXITCODE)" }
+          node tools/editor/test-authored-storage.js
+          if ($LASTEXITCODE -ne 0) { throw "authored storage tool tests failed (exit $LASTEXITCODE)" }
+
       # Every gate below is a canonical project entry point, invoked unmodified.
       # Gate semantics live in the repository, not in this YAML, so local and CI
       # verification stay aligned as those entry points evolve.
