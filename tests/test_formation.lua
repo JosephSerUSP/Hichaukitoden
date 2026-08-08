@@ -291,7 +291,7 @@ local okValBadSlot, errValBadSlot = pcall(validator.run, {
     },
     getSkill = function() return {} end,
     getItem = function() return {} end,
-    getActor = function() return {} end,
+    getUnit = function() return {} end,
 })
 assert(not okValBadSlot, "Validator rejects invalid starting slot 99")
 

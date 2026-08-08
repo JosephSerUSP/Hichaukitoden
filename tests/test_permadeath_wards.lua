@@ -211,7 +211,7 @@ do
     local formula = require("engine.formula")
     local sess = sessionModule.GameSession.new(loader)
     local wisp
-    for _, a in ipairs(loader.actors) do if a.name == "Wisp" then wisp = a.id end end
+    for _, a in ipairs(loader.units) do if a.name == "Wisp" then wisp = a.id end end
     local b = sess:recruitActor(wisp, 3)
     local view = formula.battlerView(b, sess)
     check(view.trait.MOVE_HEAL > 0,
@@ -233,7 +233,7 @@ do
     local flow = require("engine.flow")
     local sess = sessionModule.GameSession.new(loader)
     local wisp
-    for _, a in ipairs(loader.actors) do if a.name == "Wisp" then wisp = a.id end end
+    for _, a in ipairs(loader.units) do if a.name == "Wisp" then wisp = a.id end end
     local b = sess:recruitActor(wisp, 3)
     local maxHp = traits.getParam(b, "maxHp", sess)
     b.hp = 1
@@ -257,7 +257,7 @@ end
 do
     local flow = require("engine.flow")
     local function idOf(name)
-        for _, a in ipairs(loader.actors) do if a.name == name then return a.id end end
+        for _, a in ipairs(loader.units) do if a.name == name then return a.id end end
     end
     -- Nurse (symbiosis) in slot 1, a plain Skeleton beside it in slot 2.
     local sess = sessionModule.GameSession.new(loader)
@@ -317,7 +317,7 @@ end
 do
     local sess = sessionModule.GameSession.new(loader)
     local function idOf(name)
-        for _, a in ipairs(loader.actors) do if a.name == name then return a.id end end
+        for _, a in ipairs(loader.units) do if a.name == name then return a.id end end
     end
     local scholar = sess:recruitActor(idOf("Candle"), 3)
     local plain = sess:recruitActor("skeleton", 3)
@@ -340,7 +340,7 @@ end
 do
     local battleSystem = require("engine.battle")
     local function idOf(name)
-        for _, a in ipairs(loader.actors) do if a.name == name then return a.id end end
+        for _, a in ipairs(loader.units) do if a.name == name then return a.id end end
     end
 
     -- Build a battle whose ONLY initiative carrier is an enemy Bat, then force
@@ -348,7 +348,7 @@ do
     local function queueWith(partyNames, enemyName)
         local sess = sessionModule.GameSession.new(loader)
         for _, n in ipairs(partyNames) do sess:recruitActor(idOf(n), 3) end
-        local enemy = sessionModule.Battler.new(loader.getActor(idOf(enemyName)), 3)
+        local enemy = sessionModule.Battler.new(loader.getUnit(idOf(enemyName)), 3)
         local battle = battleSystem.Battle.new(sess, { enemy })
         local queue = battle:buildTurnQueue({})
         return queue, enemy, battle
@@ -417,7 +417,7 @@ do
         end
     end
 
-    for _, actorData in ipairs(loader.actors) do
+    for _, actorData in ipairs(loader.units) do
         local cmds = actorData.recruitEvent
         if cmds and #cmds > 0 then
             local nodes = {}
@@ -451,7 +451,7 @@ end
 do
     local detection = require("engine.detection")
     local function idOf(name)
-        for _, a in ipairs(loader.actors) do if a.name == name then return a.id end end
+        for _, a in ipairs(loader.units) do if a.name == name then return a.id end end
     end
     local trapEasy = { meta = { detect = "trap", detectLevel = 1 } }
     local trapHard = { meta = { detect = "trap", detectLevel = 2 } }
@@ -510,7 +510,7 @@ do
     local renderer = require("presentation.renderer")
     local detection = require("engine.detection")
     local function idOf(name)
-        for _, a in ipairs(loader.actors) do if a.name == name then return a.id end end
+        for _, a in ipairs(loader.units) do if a.name == name then return a.id end end
     end
     local sess = sessionModule.GameSession.new(loader)
     sess:recruitActor(idOf("Bat"), 3) -- nightVision: SEE_TRAPS 2

@@ -86,7 +86,7 @@ def walk_refs(node: Any, rel: str, path: str = "$") -> Iterable[Reference]:
             child = json_path(path, key)
             if key == "actorId" and is_id(value):
                 yield Reference(rel, child, key, value)
-            elif key == "evolvesTo" and rel == "actors.json" and is_id(value):
+            elif key == "evolvesTo" and rel == "units.json" and is_id(value):
                 yield Reference(rel, child, key, value)
             elif key == "actor" and rel in {"maps.json", "troops.json"} and is_id(value):
                 yield Reference(rel, child, key, value)
@@ -114,7 +114,7 @@ def unit_definition_refs(units: list[dict[str, Any]]) -> Iterable[Reference]:
         for index, rule in enumerate(unit.get("autoTransforms") or []):
             if isinstance(rule, dict) and is_unit_destination(rule.get("actor")):
                 yield Reference(
-                    "actors.json",
+                    "units.json",
                     f"{base}.autoTransforms[{index}].actor",
                     "autoTransforms.actor",
                     rule["actor"],
@@ -123,7 +123,7 @@ def unit_definition_refs(units: list[dict[str, Any]]) -> Iterable[Reference]:
         for index, rule in enumerate(unit.get("secretTransforms") or []):
             if isinstance(rule, dict) and is_unit_destination(rule.get("actor")):
                 yield Reference(
-                    "actors.json",
+                    "units.json",
                     f"{base}.secretTransforms[{index}].actor",
                     "secretTransforms.actor",
                     rule["actor"],
@@ -134,7 +134,7 @@ def unit_definition_refs(units: list[dict[str, Any]]) -> Iterable[Reference]:
             for outcome_key, outcome in outcomes.items():
                 if isinstance(outcome, dict) and is_unit_destination(outcome.get("actor")):
                     yield Reference(
-                        "actors.json",
+                        "units.json",
                         f"{base}.hatchOutcomes.{outcome_key}.actor",
                         "hatchOutcomes.actor",
                         outcome["actor"],
@@ -143,7 +143,7 @@ def unit_definition_refs(units: list[dict[str, Any]]) -> Iterable[Reference]:
         for index, value in enumerate(unit.get("eligibleFrom") or []):
             if is_unit_destination(value):
                 yield Reference(
-                    "actors.json",
+                    "units.json",
                     f"{base}.eligibleFrom[{index}]",
                     "eligibleFrom",
                     value,
@@ -219,23 +219,23 @@ def fixed_member_refs(system: Any) -> Iterable[Reference]:
 
 
 def load_units(data_dir: Path) -> tuple[list[dict[str, Any]], dict[ScalarId, dict[str, Any]], list[str]]:
-    actors_path = data_dir / "actors.json"
-    units = read_json(actors_path)
+    units_path = data_dir / "units.json"
+    units = read_json(units_path)
     if not isinstance(units, list) or not units:
-        raise SystemExit("data/actors.json must currently be a non-empty array of Unit definitions")
+        raise SystemExit("data/units.json must currently be a non-empty array of Unit definitions")
 
     by_id: dict[ScalarId, dict[str, Any]] = {}
     problems: list[str] = []
     for index, unit in enumerate(units):
         if not isinstance(unit, dict):
-            problems.append(f"actors.json[{index}] is not an object")
+            problems.append(f"units.json[{index}] is not an object")
             continue
         uid = unit.get("id")
         if not isinstance(uid, str) or uid == "":
-            problems.append(f"actors.json[{index}] must have a non-empty symbolic string id")
+            problems.append(f"units.json[{index}] must have a non-empty symbolic string id")
             continue
         if uid in by_id:
-            problems.append(f"duplicate Unit id {uid!r} at actors.json[{index}]")
+            problems.append(f"duplicate Unit id {uid!r} at units.json[{index}]")
             continue
         by_id[uid] = unit
     return units, by_id, problems

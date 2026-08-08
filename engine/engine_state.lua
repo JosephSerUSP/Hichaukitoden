@@ -64,7 +64,7 @@ end
 local IMPL_DATA_FILES = { "data/flows.json", "data/scenes.json", "data/engine.json",
     "data/commonEvents.json", "data/maps.json", "data/troops.json" }
 local ASSIGN_DATA_FILES = {
-    "data/passives.json", "data/items.json", "data/actors.json",
+    "data/passives.json", "data/items.json", "data/units.json",
     "data/states.json", "data/skills.json",
 }
 
@@ -245,7 +245,7 @@ function engine_state.build(loader)
     -- --------------------------------------------------------------- content
     line("## Content inventory")
     line()
-    local actors = loader.actors or {}
+    local units = loader.units or {}
     local disciplines, unlocked, promotable = {}, 0, 0
     for _, a in ipairs(actors) do
         local d = a.discipline or "(none)"

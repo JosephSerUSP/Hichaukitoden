@@ -198,7 +198,7 @@ do
     effects.apply({ type = "hp", value = 20 }, b, b, sess, ITEM)
     local plain = b.hp - 1
 
-    -- Carry the trait on a private actorData copy. loader.getActor hands back
+    -- Carry the trait on a private actorData copy. loader.getUnit hands back
     -- the one table every holder of that species sees, so appending to it here
     -- would give every Skeleton in every later test the trait.
     local privateData = {}

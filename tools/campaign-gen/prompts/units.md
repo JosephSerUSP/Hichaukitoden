@@ -1,7 +1,7 @@
-# Stage: actors
+# Stage: units
 
-Generate the campaign's full actors.json (creatures, bosses, and the Summoner)
-from the outline. Keep ALL existing actors whose role is "Summoner" exactly
+Generate the campaign's full units.json (creatures, bosses, and the Summoner)
+from the outline. Keep ALL existing units whose role is "Summoner" exactly
 as-is (copy them from the manifest ids); replace the rest of the roster with
 the outline's cast, plus enough generic creatures for encounters (aim for
 15-25 total).
@@ -21,20 +21,20 @@ the outline's cast, plus enough generic creatures for encounters (aim for
 ## Schema by example (copy this shape EXACTLY; unknown fields are tolerated
 but every field shown matters)
 
-Actor sample:
+Unit sample:
 {{SAMPLES}}
 
 ## Deliverable
 
-ONE JSON object: `{ "actors.json": [ ...complete actors array... ] }`
+ONE JSON object: `{ "units.json": [ ...complete units array... ] }`
 
 Rules:
 - ids are sequential integers starting at 1, unique.
 - spriteKey/smallBattler: reuse ONLY sprite keys that appear in the manifest's
-  existing actors (asset generation is a separate step; placeholder reuse is
+  existing units (asset generation is a separate step; placeholder reuse is
   correct here). Pick thematically closest.
 - skills/passives/elements: only ids from the ruleset.
-- CRITICAL: an actor's "role" field must be one of the ruleset's role ids
+- CRITICAL: a Unit's "role" field must be one of the ruleset's role ids
   EXACTLY (see RULESET.roles). The outline cast's npc/creature/boss labels
   are narrative categories, NOT role ids -- map each cast member to the
   closest real ruleset role.

@@ -1293,7 +1293,7 @@
             <div class="db-layout">
                 <!-- Sidebar tabs (left column) -->
                 <div class="db-sidebar-tabs inset-panel">
-                    <button id="db-tab-actors" class="db-tab-btn active" onclick="setDbTab('actors')">Actors</button>
+                    <button id="db-tab-units" class="db-tab-btn active" onclick="setDbTab('units')">Units</button>
                     <button id="db-tab-items" class="db-tab-btn" onclick="setDbTab('items')">Items</button>
                     <button id="db-tab-skills" class="db-tab-btn" onclick="setDbTab('skills')">Skills</button>
                     <button id="db-tab-passives" class="db-tab-btn" onclick="setDbTab('passives')">Passives</button>
@@ -1472,7 +1472,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 10px;">
                             <input type="checkbox" id="cg-models-expand" onchange="cgToggleStageModels()" />
-                            <label for="cg-models-expand">Override per stage (outline, actors, items, quests, maps, events, repair)</label>
+                            <label for="cg-models-expand">Override per stage (outline, units, items, quests, maps, events, repair)</label>
                         </div>
                     </fieldset>
 
@@ -1483,7 +1483,7 @@
                             <select id="cg-stage-select" class="win98-select" style="flex: 1;">
                                 <option value="">Full run (all stages)</option>
                                 <option value="outline">outline only</option>
-                                <option value="actors">actors only</option>
+                                <option value="units">units only</option>
                                 <option value="items">items only</option>
                                 <option value="quests">quests only</option>
                                 <option value="maps">maps only</option>

@@ -1186,7 +1186,7 @@
             if (!list) return;
             list.innerHTML = '';
             (recruits || []).forEach((actorId, idx) => {
-                const actor = (dbPayload.actors || []).find(a => a.id === actorId);
+                const actor = (dbPayload.units || []).find(a => a.id === actorId);
                 const item = document.createElement('div');
                 item.style.fontSize = '10px';
                 item.style.padding = '2px 4px';
@@ -1203,8 +1203,8 @@
         }
 
         function addRecruitToMap() {
-            const actors = (dbPayload.actors || []).filter(a => a.isRecruitable);
-            if (!actors.length) { showToast('No recruitable actors defined — check "Recruitable in dungeons" on an Actor first.'); return; }
+            const units = (dbPayload.units || []).filter(a => a.isRecruitable);
+            if (!units.length) { showToast('No recruitable Units defined — check "Recruitable in dungeons" on a Unit first.'); return; }
 
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
@@ -1227,7 +1227,7 @@
             const actorSelect = document.createElement('select');
             actorSelect.className = 'win98-select';
             actorSelect.style.flex = '1';
-            actors.forEach(a => {
+            units.forEach(a => {
                 const opt = document.createElement('option');
                 opt.value = a.id;
                 opt.textContent = `${a.name} (ID ${a.id})`;
@@ -1291,7 +1291,7 @@
             const list = document.getElementById('prop-enc-list');
             list.innerHTML = '';
             encounters.forEach((enc, idx) => {
-                const actor = (dbPayload.actors || []).find(a => a.id === enc.actor);
+                const actor = (dbPayload.units || []).find(a => a.id === enc.actor);
                 const item = document.createElement('div');
                 item.style.fontSize = '10px';
                 item.style.padding = '2px 4px';
@@ -1308,8 +1308,8 @@
         }
 
         function addEncounterToMap() {
-            const actors = dbPayload.actors || [];
-            if (!actors.length) { showToast('No actors defined — add one in the Actors tab first.'); return; }
+            const units = dbPayload.units || [];
+            if (!units.length) { showToast('No units defined — add one in the Units tab first.'); return; }
 
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
@@ -1332,7 +1332,7 @@
             const actorSelect = document.createElement('select');
             actorSelect.className = 'win98-select';
             actorSelect.style.flex = '1';
-            actors.forEach(a => {
+            units.forEach(a => {
                 const opt = document.createElement('option');
                 opt.value = a.id;
                 opt.textContent = `${a.name} (ID ${a.id})`;

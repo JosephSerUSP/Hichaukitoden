@@ -16,7 +16,7 @@ function readJson(rel) {
 // Shared-core files (owner decision: ruleset stays fixed; content layer is
 // generated). The generator copies ALL of data/ into the campaign dir first,
 // then overwrites only the content-layer files stage by stage.
-const CONTENT_FILES = ['actors.json', 'items.json', 'quests.json', 'maps.json',
+const CONTENT_FILES = ['units.json', 'items.json', 'quests.json', 'maps.json',
     'shops.json', 'commonEvents.json'];
 
 function commandRegistry() {
@@ -51,13 +51,13 @@ function ruleset() {
 // One representative sample per entity type, pulled from the REAL default
 // campaign -- the schema-by-example that keeps models honest about shape.
 function samples() {
-    const actors = readJson('data/actors.json');
+    const units = readJson('data/units.json');
     const items = readJson('data/items.json');
     const maps = readJson('data/maps.json');
     const quests = readJson('data/quests.json');
     const town = maps.find(m => m.category === 'town') || maps[0];
     return {
-        actor: actors.find(a => a.role !== 'Summoner') || actors[0],
+        unit: units.find(a => a.role !== 'Summoner') || units[0],
         item: items[0],
         quest: Object.values(quests)[0],
         map: { ...town, events: (town.events || []).slice(0, 2) },
@@ -69,7 +69,7 @@ function samples() {
 // dir, which starts as a copy of data/ and gets overwritten per stage).
 function manifest(campaignDir) {
     const j = f => JSON.parse(fs.readFileSync(path.join(campaignDir, f), 'utf8'));
-    const actors = j('actors.json');
+    const units = j('units.json');
     const items = j('items.json');
     const maps = j('maps.json');
     const quests = j('quests.json');
@@ -86,7 +86,7 @@ function manifest(campaignDir) {
     }
 
     return {
-        actors: actors.map(a => ({ id: a.id, name: a.name, role: a.role, tier: a.tier })),
+        units: units.map(a => ({ id: a.id, name: a.name, role: a.role, tier: a.tier })),
         items: items.map(i => ({ id: i.id, name: i.name, type: i.type })),
         maps: maps.map(m => ({ id: m.id, title: m.title, category: m.category })),
         quests: Object.keys(quests),

@@ -93,7 +93,7 @@ local function subjectText(kind, value, loader, engine)
         local skill = loader and loader.getSkill and loader.getSkill(value)
         return (skill and skill.name) or prettyId(value)
     elseif kind == "actor" then
-        local actor = loader and loader.getActor and loader.getActor(value)
+        local actor = loader and loader.getUnit and loader.getUnit(value)
         return (actor and actor.name) or prettyId(value)
     elseif kind == "element" then
         local element = loader and loader.getElement and loader.getElement(value)

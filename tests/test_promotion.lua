@@ -37,7 +37,7 @@ local PIXIE, HIGH_PIXIE = "pixie", "high_pixie"
 local function rigPixie(level)
     local sess = sessionModule.GameSession.new(loader)
     sess.party = {}
-    local b = sessionModule.Battler.new(loader.getActor(PIXIE), level, 24680)
+    local b = sessionModule.Battler.new(loader.getUnit(PIXIE), level, 24680)
     b.hp = b:getMaxHp(sess)
     sess.party[1] = b
     sess.mp = 9999
@@ -96,7 +96,7 @@ do
     check(preserved, "accumulated lower-form growth is preserved exactly")
 
     -- ...and demonstrably not the same as re-deriving under the new species.
-    local rederived = growth.accumulate(loader.getActor(HIGH_PIXIE), beforeSeed, 6)
+    local rederived = growth.accumulate(loader.getUnit(HIGH_PIXIE), beforeSeed, 6)
     local differs = false
     for _, p in ipairs(growth.PARAMS) do
         if rederived[p] ~= beforeGrowth[p] then differs = true end
@@ -162,9 +162,9 @@ do
     check(after.level > beforeLevel, "the promoted creature levels")
     check(after.growth.mat > beforeGrowth, "and accrues further growth")
 
-    local expected = growth.packetFor(loader.getActor(HIGH_PIXIE),
+    local expected = growth.packetFor(loader.getUnit(HIGH_PIXIE),
         after.growthSeed, beforeLevel + 1).mat or 0
-    local pixiePacket = growth.packetFor(loader.getActor(PIXIE),
+    local pixiePacket = growth.packetFor(loader.getUnit(PIXIE),
         after.growthSeed, beforeLevel + 1).mat or 0
     check(expected ~= pixiePacket,
         "the two forms really do budget that level differently (a meaningful test)")

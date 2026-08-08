@@ -3,7 +3,7 @@
 //
 //   node tools/campaign-gen/gen.js --name mist_isle "A melancholy island of drowned bells..."
 //
-// Pipeline: outline (walkthrough-first) -> actors -> items -> quests -> maps
+// Pipeline: outline (walkthrough-first) -> units -> items -> quests -> maps
 // -> events -> validate-repair loop against the REAL engine validator
 // (`lovec . validate campaign=<name>`), feeding failures back verbatim.
 // State persists in campaigns/<name>/gen-state.json; --resume continues a
@@ -22,7 +22,7 @@ const ctxlib = require('./lib/context');
 
 const HERE = __dirname;
 const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'));
-const STAGE_ORDER = ['outline', 'actors', 'items', 'quests', 'maps', 'events'];
+const STAGE_ORDER = ['outline', 'units', 'items', 'quests', 'maps', 'events'];
 
 // ---------------------------------------------------------------------------
 // Provider resolution

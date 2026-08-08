@@ -236,7 +236,7 @@
             const list = dbPayload.engine.metaKeys;
             const note = document.createElement('p');
             note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
-            note.textContent = 'Registered metadata keys can be attached to database entries and read in formulas. appliesTo lists collections (e.g. items, actors). types: number, string, flag.';
+            note.textContent = 'Registered metadata keys can be attached to database entries and read in formulas. appliesTo lists collections (e.g. items, units). types: number, string, flag.';
             panel.appendChild(note);
 
             const box = makeListBox();

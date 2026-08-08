@@ -135,10 +135,10 @@ function processActor(actor) {
 
 // ─── Main ──────────────────────────────────────────────────────────────────
 const files = [
-  'data/actors.json',
-  'campaigns/thestra_no_jijou_2/actors.json',
-  'campaigns/thestra_no_jijou_3/actors.json',
-  'campaigns/thestra_no_jijou_4/actors.json',
+  'data/units.json',
+  'campaigns/thestra_no_jijou_2/units.json',
+  'campaigns/thestra_no_jijou_3/units.json',
+  'campaigns/thestra_no_jijou_4/units.json',
 ];
 
 for (const relPath of files) {

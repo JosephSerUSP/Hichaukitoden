@@ -6,10 +6,10 @@
 // The API key is kept only in its password input for the duration of the
 // page — never persisted to localStorage or dbPayload.
 (function() {
-    const STAGES = ['outline', 'actors', 'items', 'quests', 'maps', 'events', 'repair'];
+    const STAGES = ['outline', 'units', 'items', 'quests', 'maps', 'events', 'repair'];
     // The visual progress strip: repair is folded into "validate" since the
     // log interleaves validate rounds and repair calls.
-    const STRIP_STAGES = ['outline', 'actors', 'items', 'quests', 'maps', 'events', 'validate'];
+    const STRIP_STAGES = ['outline', 'units', 'items', 'quests', 'maps', 'events', 'validate'];
     const MAX_SELECT_OPTIONS = 200; // catalogue is huge; the filter box narrows it
 
     let genConfig = null;        // /campaign-gen/config payload
