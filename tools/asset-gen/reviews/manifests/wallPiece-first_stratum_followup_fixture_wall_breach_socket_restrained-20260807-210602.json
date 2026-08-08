@@ -1,0 +1,132 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "wallPiece",
+  "name": "first_stratum_followup_fixture_wall_breach_socket_restrained",
+  "description": "old limestone wall socket, one localized restrained broken recess in exact front elevation, broad chipped stone rim, shallow materially readable back plane, sparse rubble traces, muted grey-brown and old ivory, broad quiet surrounding wall material",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, interior room, corridor, tunnel, passage, architecture scene, environmental concept art, establishing shot, camera view, receding floor, receding ceiling, perspective wall, outdoor facade, ruin landscape, doorway view, archway view, horizon line, foreground, background, cutaway, diorama, framed picture, poster, diagram labels, repeated emblem, repeated focal object, dramatic black cavity",
+      "seed": 352300,
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_followup/height/fixture_wall_breach_socket_restrained.png",
+    "heightControlWeight": 0.78
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_followup_fixture_wall_breach_socket_restrained.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 8e-06,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 1.089,
+        "centre_x": 0.372
+      },
+      "fixtureFile": "fixture-1.png",
+      "fixtureHeight": "fixture-height-1.png",
+      "fixtureCompositeHeight": "fixture-composite-height-1.png",
+      "fixturePreview": "fixture-preview-1.png",
+      "fixtureAlphaCoverage": 0.09131,
+      "fixtureSignedMin": -128,
+      "fixtureSignedMax": 127,
+      "context": "fixture-preview-1.png",
+      "contextSurface": "wall",
+      "contextPreviewVersion": "surface-fixture-neutral-alpha-v2",
+      "contextLabel": "alpha-composited fixture over neutral grey and neutral height; operation=replace; recommended scale=0.14"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 1.602,
+        "centre_x": 0.86
+      },
+      "fixtureFile": "fixture-2.png",
+      "fixtureHeight": "fixture-height-2.png",
+      "fixtureCompositeHeight": "fixture-composite-height-2.png",
+      "fixturePreview": "fixture-preview-2.png",
+      "fixtureAlphaCoverage": 0.09131,
+      "fixtureSignedMin": -128,
+      "fixtureSignedMax": 127,
+      "context": "fixture-preview-2.png",
+      "contextSurface": "wall",
+      "contextPreviewVersion": "surface-fixture-neutral-alpha-v2",
+      "contextLabel": "alpha-composited fixture over neutral grey and neutral height; operation=replace; recommended scale=0.14"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000675,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 2.028,
+        "centre_x": 0.899
+      },
+      "fixtureFile": "fixture-3.png",
+      "fixtureHeight": "fixture-height-3.png",
+      "fixtureCompositeHeight": "fixture-composite-height-3.png",
+      "fixturePreview": "fixture-preview-3.png",
+      "fixtureAlphaCoverage": 0.09131,
+      "fixtureSignedMin": -128,
+      "fixtureSignedMax": 127,
+      "context": "fixture-preview-3.png",
+      "contextSurface": "wall",
+      "contextPreviewVersion": "surface-fixture-neutral-alpha-v2",
+      "contextLabel": "alpha-composited fixture over neutral grey and neutral height; operation=replace; recommended scale=0.14"
+    }
+  ],
+  "surfaceFixturePreparation": {
+    "preparedAt": "2026-08-07T21:08:42",
+    "heightSource": "assets/geometry/3_authored_surface_maps/first_stratum_20260807_followup/height/fixture_wall_breach_socket_restrained.png",
+    "heightOperation": "replace",
+    "recommendedHeightScale": 0.14,
+    "previewVersion": "surface-fixture-neutral-alpha-v2",
+    "previewBase": "neutral grey albedo and opaque RGB=128 neutral height",
+    "alphaAuthority": "height PNG alpha copied after generation; SD output alpha ignored",
+    "originalVariantsPreserved": true
+  }
+}
