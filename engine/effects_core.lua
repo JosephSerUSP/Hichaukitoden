@@ -35,19 +35,23 @@ local function absorbWithBarrier(effectData, b, finalDmg, events)
     return adjusted
 end
 
--- Elemental affinity. Elements do double duty and the two jobs are separate
+-- Elemental affinity. Elements do double duty and the two jobs remain separate
 -- channels (docs/SPEC.md, "Elements"):
 --
 --   user layer   the acting creature's own elements vs the target's. Who you
---                ARE. Cross-product: an intensely Red creature swinging at an
---                intensely Green one counts every pairing.
+--                ARE. Every attacker/target pairing contributes to one signed
+--                relation score, so repeated alignment expresses depth while
+--                contrary colors cancel before multiplier math.
 --   skill layer  the element of the skill or item being used vs the target's.
---                What you WIELD -- a Red creature can learn a Green tome.
+--                What you WIELD -- a Red creature can learn a Green tome. Its
+--                own strong/weak target relations likewise resolve to one score.
 --
--- Advantage is additive with diminishing returns, so stacking alignment keeps
--- paying but never runs away. Disadvantage stays multiplicative -- it decays
--- toward zero instead of marching through it the way additive penalties do --
--- and is floored so deep mismatch is resistance, never immunity.
+-- Within either channel, strong = +1, neutral = 0 and weak = -1. Positive and
+-- negative relations cancel first. Only the remaining magnitude is mapped onto
+-- the existing authored curve: positive depth gets diminishing additive bonus;
+-- negative depth gets multiplicative resistance with a floor. This removes the
+-- old 1.15 * 0.90 = 1.035 arithmetic residue without special-casing RGB or any
+-- named combination, and preserves the established one-sided/repeated values.
 local function stackBonus(rate, decay, n)
     if n <= 0 then return 0 end
     if decay >= 1 then return rate * n end
@@ -70,12 +74,14 @@ local function countMatches(elements, element, targetElems)
     return strongN, weakN
 end
 
-local function layerMultiplier(strongN, weakN, bonus, decay, weakMult, floor)
-    local mult = 1.0 + stackBonus(bonus, decay, strongN)
-    if weakN > 0 then
-        mult = mult * math.max(floor, weakMult ^ weakN)
+local function layerMultiplier(score, bonus, decay, weakMult, floor)
+    if score > 0 then
+        return 1.0 + stackBonus(bonus, decay, score)
     end
-    return mult
+    if score < 0 then
+        return math.max(floor, weakMult ^ (-score))
+    end
+    return 1.0
 end
 
 -- user (optional): the battler performing the action, for the user layer.
@@ -95,7 +101,7 @@ function effects.elementMultiplier(element, user, target, session)
 
     if element then
         local strongN, weakN = countMatches(elements, element, targetElems)
-        mult = mult * layerMultiplier(strongN, weakN,
+        mult = mult * layerMultiplier(strongN - weakN,
             rules.skillStrongBonus or 0.5, rules.skillStrongDecay or 0.7,
             rules.skillWeakMultiplier or 0.65, floor)
     end
@@ -106,7 +112,7 @@ function effects.elementMultiplier(element, user, target, session)
             local s, w = countMatches(elements, userElem, targetElems)
             strongN, weakN = strongN + s, weakN + w
         end
-        mult = mult * layerMultiplier(strongN, weakN,
+        mult = mult * layerMultiplier(strongN - weakN,
             rules.userStrongBonus or 0.15, rules.userStrongDecay or 0.8,
             rules.userWeakMultiplier or 0.9, floor)
     end
