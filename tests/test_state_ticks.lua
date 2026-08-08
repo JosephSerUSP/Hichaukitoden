@@ -9,6 +9,7 @@ local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local traits = require("engine.traits")
 local vitality = require("engine.vitality")
+local formula = require("engine.formula")
 local savegame = require("engine.savegame")
 
 print("[TEST] Starting combat-state resource tests...")
@@ -94,6 +95,9 @@ do
     b.hp = math.floor(maxHp * 1.2)
     check(vitality.hpRatio(b, sess) > 1,
         "HP ratio remains above 1.0 while current HP exceeds effective Max HP")
+    local view = formula.battlerView(b, sess)
+    check(view.hpRatio > 1 and view.overheal == b.hp - maxHp,
+        "formula/UI battler views expose unclamped HP ratio and exact Overheal")
     check(not traits.evaluateCondition("HP < 100%", b, sess)
         and traits.evaluateCondition("HP < 125%", b, sess),
         "authored HP thresholds compare the unclamped currentHP/effectiveMaxHP ratio")
@@ -103,6 +107,7 @@ end
 do
     local sess, b = fresh(1.5)
     local beforeMax = traits.getParam(b, "maxHp", sess)
+    local beforeParts = vitality.maxHpComponents(b, sess)
     local permanentBefore = b.paramPlus.maxHp
     b.hp = beforeMax - 20
 
@@ -116,6 +121,15 @@ do
         "raising temporary Max HP immediately grants the new capacity as current HP")
     check(b.paramPlus.maxHp == permanentBefore,
         "temporary Max HP never mutates persistent paramPlus.maxHp")
+    local view = formula.battlerView(b, sess)
+    check(view.maxHpParts.underlying == beforeParts.underlying
+        and view.maxHpParts.active == afterMax
+        and view.maxHpParts.activeModifier == beforeParts.activeModifier + 25,
+        "formula/UI battler views distinguish underlying and active Max HP")
+    local modifier, formulaErr = formula.eval("a.maxHpParts.activeModifier",
+        formula.makeContext({ a = b }, sess))
+    check(formulaErr == nil and modifier == beforeParts.activeModifier + 25,
+        "authored formulas can read the active Max-HP modifier")
     local maxEv = hasEvent(evs, "max_hp_change")
     check(maxEv and maxEv.value == 25 and maxEv.hpGranted == 25,
         "state application emits a structured Max-HP transition")

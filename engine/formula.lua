@@ -3,6 +3,7 @@
 -- small whitelist of math helpers. Every exposed token is documented in
 -- data/engine.json -> formulaHelp; keep the two in sync.
 local traits = require("engine.traits")
+local vitality = require("engine.vitality")
 
 local formula = {}
 
@@ -58,11 +59,19 @@ end
 -- Read-only battler view: the only fields formulas may see.
 function formula.battlerView(battler, session)
     if not battler then return nil end
+    local hp = battler.hp or 0
+    local maxHpParts = vitality.maxHpComponents(battler, session)
     return {
         name = battler.name or "",
         level = battler.level or 1,
-        hp = battler.hp or 0,
-        maxHp = traits.getParam(battler, "maxHp", session) or 1,
+        hp = hp,
+        maxHp = maxHpParts.active,
+        -- Numeric combat-vitality truth for formulas and declarative UI.
+        -- `underlying` includes permanent growth; `activeModifier` is the
+        -- current trait/state/equipment delta. Overheal remains real HP.
+        maxHpParts = maxHpParts,
+        hpRatio = vitality.hpRatio(battler, session),
+        overheal = math.max(0, hp - maxHpParts.active),
         atk = traits.getParam(battler, "atk", session) or 10,
         def = traits.getParam(battler, "def", session) or 10,
         mat = traits.getParam(battler, "mat", session) or 10,

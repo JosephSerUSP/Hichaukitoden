@@ -306,13 +306,14 @@ do
     local strays = {}
     for id, sk in pairs(loader.skills or {}) do
         for _, eff in ipairs(sk.effects or {}) do
-            if (eff.type == "hp_damage" or eff.type == "hp_drain") and eff.power == nil then
+            if (eff.type == "hp_damage" or eff.type == "hp_drain")
+                and eff.power == nil and eff.formula == nil then
                 table.insert(strays, id)
             end
         end
     end
     check(#strays == 0,
-        "every damaging skill authors a power source (" .. #strays .. " do not)")
+        "every damaging skill authors power or a direct formula (" .. #strays .. " do not)")
 end
 
 --------------------------------------------------- penetration & execution --

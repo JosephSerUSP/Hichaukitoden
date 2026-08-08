@@ -37,6 +37,22 @@
       "description": "Max HP after traits (also on b/target/enemy/ally)."
     },
     {
+      "token": "a.maxHpParts.underlying",
+      "description": "Max HP from base growth plus permanent param gains, before active state/equipment/passive modifiers (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.maxHpParts.activeModifier",
+      "description": "Current active Max-HP delta from traits, states, equipment and passives relative to underlying Max HP (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.hpRatio",
+      "description": "Current HP divided by effective Max HP without clamping; an Overhealed battler reports above 1 (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.overheal",
+      "description": "Current HP above effective Max HP, or 0 when not Overhealed (also on b/target/enemy/ally)."
+    },
+    {
       "token": "a.atk",
       "description": "Attack after traits (also on b/target/enemy/ally)."
     },

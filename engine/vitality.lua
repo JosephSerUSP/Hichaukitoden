@@ -1,5 +1,4 @@
 local traits = require("engine.traits")
-local formulaEngine = require("engine.formula")
 
 local vitality = {}
 
@@ -68,6 +67,9 @@ end
 
 local function evaluateFormula(expr, a, b, session, events)
     if not expr then return 0 end
+    -- Lazy to keep vitality's numeric inspection helpers available to
+    -- engine.formula without creating a module-load cycle.
+    local formulaEngine = require("engine.formula")
     local ctx = formulaEngine.makeContext({ a = a, b = b, target = b }, session)
     local val, err = formulaEngine.eval(expr, ctx)
     if err and events then
