@@ -14321,6 +14321,42 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_basalt_DreamShaper_8_pruned-20260808-031628#1": {
+  "at": "2026-08-08T07:48:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_DreamShaper_8_pruned-20260808-031628.json",
+   "sha256": "4bab99269190992c259e2f740fd6841a6c609145f4a00c64285096cd874ca19b"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_DreamShaper_8_pruned-20260808-031628#2": {
+  "at": "2026-08-08T07:48:31",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_DreamShaper_8_pruned-20260808-031628.json",
+   "sha256": "aaa74f205a8d793ce1369db11c26ef1e15d6fc9aa892e02524358083f7d3c7d6"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_DreamShaper_8_pruned-20260808-031628#3": {
+  "at": "2026-08-08T07:48:39",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_DreamShaper_8_pruned-20260808-031628.json",
+   "sha256": "f31baacead5f469c76f69438b762f697d0c4831ac721367e95dcdd0162de9382"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_DreamShaper_8_pruned-20260808-031628#4": {
+  "at": "2026-08-08T07:48:40",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_DreamShaper_8_pruned-20260808-031628.json",
+   "sha256": "5f2d2cff2f2a3ec0c2958620b3db60a23f0bffc7e15728cb7a58ade0e7ad62f3"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260803-022937#1": {
   "at": "2026-08-04T11:44:31",
   "score": 1,
@@ -14328,6 +14364,42 @@
  },
  "wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260803-022937#2": {
   "at": "2026-08-04T11:44:32",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260808-031904#1": {
+  "at": "2026-08-08T07:48:26",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260808-031904.json",
+   "sha256": "08a421b0f5d02ecbed0325afa1871df78a3ccb491fbd7b43d0ce5fe379cfac92"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260808-031904#2": {
+  "at": "2026-08-08T07:48:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260808-031904.json",
+   "sha256": "62abf95ba451fb41126df499a16fb2733cc4d43110fcf71001be6f20339c20b2"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260808-031904#3": {
+  "at": "2026-08-08T07:48:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260808-031904.json",
+   "sha256": "8ad5d2caff4e0ba15d6eebd3156c38331f61c06aaa80769f8b876431a31f84eb"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260808-031904#4": {
+  "at": "2026-08-08T07:48:29",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_aLunarDreamBeta_aLunarDreamV1-20260808-031904.json",
+   "sha256": "1191bb7de9a4375943e969e7a40379e3750942906e77c07a9ba2f38a6761ffc0"
+  },
   "score": 1,
   "tags": []
  },
@@ -14341,6 +14413,48 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_basalt_aamAnyloraAnimeMixAnime_v1-20260808-032139#1": {
+  "at": "2026-08-08T07:48:12",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_aamAnyloraAnimeMixAnime_v1-20260808-032139.json",
+   "sha256": "47afdae79402a396a0b44073ccb65706cde7c73b536b05a36e3400d6ba11e7a5"
+  },
+  "score": 2,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_basalt_aamAnyloraAnimeMixAnime_v1-20260808-032139#2": {
+  "at": "2026-08-08T07:48:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_aamAnyloraAnimeMixAnime_v1-20260808-032139.json",
+   "sha256": "d32ad917be9b103a6ad5071dac1b57d1b6fe9b14cc589dd30a995eb48ee19ac6"
+  },
+  "score": 4,
+  "tags": [
+   "blank",
+   "palette"
+  ]
+ },
+ "wallPiece-overnight_basalt_aamAnyloraAnimeMixAnime_v1-20260808-032139#3": {
+  "at": "2026-08-08T07:48:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_aamAnyloraAnimeMixAnime_v1-20260808-032139.json",
+   "sha256": "34e1443c362e5891681633864c1c83f2e6cb7ab69201fc981210a272728707ac"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_aamAnyloraAnimeMixAnime_v1-20260808-032139#4": {
+  "at": "2026-08-08T07:48:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_aamAnyloraAnimeMixAnime_v1-20260808-032139.json",
+   "sha256": "fd43f1e8b696cae835933649dd0e06a513c579d4ba2d0f337cdc6b973113a823"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_airfucksWildMix_v10-20260803-023210#1": {
   "at": "2026-08-04T11:44:25",
   "score": 1,
@@ -14349,6 +14463,44 @@
  "wallPiece-overnight_basalt_airfucksWildMix_v10-20260803-023210#2": {
   "at": "2026-08-04T11:44:26",
   "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_airfucksWildMix_v10-20260808-032421#1": {
+  "at": "2026-08-08T07:47:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_airfucksWildMix_v10-20260808-032421.json",
+   "sha256": "4469c38bed4262a9235fce686b263542e42bb115da95efa44c941aa8889626d5"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_airfucksWildMix_v10-20260808-032421#2": {
+  "at": "2026-08-08T07:48:01",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_airfucksWildMix_v10-20260808-032421.json",
+   "sha256": "fdc59be24044602ea6b1046ab82fd5f7b7c4e6752e2d8512ce5f638affadb694"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_airfucksWildMix_v10-20260808-032421#3": {
+  "at": "2026-08-08T07:48:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_airfucksWildMix_v10-20260808-032421.json",
+   "sha256": "de556c63f648624ffa00da254ed6a2ff6ad34ae3db419c026491799ceed0b7c4"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_airfucksWildMix_v10-20260808-032421#4": {
+  "at": "2026-08-08T07:48:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_airfucksWildMix_v10-20260808-032421.json",
+   "sha256": "414c99510689115bb4337d1ed79cf02bbb255c76fdbb87440a3032a8b2ae3e8c"
+  },
+  "score": 2,
   "tags": []
  },
  "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260803-023332#1": {
@@ -14361,6 +14513,47 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-032706#1": {
+  "at": "2026-08-08T07:47:32",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-032706.json",
+   "sha256": "7cd69e85a14f9946727f0adefcb814a42a6c70d6a30b8a64de1e707a593a1aaf"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-032706#2": {
+  "at": "2026-08-08T07:47:36",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-032706.json",
+   "sha256": "a226946926167cec2c2117ffd7b42c1f42792174432129447929ec3706e4a777"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-032706#3": {
+  "at": "2026-08-08T07:47:41",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-032706.json",
+   "sha256": "7f01a3e741bd23cd24ad229b21fdd9339db9445d467b90daf915af83c4d00610"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-032706#4": {
+  "at": "2026-08-08T07:47:48",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-032706.json",
+   "sha256": "57f9f6aff7d57a92325eae81e39b20b70f9709e81c3c43e249072cf7c8c557d7"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
  "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260803-023453#1": {
   "at": "2026-08-04T11:44:21",
   "score": 1,
@@ -14370,6 +14563,44 @@
   "at": "2026-08-04T11:44:22",
   "score": 2,
   "tags": []
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-032949#1": {
+  "at": "2026-08-08T07:47:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-032949.json",
+   "sha256": "07a32892ac89444cdff35e047298bca3b41b60e354e53b4ad4cedfb82c7705e5"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-032949#2": {
+  "at": "2026-08-08T07:47:22",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-032949.json",
+   "sha256": "ae6ca7e8ea7d309066973dbec7f77fcf80ac79d7afa769ee6dc6458dea9a832b"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-032949#3": {
+  "at": "2026-08-08T07:47:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-032949.json",
+   "sha256": "e5c13ada73aaa377183c04e848883450665ea0cc3ecd1cf307be39ccd0eda87b"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-032949#4": {
+  "at": "2026-08-08T07:47:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-032949.json",
+   "sha256": "9a20ef23071e254fff0d420d474c03f21789d14e56ff538d3f43758698ac88df"
+  },
+  "score": 3,
+  "tags": [
+   "seam"
+  ]
  },
  "wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260803-023614#1": {
   "at": "2026-08-04T11:44:18",
@@ -14381,6 +14612,47 @@
   "score": 3,
   "tags": []
  },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260808-033229#1": {
+  "at": "2026-08-08T07:47:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260808-033229.json",
+   "sha256": "26f67bdf0ccadc1ee1c9d3576d4c9dd0b51db789bbbf8a55d09f3a293ec2aa5f"
+  },
+  "score": 1,
+  "tags": [
+   "blank",
+   "fragment"
+  ]
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260808-033229#2": {
+  "at": "2026-08-08T07:47:09",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260808-033229.json",
+   "sha256": "c428a199a80d760829378b2c41e2c35174c798977f1d420684f904d21342d600"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260808-033229#3": {
+  "at": "2026-08-08T07:47:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260808-033229.json",
+   "sha256": "4ac276bcdf0fed92d28e64e061e5e911b4be26350f96220b0592f63046eaa6a8"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260808-033229#4": {
+  "at": "2026-08-08T07:47:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_anyloraCheckpoint_lcm-20260808-033229.json",
+   "sha256": "b08828e362f8af5fb6ccee6248f5a666d73e9a6b7133ad57b40e5d3a6fbc8f35"
+  },
+  "score": 2,
+  "tags": [
+   "blank"
+  ]
+ },
  "wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260803-023729#1": {
   "at": "2026-08-04T11:44:10",
   "score": 1,
@@ -14390,6 +14662,53 @@
   "at": "2026-08-04T11:44:14",
   "score": 1,
   "tags": []
+ },
+ "wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260808-033504#1": {
+  "at": "2026-08-08T07:46:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260808-033504.json",
+   "sha256": "cdbca4d6a59cb2a4aad0280dd83ccde6f4f365824e45c699730bcc51db1eca1c"
+  },
+  "score": 1,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260808-033504#2": {
+  "at": "2026-08-08T07:46:50",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260808-033504.json",
+   "sha256": "801a71a9e5981b8e6f2482febf593ffda527b20dfabeab038b7a7d1e5dd7df1e"
+  },
+  "score": 1,
+  "tags": [
+   "blank",
+   "flat",
+   "fragment"
+  ]
+ },
+ "wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260808-033504#3": {
+  "at": "2026-08-08T07:46:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260808-033504.json",
+   "sha256": "11cc898d8a8d6d58395b756785b8119239c66a153ef2bc62bb7d56cefdde2dea"
+  },
+  "score": 1,
+  "tags": [
+   "blank",
+   "text"
+  ]
+ },
+ "wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260808-033504#4": {
+  "at": "2026-08-08T07:46:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_boxmix25DMale_v10Boxcat-20260808-033504.json",
+   "sha256": "c686fe5ac60541fdfb3ea15068bb16848728923fa46a08df16380130830ae21f"
+  },
+  "score": 2,
+  "tags": [
+   "blank"
+  ]
  },
  "wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260803-023856#1": {
   "at": "2026-08-04T11:44:07",
@@ -14401,6 +14720,45 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260808-033754#1": {
+  "at": "2026-08-08T07:46:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260808-033754.json",
+   "sha256": "f0298c87039e21ab504c242687b940ff73203c13ba6aaf20ce649332f9478298"
+  },
+  "score": 1,
+  "tags": [
+   "blank",
+   "text"
+  ]
+ },
+ "wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260808-033754#2": {
+  "at": "2026-08-08T07:46:38",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260808-033754.json",
+   "sha256": "ec7488753454367fc86b1842be8a14fe71c051bb86f49ed6cfe9fdb99511a8b3"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260808-033754#3": {
+  "at": "2026-08-08T07:46:39",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260808-033754.json",
+   "sha256": "1aaed1760fcec336d63c4306efdca38dd1d37adfa7f091a00dd3c651452c92ce"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260808-033754#4": {
+  "at": "2026-08-08T07:46:42",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_chilloutmix_NiPrunedFp32Fix-20260808-033754.json",
+   "sha256": "f2e821e773b42866cba60eebafa583a44947c6da8b32a3718c9b8fa6813717d4"
+  },
+  "score": 2,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_daddyDiffusion_v1-20260803-024021#1": {
   "at": "2026-08-04T11:44:03",
   "score": 1,
@@ -14408,6 +14766,42 @@
  },
  "wallPiece-overnight_basalt_daddyDiffusion_v1-20260803-024021#2": {
   "at": "2026-08-04T11:44:06",
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_daddyDiffusion_v1-20260808-034039#1": {
+  "at": "2026-08-08T07:46:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_daddyDiffusion_v1-20260808-034039.json",
+   "sha256": "74d64fb80bcb8dcf0e88155766e75e9cdb3c7d8bbe86960c62f1ee5d510f4fac"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_daddyDiffusion_v1-20260808-034039#2": {
+  "at": "2026-08-08T07:46:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_daddyDiffusion_v1-20260808-034039.json",
+   "sha256": "91a10288faecee88010d71487f00349d7bf70096671a1e30ee4bd7fc7c09ad4d"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_daddyDiffusion_v1-20260808-034039#3": {
+  "at": "2026-08-08T07:46:29",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_daddyDiffusion_v1-20260808-034039.json",
+   "sha256": "5433347c47a1d759984e0c2ea45e8766c7e091945fa6b1fa7f3e08a8325cf79e"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_daddyDiffusion_v1-20260808-034039#4": {
+  "at": "2026-08-08T07:46:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_daddyDiffusion_v1-20260808-034039.json",
+   "sha256": "e6aaaf16b8fbf6c68a5645468174c1d29e0261fcbeb64ae847bed3faa2769c7e"
+  },
   "score": 0,
   "tags": []
  },
@@ -14423,6 +14817,52 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_basalt_deepboys25D_v20-20260808-034315#1": {
+  "at": "2026-08-08T07:46:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_deepboys25D_v20-20260808-034315.json",
+   "sha256": "a9ba22811a7186cf6cc6ba3503fb1ed138f1b1433a90e09fd36ba95431708f29"
+  },
+  "score": 1,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_deepboys25D_v20-20260808-034315#2": {
+  "at": "2026-08-08T07:46:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_deepboys25D_v20-20260808-034315.json",
+   "sha256": "41b5df1d6178bfe9b224fa2204be4085ea91818a55edfc48da26231e5c8c2920"
+  },
+  "score": 4,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_deepboys25D_v20-20260808-034315#3": {
+  "at": "2026-08-08T07:46:18",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_deepboys25D_v20-20260808-034315.json",
+   "sha256": "b54909575fa63d52fcd83f12c26f1b6cfb3af40253634108c397cf0b893367c9"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_basalt_deepboys25D_v20-20260808-034315#4": {
+  "at": "2026-08-08T07:46:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_deepboys25D_v20-20260808-034315.json",
+   "sha256": "9bec56ead9979d3692a8678b91f943641cef6bc1e385ffec51eb2e0699f09304"
+  },
+  "score": 1,
+  "tags": [
+   "blank",
+   "fragment"
+  ]
+ },
  "wallPiece-overnight_basalt_dreamshaper_8LCM-20260803-024251#1": {
   "at": "2026-08-04T11:43:51",
   "score": 1,
@@ -14434,6 +14874,43 @@
  "wallPiece-overnight_basalt_dreamshaper_8LCM-20260803-024251#2": {
   "at": "2026-08-04T11:43:56",
   "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_dreamshaper_8LCM-20260808-034549#1": {
+  "at": "2026-08-08T07:45:12",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_dreamshaper_8LCM-20260808-034549.json",
+   "sha256": "1a22d3bac99dea242edbd9fdca4b5383091a85a06bfbad48478775ea7a4f7099"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_dreamshaper_8LCM-20260808-034549#2": {
+  "at": "2026-08-08T07:45:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_dreamshaper_8LCM-20260808-034549.json",
+   "sha256": "eb6b048f6c04ff77e2192d191cdee3cb4d6aa7fb8172817875580bce11813e50"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_dreamshaper_8LCM-20260808-034549#3": {
+  "at": "2026-08-08T07:45:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_dreamshaper_8LCM-20260808-034549.json",
+   "sha256": "3c0cf25ffa2f338daa3d06f736d813948752d0ed3427013fb4621c6a42426843"
+  },
+  "note": "these weird malformed generations which are harsh and blurry sometimes translate surprisingly well to low resolution textures under our pipeline.",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_dreamshaper_8LCM-20260808-034549#4": {
+  "at": "2026-08-08T07:45:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_dreamshaper_8LCM-20260808-034549.json",
+   "sha256": "c205132185b2c3b257ec2818b743faba40fd3e25121983cede2837bda767adac"
+  },
+  "score": 6,
   "tags": []
  },
  "wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260803-024406#1": {
@@ -14449,6 +14926,42 @@
    "fragment"
   ]
  },
+ "wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260808-034827#1": {
+  "at": "2026-08-08T07:45:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260808-034827.json",
+   "sha256": "163c9a2044534a043f3b445e942641202ddd9c891ff54f523bcfa4f9d702d334"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260808-034827#2": {
+  "at": "2026-08-08T07:45:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260808-034827.json",
+   "sha256": "a4d132a446c141619ba37d0a281dc757846cc533ad4a0ff61544b19d5e7a5341"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260808-034827#3": {
+  "at": "2026-08-08T07:45:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260808-034827.json",
+   "sha256": "1c4ec31837dc4c4e246c7eeac38d34447082d8eb7ef1fb2bda362ec96f51aac7"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260808-034827#4": {
+  "at": "2026-08-08T07:45:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_everyjourneylcm_v10Ace-20260808-034827.json",
+   "sha256": "4e9faa2a949a839db7fedddbfde03a347f7b841c2bb9ec3a7117b1b0679b87d2"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260803-024559#1": {
   "at": "2026-08-04T11:43:35",
   "score": 4,
@@ -14462,6 +14975,44 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260808-035214#1": {
+  "at": "2026-08-08T07:44:41",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260808-035214.json",
+   "sha256": "3c17d3c4d3c55ee9cc8e93202969e66afc4d6ca2c6f057f4782310725ada04cb"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260808-035214#2": {
+  "at": "2026-08-08T07:44:43",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260808-035214.json",
+   "sha256": "f4df174b8892534e2ccbae511935c0d8d2ebec62191c5adbff0741fa5a8df4c0"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260808-035214#3": {
+  "at": "2026-08-08T07:44:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260808-035214.json",
+   "sha256": "528be252fcc50a226acc2a5b9ff8119eb05b8f0e90f4cf61e7e13ed7f68fc56d"
+  },
+  "score": 1,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260808-035214#4": {
+  "at": "2026-08-08T07:44:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_homodiffusionGay_homoDiffusionV10FP32-20260808-035214.json",
+   "sha256": "e428471b42c3a86373f9d79eddb284400e1318945a17a254b850a11506698de3"
+  },
+  "score": 3,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_homosimile_v40-20260803-024721#1": {
   "at": "2026-08-04T11:43:24",
   "score": 3,
@@ -14471,6 +15022,48 @@
   "at": "2026-08-04T11:43:26",
   "score": 1,
   "tags": []
+ },
+ "wallPiece-overnight_basalt_homosimile_v40-20260808-035459#1": {
+  "at": "2026-08-08T07:44:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_homosimile_v40-20260808-035459.json",
+   "sha256": "febb56350eecb226b5e871108cc572ac92c4769c28c56f8aa2844c9cf4e86e5a"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_homosimile_v40-20260808-035459#2": {
+  "at": "2026-08-08T07:44:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_homosimile_v40-20260808-035459.json",
+   "sha256": "13774b8cc87cf5783d55c0a622e4741f973226c01944c77931f670c8b7ad4526"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_homosimile_v40-20260808-035459#3": {
+  "at": "2026-08-08T07:44:34",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_homosimile_v40-20260808-035459.json",
+   "sha256": "5353b9986f9210d66b729a2239c456aeb3c4d04cd153625d46b581584d77a419"
+  },
+  "score": 3,
+  "tags": [
+   "harsh",
+   "palette",
+   "repeat"
+  ]
+ },
+ "wallPiece-overnight_basalt_homosimile_v40-20260808-035459#4": {
+  "at": "2026-08-08T07:44:39",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_homosimile_v40-20260808-035459.json",
+   "sha256": "06d12808fa9c7eaab514c96d6bb74561eedea714db09b861fb7aa6604e147788"
+  },
+  "score": 3,
+  "tags": [
+   "seam"
+  ]
  },
  "wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260803-024836#1": {
   "at": "2026-08-04T11:43:21",
@@ -14484,6 +15077,50 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260808-035736#1": {
+  "at": "2026-08-08T07:40:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260808-035736.json",
+   "sha256": "10b66317261b9b3f1c09cbbb7d00c66d710f772dde5ac3095eb5c4179022fbcb"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260808-035736#2": {
+  "at": "2026-08-08T07:41:00",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260808-035736.json",
+   "sha256": "d55900fa9229b97c74ec46eea5e12f16e7d32b08a4d17036442210c25cdc49d3"
+  },
+  "score": 4,
+  "tags": [
+   "repeat"
+  ]
+ },
+ "wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260808-035736#3": {
+  "at": "2026-08-08T07:41:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260808-035736.json",
+   "sha256": "056ab3c80e2441b986a36b3812ff41e0600c36c4f1b8176054796319d61eef45"
+  },
+  "score": 4,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260808-035736#4": {
+  "at": "2026-08-08T07:41:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_littleFishNaiLCM_v10-20260808-035736.json",
+   "sha256": "c830a54cb14d9c8132a4b3939267aa62b254dda5259a27fc6c048bcfe1f2dd9a"
+  },
+  "score": 2,
+  "tags": [
+   "blank"
+  ]
+ },
  "wallPiece-overnight_basalt_lyriel_v16-20260803-024951#1": {
   "at": "2026-08-04T11:43:11",
   "score": 1,
@@ -14493,6 +15130,47 @@
   "at": "2026-08-04T11:43:13",
   "score": 3,
   "tags": []
+ },
+ "wallPiece-overnight_basalt_lyriel_v16-20260808-040011#1": {
+  "at": "2026-08-08T07:38:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_lyriel_v16-20260808-040011.json",
+   "sha256": "da074e542b7383052fb1f56945c425150fb40bb793e7d725b6ff4bd86bb2e206"
+  },
+  "score": 1,
+  "tags": [
+   "picture"
+  ]
+ },
+ "wallPiece-overnight_basalt_lyriel_v16-20260808-040011#2": {
+  "at": "2026-08-08T07:40:38",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_lyriel_v16-20260808-040011.json",
+   "sha256": "42cce7520a7e95d1394e1198ca2b0c120345991d80464afc547cc78ca5fd80fa"
+  },
+  "note": "the lighting makes it look like there's spotlights. needs a matching ceiling to work, but looks really nice",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_lyriel_v16-20260808-040011#3": {
+  "at": "2026-08-08T07:40:41",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_lyriel_v16-20260808-040011.json",
+   "sha256": "612d7283eb92c9bfa43a63bf6794ca2c3f9876fca3fee155ba561e02d51e4966"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_lyriel_v16-20260808-040011#4": {
+  "at": "2026-08-08T07:40:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_lyriel_v16-20260808-040011.json",
+   "sha256": "c419f2f6822d4d33e897d3e7974adc4176baa97a6ad3f9d9071faa4ccb6031f4"
+  },
+  "score": 2,
+  "tags": [
+   "repeat"
+  ]
  },
  "wallPiece-overnight_basalt_maturemalemix_v13-20260803-025106#1": {
   "at": "2026-08-04T11:43:08",
@@ -14504,6 +15182,46 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_basalt_maturemalemix_v13-20260808-040246#1": {
+  "at": "2026-08-08T07:38:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_maturemalemix_v13-20260808-040246.json",
+   "sha256": "4e9da7d6467b8086ff432a38a99b4bf3af962e16a329507c293e52891a4ce1ef"
+  },
+  "score": 2,
+  "tags": [
+   "perspective"
+  ]
+ },
+ "wallPiece-overnight_basalt_maturemalemix_v13-20260808-040246#2": {
+  "at": "2026-08-08T07:38:18",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_maturemalemix_v13-20260808-040246.json",
+   "sha256": "cbcf0c1cacbf6e78f485422e8e5e508460bd2b71847c3a0b10b3a9eaa6043d9f"
+  },
+  "score": 3,
+  "tags": [
+   "perspective"
+  ]
+ },
+ "wallPiece-overnight_basalt_maturemalemix_v13-20260808-040246#3": {
+  "at": "2026-08-08T07:38:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_maturemalemix_v13-20260808-040246.json",
+   "sha256": "5434ba24b07354f99407ddb26a303667cf173ccbe0495840c6cd71438266fc74"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_maturemalemix_v13-20260808-040246#4": {
+  "at": "2026-08-08T07:38:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_maturemalemix_v13-20260808-040246.json",
+   "sha256": "e59b97368337b1fc0c5a0ea2d85051dd6d4c36ea6f8cb3a9098a28b481b3b361"
+  },
+  "score": 5,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_megatronmerge-20260803-025223#1": {
   "at": "2026-08-04T11:43:06",
   "score": 1,
@@ -14512,6 +15230,47 @@
  "wallPiece-overnight_basalt_megatronmerge-20260803-025223#2": {
   "at": "2026-08-04T11:43:07",
   "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_megatronmerge-20260808-040523#1": {
+  "at": "2026-08-08T07:37:50",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_megatronmerge-20260808-040523.json",
+   "sha256": "7b880d81ec04feb1b578acb2036389721f972588405da0beb9cd234767e4ff1b"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_megatronmerge-20260808-040523#2": {
+  "at": "2026-08-08T07:37:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_megatronmerge-20260808-040523.json",
+   "sha256": "73ff59e55c62b798cac2ff0d27faa1a864c1d04eed429a09a8ca07b773d57122"
+  },
+  "score": 1,
+  "tags": [
+   "seam"
+  ]
+ },
+ "wallPiece-overnight_basalt_megatronmerge-20260808-040523#3": {
+  "at": "2026-08-08T07:38:05",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_megatronmerge-20260808-040523.json",
+   "sha256": "e9981c9571ba5b67525985fcbf44153d1c25a6c00b0f86fe35bbadecd01d3192"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "text"
+  ]
+ },
+ "wallPiece-overnight_basalt_megatronmerge-20260808-040523#4": {
+  "at": "2026-08-08T07:38:09",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_megatronmerge-20260808-040523.json",
+   "sha256": "09ffd5682c58d2614a3f4708764e4dcf865cae2b70c24266df51c526571b03ba"
+  },
+  "score": 3,
   "tags": []
  },
  "wallPiece-overnight_basalt_mistoonAnime_v30-20260803-025338#1": {
@@ -14529,6 +15288,47 @@
    "fragment"
   ]
  },
+ "wallPiece-overnight_basalt_mistoonAnime_v30-20260808-040800#1": {
+  "at": "2026-08-08T07:37:31",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_mistoonAnime_v30-20260808-040800.json",
+   "sha256": "039e9a612933f3b2755c7bf41a3fe4f9137a03080d2b35ff7e28d63c636074b8"
+  },
+  "score": 6,
+  "tags": [
+   "harsh"
+  ]
+ },
+ "wallPiece-overnight_basalt_mistoonAnime_v30-20260808-040800#2": {
+  "at": "2026-08-08T07:37:34",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_mistoonAnime_v30-20260808-040800.json",
+   "sha256": "94e26de73851dc084f0fdd8493fc1cf1e5a550c5931b263e28842bee1af70a59"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_mistoonAnime_v30-20260808-040800#3": {
+  "at": "2026-08-08T07:37:39",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_mistoonAnime_v30-20260808-040800.json",
+   "sha256": "5faa2c817cbf3791eb9b5816181593f4a19993201b65aafb2ca77bb98ef95de5"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_mistoonAnime_v30-20260808-040800#4": {
+  "at": "2026-08-08T07:37:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_mistoonAnime_v30-20260808-040800.json",
+   "sha256": "24aec0c86f94f956b70a9ae08149c556a61c3b797f722ad037f890431494d576"
+  },
+  "score": 3,
+  "tags": [
+   "harsh",
+   "unguided"
+  ]
+ },
  "wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260803-025453#1": {
   "at": "2026-08-04T11:42:49",
   "score": 3,
@@ -14541,6 +15341,44 @@
   "score": 3,
   "tags": []
  },
+ "wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260808-041035#1": {
+  "at": "2026-08-08T07:37:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260808-041035.json",
+   "sha256": "093e1f7964c6c202ba3f11be7aade0407610475bf98c73f49331dcb71f91f5b3"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260808-041035#2": {
+  "at": "2026-08-08T07:37:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260808-041035.json",
+   "sha256": "63147e18275b3bd6e116a486dfb1b7e76321c9bb7585102119a713618e064578"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260808-041035#3": {
+  "at": "2026-08-08T07:37:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260808-041035.json",
+   "sha256": "b382a313c4ee29c645e66d115b2bfb84caa411c7f069539997534f5af0c5fc1e"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260808-041035#4": {
+  "at": "2026-08-08T07:37:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_newERANewEstheticRetro_retroV60VAE-20260808-041035.json",
+   "sha256": "28c4de9393abd7eb8bb5cde45656c08aa2d1faf2131f1d19b70fe716ddfe82b4"
+  },
+  "score": 5,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260803-025616#1": {
   "at": "2026-08-04T11:42:43",
   "score": 3,
@@ -14548,6 +15386,42 @@
  },
  "wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260803-025616#2": {
   "at": "2026-08-04T11:42:44",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260808-041315#1": {
+  "at": "2026-08-08T07:36:58",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260808-041315.json",
+   "sha256": "1aabfc052e59042e73725d0d1402107240482e8f17fbe1f4ffd2cfc033a63615"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260808-041315#2": {
+  "at": "2026-08-08T07:36:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260808-041315.json",
+   "sha256": "9af60a26e37da7ffec9bed49c58c08c42577fdd3c2a9edcb6dd56a81e02fdd22"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260808-041315#3": {
+  "at": "2026-08-08T07:37:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260808-041315.json",
+   "sha256": "af8db85d24a7ca514272f55484588dabcc293edd6af12c60688f7b0a8afe6057"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260808-041315#4": {
+  "at": "2026-08-08T07:37:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_ohmenOrigins_ohmenOriginsV3-20260808-041315.json",
+   "sha256": "313e4ff982433fc9ebf8ba0edc8e34fabaabf2e46b4c128ee3bf3337b57ef6df"
+  },
   "score": 4,
   "tags": []
  },
@@ -14561,6 +15435,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_basalt_ohmenToontastic_ohmenToontasticV2-20260808-041554#1": {
+  "at": "2026-08-08T07:36:51",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_ohmenToontastic_ohmenToontasticV2-20260808-041554.json",
+   "sha256": "8a5eaf0bf0c7d190dc49b4df1f8d7203b610416b00c33fb6a168dc7f2a83435f"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_ohmenToontastic_ohmenToontasticV2-20260808-041554#2": {
+  "at": "2026-08-08T07:36:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_ohmenToontastic_ohmenToontasticV2-20260808-041554.json",
+   "sha256": "68e9d4c4f678faee2fb5cf765ac53d0e1d840065b5298f441c9533fa9e15dc82"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_ohmenToontastic_ohmenToontasticV2-20260808-041554#3": {
+  "at": "2026-08-08T07:36:53",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_ohmenToontastic_ohmenToontasticV2-20260808-041554.json",
+   "sha256": "a4934783619903d610568c77effcc43a0891db1072c54b51e05e982d8f509e10"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_ohmenToontastic_ohmenToontasticV2-20260808-041554#4": {
+  "at": "2026-08-08T07:36:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_ohmenToontastic_ohmenToontasticV2-20260808-041554.json",
+   "sha256": "4f25cdfb8f8ccdf22c5395b1fc878b7dbe24e04106759829dcbb1a93515478ef"
+  },
+  "score": 3,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_perfectWorld_v3Baked-20260803-025845#1": {
   "at": "2026-08-04T11:42:36",
   "score": 3,
@@ -14570,6 +15480,44 @@
   "at": "2026-08-04T11:42:38",
   "score": 3,
   "tags": []
+ },
+ "wallPiece-overnight_basalt_perfectWorld_v3Baked-20260808-041828#1": {
+  "at": "2026-08-08T07:36:29",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_perfectWorld_v3Baked-20260808-041828.json",
+   "sha256": "ef01603db8a37fb99006a79f4f5f0f108e6542ed4af655e495a98638d894fc9f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_perfectWorld_v3Baked-20260808-041828#2": {
+  "at": "2026-08-08T07:36:36",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_perfectWorld_v3Baked-20260808-041828.json",
+   "sha256": "02494676af349a30558dc2ee1769bf9ac40b59d0766461da2869d332eb35eeef"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_perfectWorld_v3Baked-20260808-041828#3": {
+  "at": "2026-08-08T07:36:42",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_perfectWorld_v3Baked-20260808-041828.json",
+   "sha256": "a6be27d1b1f79a8940a7adf1edfd54eb2e81198303b987c2859364f0f60edcc1"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_perfectWorld_v3Baked-20260808-041828#4": {
+  "at": "2026-08-08T07:36:48",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_perfectWorld_v3Baked-20260808-041828.json",
+   "sha256": "ec37d528a264de0f50a78990a4a44ed5476f223667eada49e8f94420d2cf2e41"
+  },
+  "score": 4,
+  "tags": [
+   "blank"
+  ]
  },
  "wallPiece-overnight_basalt_sd-v1-4-20260803-030012#1": {
   "at": "2026-08-04T11:42:29",
@@ -14584,6 +15532,42 @@
    "text"
   ]
  },
+ "wallPiece-overnight_basalt_sd-v1-4-20260808-042121#1": {
+  "at": "2026-08-08T07:36:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_sd-v1-4-20260808-042121.json",
+   "sha256": "c6c086fdf0c09fc563ef8ee209dedfff66f14025fd7ba67c6acdde7c0f921c35"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_sd-v1-4-20260808-042121#2": {
+  "at": "2026-08-08T07:36:26",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_sd-v1-4-20260808-042121.json",
+   "sha256": "7f8b45d5f04bad0d6e3d7aea66a55f2b2ff9222c50992ca4fe4481fa2e3c3455"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_sd-v1-4-20260808-042121#3": {
+  "at": "2026-08-08T07:36:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_sd-v1-4-20260808-042121.json",
+   "sha256": "e80bc56d974ca46c281f63128a0f3e61446d244022828d5988f8b6158845f943"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_sd-v1-4-20260808-042121#4": {
+  "at": "2026-08-08T07:36:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_sd-v1-4-20260808-042121.json",
+   "sha256": "732185d1f40b380e6d52ee5b2491fceb93b41a585c1484a77f10ee9ac31ca31c"
+  },
+  "score": 0,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_sigmatron_Hyper-20260803-030130#1": {
   "at": "2026-08-04T11:42:23",
   "score": 4,
@@ -14597,6 +15581,51 @@
   "score": 0,
   "tags": []
  },
+ "wallPiece-overnight_basalt_sigmatron_Hyper-20260808-042401#1": {
+  "at": "2026-08-08T07:36:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_sigmatron_Hyper-20260808-042401.json",
+   "sha256": "099c1f9dc39d54159f010d7c85edc94ab806594aeff845040df300e799b0c63b"
+  },
+  "score": 5,
+  "tags": [
+   "blank",
+   "text"
+  ]
+ },
+ "wallPiece-overnight_basalt_sigmatron_Hyper-20260808-042401#2": {
+  "at": "2026-08-08T07:36:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_sigmatron_Hyper-20260808-042401.json",
+   "sha256": "108e2baab7d5840deb5e8a686db41fc7b1cc74f13d5901e57d09f911d9d62dbd"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_sigmatron_Hyper-20260808-042401#3": {
+  "at": "2026-08-08T07:36:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_sigmatron_Hyper-20260808-042401.json",
+   "sha256": "ae1c156204e9b809d6c91930f82e09195346818277c455cffa56a037332e02c7"
+  },
+  "score": 4,
+  "tags": [
+   "blank",
+   "text"
+  ]
+ },
+ "wallPiece-overnight_basalt_sigmatron_Hyper-20260808-042401#4": {
+  "at": "2026-08-08T07:36:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_sigmatron_Hyper-20260808-042401.json",
+   "sha256": "6974443ff5482cdf61758d8deefff40fe6b45acce40d5377ef697a94e25cf8b0"
+  },
+  "score": 5,
+  "tags": [
+   "blank",
+   "text"
+  ]
+ },
  "wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260803-030244#1": {
   "at": "2026-08-04T11:42:15",
   "score": 2,
@@ -14607,6 +15636,42 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-042638#1": {
+  "at": "2026-08-08T07:36:00",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-042638.json",
+   "sha256": "74e8ec0869c39d1bae590a23011a584b1a184bfee6ea767e23966aff2abb60a2"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-042638#2": {
+  "at": "2026-08-08T07:36:01",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-042638.json",
+   "sha256": "8bd5e230f2b1dcb1c721f4abf7da9c372a7c094be340236707c9f34488b84e40"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-042638#3": {
+  "at": "2026-08-08T07:36:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-042638.json",
+   "sha256": "7ac1ed607c2fbea454e4e821f25f4ef39388acd96e404a9a693415fa99c08bd7"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-042638#4": {
+  "at": "2026-08-08T07:36:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-042638.json",
+   "sha256": "62d4565ef38c607eb293930de745cbc7adbd95e7aab8ff308726fba0430f22b5"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260803-030357#1": {
   "at": "2026-08-04T11:42:10",
   "score": 1,
@@ -14614,6 +15679,42 @@
  },
  "wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260803-030357#2": {
   "at": "2026-08-04T11:42:12",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260808-042915#1": {
+  "at": "2026-08-08T07:35:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260808-042915.json",
+   "sha256": "8ccdeb5c2b3be31e79414efbfb60bcd66f406eac00c3b202d6a4add539ddd080"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260808-042915#2": {
+  "at": "2026-08-08T07:35:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260808-042915.json",
+   "sha256": "78e71518c65686b093790903d1aa90919f76286dc44dea2a8b2b65a19df5bc17"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260808-042915#3": {
+  "at": "2026-08-08T07:35:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260808-042915.json",
+   "sha256": "936b0692c27836309aa31371d2107de8b5eebdb19cad558087d7ee224091f172"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260808-042915#4": {
+  "at": "2026-08-08T07:35:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_tAnimeV4Pruned_v40-20260808-042915.json",
+   "sha256": "e69bf1390a4332e512c3e8570bfc2e0300fd5047b26d8811277cd99c65ae6bb1"
+  },
   "score": 1,
   "tags": []
  },
@@ -14628,6 +15729,42 @@
   "tags": [
    "burned"
   ]
+ },
+ "wallPiece-overnight_basalt_v1-5-pruned-emaonly-20260808-043152#1": {
+  "at": "2026-08-08T07:35:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_v1-5-pruned-emaonly-20260808-043152.json",
+   "sha256": "00e8ebb3e541d35df233f760b27531f54867cd852cbbfde7693c03fedbbd486e"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_v1-5-pruned-emaonly-20260808-043152#2": {
+  "at": "2026-08-08T07:35:51",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_v1-5-pruned-emaonly-20260808-043152.json",
+   "sha256": "4b9c6e568b9a8a70106e5d526cf5f158f0b685f2b7946408f5e3b08ea00f6785"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_v1-5-pruned-emaonly-20260808-043152#3": {
+  "at": "2026-08-08T07:35:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_v1-5-pruned-emaonly-20260808-043152.json",
+   "sha256": "6aa6c2ceb33cd79e8b7f9fed4237be9f7251d94ec73a6cb7e2268217f8ced0b7"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_basalt_v1-5-pruned-emaonly-20260808-043152#4": {
+  "at": "2026-08-08T07:35:53",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_v1-5-pruned-emaonly-20260808-043152.json",
+   "sha256": "00a9eff1c22a9f76822b7d695d93fd452afed6a175cbb420ed7a8a94fd655542"
+  },
+  "score": 0,
+  "tags": []
  },
  "wallPiece-overnight_basalt_virileReality_v20-20260803-030634#1": {
   "at": "2026-08-04T11:41:55",
@@ -14644,6 +15781,51 @@
    "text"
   ]
  },
+ "wallPiece-overnight_basalt_virileReality_v20-20260808-043438#1": {
+  "at": "2026-08-08T07:35:32",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_virileReality_v20-20260808-043438.json",
+   "sha256": "4e3efba6a5389cec01d9b43c14bc326b3044221559047d2437d8e770e7b73f99"
+  },
+  "score": 4,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_virileReality_v20-20260808-043438#2": {
+  "at": "2026-08-08T07:35:37",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_virileReality_v20-20260808-043438.json",
+   "sha256": "4754eabdb3ecf6a7d109c4197057c89847e48ea5efee8f8ce5de99954537ccc2"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_basalt_virileReality_v20-20260808-043438#3": {
+  "at": "2026-08-08T07:35:42",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_virileReality_v20-20260808-043438.json",
+   "sha256": "7492e08481cc008f9c49f9eddb3c8ab8def6345404e347921738c7744879c0f3"
+  },
+  "score": 3,
+  "tags": [
+   "blank",
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_basalt_virileReality_v20-20260808-043438#4": {
+  "at": "2026-08-08T07:35:46",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_basalt_virileReality_v20-20260808-043438.json",
+   "sha256": "594951408e2c54799758c9f48c4f117dcb915e95e5997495547d8d57494ad405"
+  },
+  "score": 1,
+  "tags": [
+   "blank"
+  ]
+ },
  "wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260803-030924#1": {
   "at": "2026-08-04T11:41:47",
   "score": 1,
@@ -14654,6 +15836,44 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260808-044031#1": {
+  "at": "2026-08-08T07:35:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260808-044031.json",
+   "sha256": "94effc538bcd19cb2f6319184f34dc7331dd9d6578cc3ca1af105348789567b8"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260808-044031#2": {
+  "at": "2026-08-08T07:35:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260808-044031.json",
+   "sha256": "10bfaefb98631a0ead1b894b426d72a74a4522e1ef3d38129821e7235e1b0bac"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260808-044031#3": {
+  "at": "2026-08-08T07:35:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260808-044031.json",
+   "sha256": "5b5ffb58a8a36ce752f43e01366ec84dd5807eb8e89502a5ea192b7f2935c267"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260808-044031#4": {
+  "at": "2026-08-08T07:35:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_DreamShaper_8_pruned-20260808-044031.json",
+   "sha256": "7f3d1b158d04f9f6d675b2821461bee63206f624fe17ead95cf582944a36d0ca"
+  },
+  "score": 5,
+  "tags": [
+   "blank"
+  ]
+ },
  "wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260803-031037#1": {
   "at": "2026-08-04T11:41:44",
   "score": 1,
@@ -14661,6 +15881,42 @@
  },
  "wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260803-031037#2": {
   "at": "2026-08-04T11:41:44",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260808-044321#1": {
+  "at": "2026-08-08T07:35:12",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260808-044321.json",
+   "sha256": "b37cd1430cc73e768c586288d7be6fc8228c2154594a00ba817709b31b126bcf"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260808-044321#2": {
+  "at": "2026-08-08T07:35:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260808-044321.json",
+   "sha256": "51385626dcfeb15f8e3290f4f2ff1e02fcfff791ec81527fae29926323178473"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260808-044321#3": {
+  "at": "2026-08-08T07:35:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260808-044321.json",
+   "sha256": "3fe26cb16fdf27c7c51b4074d56d60be55c371ef0b863c3b8aeb0cd59494af0b"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260808-044321#4": {
+  "at": "2026-08-08T07:35:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_aLunarDreamBeta_aLunarDreamV1-20260808-044321.json",
+   "sha256": "d51549700e174c6a5ae063f147ee7ddbb37780a354189f477cfbe88d1cfec2b2"
+  },
   "score": 1,
   "tags": []
  },
@@ -14674,6 +15930,44 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_aamAnyloraAnimeMixAnime_v1-20260808-044559#1": {
+  "at": "2026-08-08T07:35:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_aamAnyloraAnimeMixAnime_v1-20260808-044559.json",
+   "sha256": "44d7e56c4dc1e05cf6cd836f5f37c2605830065532a6ed5c1fbb767eb6f57d1a"
+  },
+  "score": 4,
+  "tags": [
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight_cathedral_aamAnyloraAnimeMixAnime_v1-20260808-044559#2": {
+  "at": "2026-08-08T07:35:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_aamAnyloraAnimeMixAnime_v1-20260808-044559.json",
+   "sha256": "2a544c227c29e33694e9ef39495aef76c56c3d5be2a4afafac20abf928f43704"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_aamAnyloraAnimeMixAnime_v1-20260808-044559#3": {
+  "at": "2026-08-08T07:35:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_aamAnyloraAnimeMixAnime_v1-20260808-044559.json",
+   "sha256": "6b6f4b88c0a647b9a03385167230e9b78a865ed3547458d689210af40f948e13"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_aamAnyloraAnimeMixAnime_v1-20260808-044559#4": {
+  "at": "2026-08-08T07:35:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_aamAnyloraAnimeMixAnime_v1-20260808-044559.json",
+   "sha256": "f63936fa2c213bcb0dc621fe64dcf0230653c314fa6937629e82b971233864a9"
+  },
+  "score": 3,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_airfucksWildMix_v10-20260803-031307#1": {
   "at": "2026-08-04T11:41:40",
   "score": 1,
@@ -14681,6 +15975,46 @@
  },
  "wallPiece-overnight_cathedral_airfucksWildMix_v10-20260803-031307#2": {
   "at": "2026-08-04T11:41:41",
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_airfucksWildMix_v10-20260808-044843#1": {
+  "at": "2026-08-08T07:34:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_airfucksWildMix_v10-20260808-044843.json",
+   "sha256": "dd456f9a318402ce23d5556a1f3e6ea2971bfe91cc2b62fe46ebf38baa2a832f"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_airfucksWildMix_v10-20260808-044843#2": {
+  "at": "2026-08-08T07:34:48",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_airfucksWildMix_v10-20260808-044843.json",
+   "sha256": "3d4f2db4eb73206dc32f396c324411fa52a974c93501028a04f60a0ff149ae38"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "repeat",
+   "seam"
+  ]
+ },
+ "wallPiece-overnight_cathedral_airfucksWildMix_v10-20260808-044843#3": {
+  "at": "2026-08-08T07:34:51",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_airfucksWildMix_v10-20260808-044843.json",
+   "sha256": "320c326208166bf34ba5d2aca2a70ff315dbf2c538baca8bebca5a8eee23130e"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_airfucksWildMix_v10-20260808-044843#4": {
+  "at": "2026-08-08T07:34:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_airfucksWildMix_v10-20260808-044843.json",
+   "sha256": "948ecdd758fca1e6331299078b05f871d70e5896a0defe778b48c0fcee7125a0"
+  },
   "score": 2,
   "tags": []
  },
@@ -14699,6 +16033,44 @@
    "blank"
   ]
  },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-045128#1": {
+  "at": "2026-08-08T07:34:16",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-045128.json",
+   "sha256": "40ecebaf8c6e881460e2b80f5965340770e4e1676c2e573ec6773afe156fe38f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-045128#2": {
+  "at": "2026-08-08T07:34:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-045128.json",
+   "sha256": "0ca49cb922fb340c75e44d3dd7cb582e1bddac650e839699f62c9ceda93e7eaf"
+  },
+  "score": 3,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-045128#3": {
+  "at": "2026-08-08T07:34:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-045128.json",
+   "sha256": "ea3dc005947b0aac112d74b4c64d317d241c6c774fb70fb70cccf3092df09514"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-045128#4": {
+  "at": "2026-08-08T07:34:22",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-045128.json",
+   "sha256": "dff76ac40f06106213d8a4c0376d3c96a83386c58d976f126526f265a8db22ab"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260803-031547#1": {
   "at": "2026-08-04T11:41:14",
   "score": 1,
@@ -14708,6 +16080,47 @@
   "at": "2026-08-04T11:41:16",
   "score": 3,
   "tags": []
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-045412#1": {
+  "at": "2026-08-08T07:33:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-045412.json",
+   "sha256": "c6e4d06ae776275f0f427bc565971a7702eb65a4a90ac62849ff1eb36ab20f04"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-045412#2": {
+  "at": "2026-08-08T07:34:05",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-045412.json",
+   "sha256": "45319149b120a1049d391e76b241c7fba632284673afdb374952ddac0494c71a"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-045412#3": {
+  "at": "2026-08-08T07:34:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-045412.json",
+   "sha256": "497f37eb5e3ea3a853c1aac11f498835ac00a1e98b67595454e02b288e37fc42"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-045412#4": {
+  "at": "2026-08-08T07:34:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-045412.json",
+   "sha256": "a2f78ddb4f8803df72b03307c95be8e6e607abda3c33d5f4bed04ab57b0ea9e2"
+  },
+  "score": 1,
+  "tags": [
+   "fragment",
+   "picture"
+  ]
  },
  "wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260803-031706#1": {
   "at": "2026-08-04T11:41:07",
@@ -14719,6 +16132,47 @@
   "score": 5,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260808-045653#1": {
+  "at": "2026-08-08T07:33:36",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260808-045653.json",
+   "sha256": "39c158883fd2735d1f261984f192dd3234828f64375eb134ffe54c1ff7df8e3b"
+  },
+  "score": 4,
+  "tags": [
+   "harsh"
+  ]
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260808-045653#2": {
+  "at": "2026-08-08T07:33:41",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260808-045653.json",
+   "sha256": "ce84656c405e0f63329e18a7c9770b1840f2a7f9b84ebf6a05e4f27661f881a1"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260808-045653#3": {
+  "at": "2026-08-08T07:33:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260808-045653.json",
+   "sha256": "bb526b263956ddceeedd8cdd3c1e8fef9ddfa233190c6493258948c44b5aadcb"
+  },
+  "score": 4,
+  "tags": [
+   "outdoor",
+   "repeat"
+  ]
+ },
+ "wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260808-045653#4": {
+  "at": "2026-08-08T07:33:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_anyloraCheckpoint_lcm-20260808-045653.json",
+   "sha256": "e444207c5e68bc03112290aed163ca0a9346fe9c169128092f4041d8963ee792"
+  },
+  "score": 6,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260803-031821#1": {
   "at": "2026-08-04T11:41:05",
   "score": 1,
@@ -14726,6 +16180,42 @@
  },
  "wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260803-031821#2": {
   "at": "2026-08-04T11:41:06",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260808-045931#1": {
+  "at": "2026-08-08T07:33:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260808-045931.json",
+   "sha256": "57cfd221c2562a3d1e56c0944b5daaf608c736a54cd4b8d987fb676d4be52dcd"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260808-045931#2": {
+  "at": "2026-08-08T07:33:22",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260808-045931.json",
+   "sha256": "7451439059be61e5f9261c5a876159f390f44e6467a64c943ee60bb9f4ac83e3"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260808-045931#3": {
+  "at": "2026-08-08T07:33:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260808-045931.json",
+   "sha256": "aaf27541166a9cc3aeaba3129eae483338c63013683f34cda09a04de688197dd"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260808-045931#4": {
+  "at": "2026-08-08T07:33:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_boxmix25DMale_v10Boxcat-20260808-045931.json",
+   "sha256": "78f0de32d9b0d10c2829cf5fefdd01a4eeba7a8ee308fda54725eecb2d83b08c"
+  },
   "score": 1,
   "tags": []
  },
@@ -14739,6 +16229,42 @@
   "score": 3,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_chilloutmix_NiPrunedFp32Fix-20260808-050224#1": {
+  "at": "2026-08-08T07:33:16",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_chilloutmix_NiPrunedFp32Fix-20260808-050224.json",
+   "sha256": "5ccc05a3e238f29fbc79f4a6ab83eea866cfae6ec1fb0669d835f7c0a9bd4082"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_chilloutmix_NiPrunedFp32Fix-20260808-050224#2": {
+  "at": "2026-08-08T07:33:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_chilloutmix_NiPrunedFp32Fix-20260808-050224.json",
+   "sha256": "bbd56e8bb66a5875298508fc3dfff51012f6a71deb0fbfe3878d8c4ac0079b6a"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_chilloutmix_NiPrunedFp32Fix-20260808-050224#3": {
+  "at": "2026-08-08T07:33:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_chilloutmix_NiPrunedFp32Fix-20260808-050224.json",
+   "sha256": "475e1629f25d897c7469e9425784b29b4c1b24e437aa62dc1e66fde309e58a4a"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_chilloutmix_NiPrunedFp32Fix-20260808-050224#4": {
+  "at": "2026-08-08T07:33:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_chilloutmix_NiPrunedFp32Fix-20260808-050224.json",
+   "sha256": "8ecadc207e4fd53e85631915fad5f088fabe2d39e9d2eb521847e4b60217bd6f"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_daddyDiffusion_v1-20260803-032109#1": {
   "at": "2026-08-04T11:40:57",
   "score": 1,
@@ -14746,6 +16272,42 @@
  },
  "wallPiece-overnight_cathedral_daddyDiffusion_v1-20260803-032109#2": {
   "at": "2026-08-04T11:40:58",
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_daddyDiffusion_v1-20260808-050512#1": {
+  "at": "2026-08-08T07:33:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_daddyDiffusion_v1-20260808-050512.json",
+   "sha256": "1b47919a3e62d8a6f71ebced50321d1125624979c8757db428fec2a1ea4ab28c"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_daddyDiffusion_v1-20260808-050512#2": {
+  "at": "2026-08-08T07:33:12",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_daddyDiffusion_v1-20260808-050512.json",
+   "sha256": "9e54e5cb47309a281c011785beadac68588dbefea22de42e41409e1e40a9248d"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_daddyDiffusion_v1-20260808-050512#3": {
+  "at": "2026-08-08T07:33:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_daddyDiffusion_v1-20260808-050512.json",
+   "sha256": "8d4bfd2f0dbe0bb8adbd712cd4b227703275caaa7c36e9ff116d9f06546df614"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_daddyDiffusion_v1-20260808-050512#4": {
+  "at": "2026-08-08T07:33:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_daddyDiffusion_v1-20260808-050512.json",
+   "sha256": "7faa2e4b696ac0af7150d73e6151725a0cec97e0423a9a83fe24e766bd428af6"
+  },
   "score": 0,
   "tags": []
  },
@@ -14759,6 +16321,45 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_deepboys25D_v20-20260808-050749#1": {
+  "at": "2026-08-08T07:32:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_deepboys25D_v20-20260808-050749.json",
+   "sha256": "9c362467cacbd1e262b1d1fbca87e47825f383b933cccbc882f3eebc5362984a"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "fragment"
+  ]
+ },
+ "wallPiece-overnight_cathedral_deepboys25D_v20-20260808-050749#2": {
+  "at": "2026-08-08T07:32:58",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_deepboys25D_v20-20260808-050749.json",
+   "sha256": "2548217f2028e9eb15f4832d9398576fac555acc53d9dcd59ff1b0e99ae3d3f6"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_deepboys25D_v20-20260808-050749#3": {
+  "at": "2026-08-08T07:32:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_deepboys25D_v20-20260808-050749.json",
+   "sha256": "6dd804acb20d94481bd237725bb5e4cdab8525e925181524dd6a67e7bdb9aa67"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_deepboys25D_v20-20260808-050749#4": {
+  "at": "2026-08-08T07:33:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_deepboys25D_v20-20260808-050749.json",
+   "sha256": "66f94bf3201f8e362eb5acc35f719de64e688f336fd11016157b17e2a6165b96"
+  },
+  "score": 3,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_dreamshaper_8LCM-20260803-032336#1": {
   "at": "2026-08-04T11:40:50",
   "score": 2,
@@ -14767,6 +16368,48 @@
  "wallPiece-overnight_cathedral_dreamshaper_8LCM-20260803-032336#2": {
   "at": "2026-08-04T11:40:52",
   "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_dreamshaper_8LCM-20260808-051028#1": {
+  "at": "2026-08-08T07:32:31",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_dreamshaper_8LCM-20260808-051028.json",
+   "sha256": "0f23733c6b26820a724e8764e55bf75b873bb73e521500bb58a1b3dd383a0236"
+  },
+  "score": 1,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_cathedral_dreamshaper_8LCM-20260808-051028#2": {
+  "at": "2026-08-08T07:32:31",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_dreamshaper_8LCM-20260808-051028.json",
+   "sha256": "8a6b64387dee63495453a6544e0d0bd610415c3842765100829b511e4eb05989"
+  },
+  "score": 1,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_cathedral_dreamshaper_8LCM-20260808-051028#3": {
+  "at": "2026-08-08T07:32:32",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_dreamshaper_8LCM-20260808-051028.json",
+   "sha256": "f1c91242cd39544d89556f2f13e9b896d67760ddb226fab8d237970bc11573bf"
+  },
+  "score": 1,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_cathedral_dreamshaper_8LCM-20260808-051028#4": {
+  "at": "2026-08-08T07:32:37",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_dreamshaper_8LCM-20260808-051028.json",
+   "sha256": "86841fc87c80dcb8d8a5f051668b18a6b29bc825bab3cf1aede4ff96d31110eb"
+  },
+  "score": 4,
   "tags": []
  },
  "wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260803-032449#1": {
@@ -14779,6 +16422,50 @@
   "score": 0,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260808-051309#1": {
+  "at": "2026-08-08T07:32:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260808-051309.json",
+   "sha256": "235c20be1309a3c88da18c0508d2ef845b4f877f6d787e16859cb019113aa06f"
+  },
+  "score": 1,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260808-051309#2": {
+  "at": "2026-08-08T07:32:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260808-051309.json",
+   "sha256": "30dfe79baafa27f072c7759c71af71181b9b54d5f56012fd468adde5d2e517c7"
+  },
+  "score": 1,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260808-051309#3": {
+  "at": "2026-08-08T07:32:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260808-051309.json",
+   "sha256": "2e3bb94f932c9baa1c96c834f36b265fb7b1e6d2298a0f19fc8f12560e3248f6"
+  },
+  "score": 1,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260808-051309#4": {
+  "at": "2026-08-08T07:32:29",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_everyjourneylcm_v10Ace-20260808-051309.json",
+   "sha256": "dbbc4267b1ab5e90ca9d63d536ae0a9d0f2302872c85d7f4e57e676ac2edde47"
+  },
+  "score": 1,
+  "tags": [
+   "burned"
+  ]
+ },
  "wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260803-032642#1": {
   "at": "2026-08-04T11:40:38",
   "score": 1,
@@ -14789,6 +16476,42 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260808-051656#1": {
+  "at": "2026-08-08T07:32:05",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260808-051656.json",
+   "sha256": "735034bc4ad945316ea4347480bfe8e36e8cba036cb8db660047785651c0f289"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260808-051656#2": {
+  "at": "2026-08-08T07:32:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260808-051656.json",
+   "sha256": "83490dd69efde0ec9ec50a25910b4838ad99ce8716fa3639273aa60eabbf8647"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260808-051656#3": {
+  "at": "2026-08-08T07:32:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260808-051656.json",
+   "sha256": "dd23e68689e3f7a28b69aab83422b390a0f9a07cc31636c3b97347a2b7c78c8b"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260808-051656#4": {
+  "at": "2026-08-08T07:32:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_homodiffusionGay_homoDiffusionV10FP32-20260808-051656.json",
+   "sha256": "b7d4683506afde66ad977a38467c0221b3df624343140758baeda575cad6a4dd"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_homosimile_v40-20260803-032802#1": {
   "at": "2026-08-04T11:40:36",
   "score": 1,
@@ -14796,6 +16519,42 @@
  },
  "wallPiece-overnight_cathedral_homosimile_v40-20260803-032802#2": {
   "at": "2026-08-04T11:40:38",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_homosimile_v40-20260808-051940#1": {
+  "at": "2026-08-08T07:31:58",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_homosimile_v40-20260808-051940.json",
+   "sha256": "94ffeca884e197980a9e3a9e02fe7337b9d03155f705cbdbb39dfb789fe93efa"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_homosimile_v40-20260808-051940#2": {
+  "at": "2026-08-08T07:32:01",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_homosimile_v40-20260808-051940.json",
+   "sha256": "ff6b9ac87830bb6164fabe9afe23fffa64606d1a15168f7cad327a72c301a35a"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_homosimile_v40-20260808-051940#3": {
+  "at": "2026-08-08T07:32:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_homosimile_v40-20260808-051940.json",
+   "sha256": "6a417f119b4c24394659f3f3aac9eced3859d6ef1d28cfa03fd7fb12dfd208af"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_homosimile_v40-20260808-051940#4": {
+  "at": "2026-08-08T07:32:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_homosimile_v40-20260808-051940.json",
+   "sha256": "fac95b79908d40ff55e9f61eb08410ace93faeb6a0100cd9ae8531641c2d866e"
+  },
   "score": 1,
   "tags": []
  },
@@ -14809,6 +16568,44 @@
   "score": 3,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_littleFishNaiLCM_v10-20260808-052218#1": {
+  "at": "2026-08-08T07:31:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_littleFishNaiLCM_v10-20260808-052218.json",
+   "sha256": "77933b5fd0503ba0c0b6cb2a2feb6ec61b5c289d687f1245d6b7a80be9f777b9"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_littleFishNaiLCM_v10-20260808-052218#2": {
+  "at": "2026-08-08T07:31:50",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_littleFishNaiLCM_v10-20260808-052218.json",
+   "sha256": "c6925c6092d801494f6736b418b6a3c51541844fa62c9f3f29f83e0b4fe74425"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_littleFishNaiLCM_v10-20260808-052218#3": {
+  "at": "2026-08-08T07:31:51",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_littleFishNaiLCM_v10-20260808-052218.json",
+   "sha256": "e40b063c933e5065df4fd1bb95982208bcfe767e2d66464dc07527f4a6aaaa77"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_littleFishNaiLCM_v10-20260808-052218#4": {
+  "at": "2026-08-08T07:31:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_littleFishNaiLCM_v10-20260808-052218.json",
+   "sha256": "70b639607f9dc0424b4b1df8c53b803b34cd453407a4994c76758d73e1ab6a29"
+  },
+  "score": 3,
+  "tags": [
+   "harsh"
+  ]
+ },
  "wallPiece-overnight_cathedral_lyriel_v16-20260803-033035#1": {
   "at": "2026-08-04T11:35:25",
   "score": 3,
@@ -14817,6 +16614,42 @@
  "wallPiece-overnight_cathedral_lyriel_v16-20260803-033035#2": {
   "at": "2026-08-04T11:31:53",
   "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_lyriel_v16-20260808-052456#1": {
+  "at": "2026-08-08T07:31:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_lyriel_v16-20260808-052456.json",
+   "sha256": "e8cc451d125aa2cf9a9a6af01d575582c8fb4ee29628efd20074b4dd5df8d648"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_lyriel_v16-20260808-052456#2": {
+  "at": "2026-08-08T07:31:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_lyriel_v16-20260808-052456.json",
+   "sha256": "c11b24c00a15408e13c04a45c31bcc2992b1eecd905c7b75b2212410abe04974"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_lyriel_v16-20260808-052456#3": {
+  "at": "2026-08-08T07:31:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_lyriel_v16-20260808-052456.json",
+   "sha256": "8c4a31e950acac94956bdc54046adedae7a458fa548cb25964867db8f8fa1d45"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_lyriel_v16-20260808-052456#4": {
+  "at": "2026-08-08T07:31:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_lyriel_v16-20260808-052456.json",
+   "sha256": "9432a96bff23f1a0b2df9e3fe0105a3768eb47a10c7812b6b644e573153f3580"
+  },
+  "score": 1,
   "tags": []
  },
  "wallPiece-overnight_cathedral_maturemalemix_v13-20260803-033148#1": {
@@ -14831,6 +16664,42 @@
    "blank"
   ]
  },
+ "wallPiece-overnight_cathedral_maturemalemix_v13-20260808-052734#1": {
+  "at": "2026-08-08T07:31:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_maturemalemix_v13-20260808-052734.json",
+   "sha256": "8df641beb11f4354a26c952defb992dc245933236162415d7132bb5258aee172"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_maturemalemix_v13-20260808-052734#2": {
+  "at": "2026-08-08T07:31:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_maturemalemix_v13-20260808-052734.json",
+   "sha256": "645af375f6e94cf40722fa8befd5ad68436b4dc8ac49d467389a719328327518"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_maturemalemix_v13-20260808-052734#3": {
+  "at": "2026-08-08T07:31:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_maturemalemix_v13-20260808-052734.json",
+   "sha256": "ce9859c6735543ad2ede12cd224a412d3297c49761a0f60f92de80369c9453d9"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_maturemalemix_v13-20260808-052734#4": {
+  "at": "2026-08-08T07:31:29",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_maturemalemix_v13-20260808-052734.json",
+   "sha256": "e2e2a3ed4826259c07b24567886587cb6c83cfbcf8ba124d71bc88f99aae6a15"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_megatronmerge-20260803-033301#1": {
   "at": "2026-08-04T11:31:30",
   "score": 1,
@@ -14838,6 +16707,42 @@
  },
  "wallPiece-overnight_cathedral_megatronmerge-20260803-033301#2": {
   "at": "2026-08-04T11:31:32",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_megatronmerge-20260808-053015#1": {
+  "at": "2026-08-08T07:31:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_megatronmerge-20260808-053015.json",
+   "sha256": "fb4b7e49b7705f609beb677f7f7ef07066d63d4a22f359fcebd1a904b6942a0e"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_megatronmerge-20260808-053015#2": {
+  "at": "2026-08-08T07:31:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_megatronmerge-20260808-053015.json",
+   "sha256": "309381d55d696144f77b76d04916a66a373ddd5fc90ae624a0052f068cf621b9"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_megatronmerge-20260808-053015#3": {
+  "at": "2026-08-08T07:31:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_megatronmerge-20260808-053015.json",
+   "sha256": "29a3055bc682f5e99ffe843d036a89638963a60cc811dba697509764de6d69e2"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_megatronmerge-20260808-053015#4": {
+  "at": "2026-08-08T07:31:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_megatronmerge-20260808-053015.json",
+   "sha256": "75c485548a95e7b72365ea5ea0d9d8d99db3a395f328ef6890291449ebdb3885"
+  },
   "score": 1,
   "tags": []
  },
@@ -14849,6 +16754,48 @@
  "wallPiece-overnight_cathedral_mistoonAnime_v30-20260803-033414#2": {
   "at": "2026-08-04T11:31:27",
   "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_mistoonAnime_v30-20260808-053252#1": {
+  "at": "2026-08-08T07:30:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_mistoonAnime_v30-20260808-053252.json",
+   "sha256": "bf25629b45fa1f0157177aa4bc6b2981b38051d0d326586eeb7484d9565e0db9"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_mistoonAnime_v30-20260808-053252#2": {
+  "at": "2026-08-08T07:31:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_mistoonAnime_v30-20260808-053252.json",
+   "sha256": "a800987fa63b52d8498523356651de0a673f50eaa434299d416f4fd02543bd41"
+  },
+  "score": 5,
+  "tags": [
+   "repeat",
+   "seam"
+  ]
+ },
+ "wallPiece-overnight_cathedral_mistoonAnime_v30-20260808-053252#3": {
+  "at": "2026-08-08T07:31:12",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_mistoonAnime_v30-20260808-053252.json",
+   "sha256": "54e0e48b1e8d238ad9d7fc489a6efc230688fea079ad477af1f49191e29ce8ec"
+  },
+  "score": 1,
+  "tags": [
+   "fragment",
+   "picture"
+  ]
+ },
+ "wallPiece-overnight_cathedral_mistoonAnime_v30-20260808-053252#4": {
+  "at": "2026-08-08T07:31:15",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_mistoonAnime_v30-20260808-053252.json",
+   "sha256": "014d0d59eca602283b0734e4e406053cadbc86334f2fd443bca92a09cf79204d"
+  },
+  "score": 1,
   "tags": []
  },
  "wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260803-033527#1": {
@@ -14863,6 +16810,42 @@
   "score": 4,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260808-053530#1": {
+  "at": "2026-08-08T07:30:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260808-053530.json",
+   "sha256": "85325a1c410f4f6a4294fdabe57dd691fbab414827eaa999eb12b164d71f3653"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260808-053530#2": {
+  "at": "2026-08-08T07:30:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260808-053530.json",
+   "sha256": "f49f643b28b01b6c19659ebd1c7f8432eb9ffec14e00d0efc8a8d5e93128b78a"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260808-053530#3": {
+  "at": "2026-08-08T07:30:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260808-053530.json",
+   "sha256": "b04e3841fbe87c4245f6ffe1bf2d9f53804c6009b52a696a125f44817c2d461b"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260808-053530#4": {
+  "at": "2026-08-08T07:30:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_newERANewEstheticRetro_retroV60VAE-20260808-053530.json",
+   "sha256": "6bafb596e13b585a662b01234d35b7ce6263bc0a3b33458f500d478b5295eaff"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260803-033648#1": {
   "at": "2026-08-04T10:19:16",
   "score": 2,
@@ -14875,6 +16858,46 @@
   "score": 5,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260808-053812#1": {
+  "at": "2026-08-08T07:30:22",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260808-053812.json",
+   "sha256": "7d1814e369b8df7ddff097dfe175f85eb708db668bd1048b16b74a8be2dacbbc"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260808-053812#2": {
+  "at": "2026-08-08T07:30:34",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260808-053812.json",
+   "sha256": "289d7b9e431dbde01cd10be82f347d20a4117fa7e532029ec369da2fce86d842"
+  },
+  "score": 4,
+  "tags": [
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260808-053812#3": {
+  "at": "2026-08-08T07:30:40",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260808-053812.json",
+   "sha256": "3136cc79ed971d58ced85f4ad4a1a4f64ab08c5b7954e2b4dad9e11ff862918a"
+  },
+  "score": 2,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260808-053812#4": {
+  "at": "2026-08-08T07:30:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_ohmenOrigins_ohmenOriginsV3-20260808-053812.json",
+   "sha256": "af89b1266f01725241558218c3d900274b4422617a6701f22e5c095e23323b87"
+  },
+  "score": 2,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260803-033800#1": {
   "at": "2026-08-03T23:49:20",
   "score": 1,
@@ -14885,6 +16908,42 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260808-054049#1": {
+  "at": "2026-08-08T07:30:18",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260808-054049.json",
+   "sha256": "92f62970c505479adae92c17c14126f14a556eb8606a86fd5d2860d08826c2dc"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260808-054049#2": {
+  "at": "2026-08-08T07:30:18",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260808-054049.json",
+   "sha256": "2759bc989ebacf292d9e28af53126261e6205430029ea8682a0429d643fd67d7"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260808-054049#3": {
+  "at": "2026-08-08T07:30:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260808-054049.json",
+   "sha256": "73ede059f81e433edb04430f027b06587f8f6ebd5f5ecff98cd631a74164b81f"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260808-054049#4": {
+  "at": "2026-08-08T07:30:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_ohmenToontastic_ohmenToontasticV2-20260808-054049.json",
+   "sha256": "6659196575959324b62e85053d82d240cb581ff2d31c5faeb22ce544b5d6392b"
+  },
+  "score": 3,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260803-033914#1": {
   "at": "2026-08-03T23:49:15",
   "score": 1,
@@ -14892,6 +16951,43 @@
  },
  "wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260803-033914#2": {
   "at": "2026-08-03T23:49:17",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260808-054331#1": {
+  "at": "2026-08-08T07:29:43",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260808-054331.json",
+   "sha256": "30e74c8801efffdb557b71ec395cc914ef1248817c8e43dbda01aa2a0ac81f5f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260808-054331#2": {
+  "at": "2026-08-08T07:29:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260808-054331.json",
+   "sha256": "151fa7bfffe9e8421ed1e5bc6b264c8748698c4191642e4eb8562c48226f37f3"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260808-054331#3": {
+  "at": "2026-08-08T07:30:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260808-054331.json",
+   "sha256": "64ebb49ba484ac7adfe4450bd4d92350ffe24b4e8a4721c5a27929b03ee4d43e"
+  },
+  "note": "visually interesting as a tile",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260808-054331#4": {
+  "at": "2026-08-08T07:30:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_perfectWorld_v3Baked-20260808-054331.json",
+   "sha256": "5394f1c7dd06327e52c42d98bdcb50039e4a86c02899864b1c2db00f15114541"
+  },
   "score": 1,
   "tags": []
  },
@@ -14905,6 +17001,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_sd-v1-4-20260808-054624#1": {
+  "at": "2026-08-08T07:29:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_sd-v1-4-20260808-054624.json",
+   "sha256": "ec128e56fbe334b5e3d5522efa89ba9ab09c7d5449d02d37c5867da09739dded"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_sd-v1-4-20260808-054624#2": {
+  "at": "2026-08-08T07:29:38",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_sd-v1-4-20260808-054624.json",
+   "sha256": "721329e5c89f28773ad205a30305b726f0cb1dc8c1fc06ec317eba9358892e8e"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_sd-v1-4-20260808-054624#3": {
+  "at": "2026-08-08T07:29:40",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_sd-v1-4-20260808-054624.json",
+   "sha256": "8de11da05e549fe1e0dc9d3ed95b9040696b226b57dad02750ed10c67fd310b1"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_sd-v1-4-20260808-054624#4": {
+  "at": "2026-08-08T07:29:41",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_sd-v1-4-20260808-054624.json",
+   "sha256": "208f9614ab01dd5de119d687cfbd018936e90db551719f2491ac164d83f0f501"
+  },
+  "score": 0,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_sigmatron_Hyper-20260803-034156#1": {
   "at": "2026-08-03T23:49:10",
   "score": 1,
@@ -14912,6 +17044,45 @@
  },
  "wallPiece-overnight_cathedral_sigmatron_Hyper-20260803-034156#2": {
   "at": "2026-08-03T23:49:12",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_sigmatron_Hyper-20260808-054906#1": {
+  "at": "2026-08-08T07:29:18",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_sigmatron_Hyper-20260808-054906.json",
+   "sha256": "c0bdeb539c4e19455c18bcc9985dda88ff17347e5acba1d347183640e36711a0"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_sigmatron_Hyper-20260808-054906#2": {
+  "at": "2026-08-08T07:29:26",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_sigmatron_Hyper-20260808-054906.json",
+   "sha256": "a69e0f63d60af407842c636642291d7eb48afe899e6043969295885a98c20356"
+  },
+  "score": 1,
+  "tags": [
+   "blank",
+   "text"
+  ]
+ },
+ "wallPiece-overnight_cathedral_sigmatron_Hyper-20260808-054906#3": {
+  "at": "2026-08-08T07:29:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_sigmatron_Hyper-20260808-054906.json",
+   "sha256": "f3f688560e576070d38998431e51438e4abfdd9e658cba4ecd2fc18b5352d599"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_sigmatron_Hyper-20260808-054906#4": {
+  "at": "2026-08-08T07:29:32",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_sigmatron_Hyper-20260808-054906.json",
+   "sha256": "d6bf77af06b9be1b216137b02312d5801d9d63890be08ad0972d0ee58c0f248a"
+  },
   "score": 1,
   "tags": []
  },
@@ -14925,6 +17096,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-055143#1": {
+  "at": "2026-08-08T07:29:05",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-055143.json",
+   "sha256": "2cfbcdb2b8f597a96fb8ce16af42c425be1339b7f8bc5645eaeb4c89bc50c739"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-055143#2": {
+  "at": "2026-08-08T07:29:09",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-055143.json",
+   "sha256": "8ce8123d3b6f1dad5c0f58c945ebc127ec4855762be4377e8f44d65ffc146b38"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-055143#3": {
+  "at": "2026-08-08T07:29:12",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-055143.json",
+   "sha256": "ec4df05e5a214f12b12ced3216c8c166d272fd995fd674d41ec688c124336111"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-055143#4": {
+  "at": "2026-08-08T07:29:15",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-055143.json",
+   "sha256": "787a9c41c9523e1c6f291eab6ff113a5841fbf594a68f6c8644984e765b35288"
+  },
+  "score": 2,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260803-034421#1": {
   "at": "2026-08-03T23:48:59",
   "score": 2,
@@ -14932,6 +17139,42 @@
  },
  "wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260803-034421#2": {
   "at": "2026-08-03T23:49:00",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260808-055420#1": {
+  "at": "2026-08-08T07:28:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260808-055420.json",
+   "sha256": "04c21734a9553c1feeadd1c427bcb37d5ed5551b5ab35826ed33b9466ee97afb"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260808-055420#2": {
+  "at": "2026-08-08T07:29:01",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260808-055420.json",
+   "sha256": "142c55bb045bc4f2197ac1fba62ca562bf2f6d0ec95f2a373b7f987015d5d730"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260808-055420#3": {
+  "at": "2026-08-08T07:29:01",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260808-055420.json",
+   "sha256": "7012ae39b31d72904b8962180cfc7a9e5f62d485348f0d6ed2c17a47af9986f2"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260808-055420#4": {
+  "at": "2026-08-08T07:29:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_tAnimeV4Pruned_v40-20260808-055420.json",
+   "sha256": "f0c2bede0537569d5c052e37b69e1f28832d8e2f5d970a3db593a4993b0a6c23"
+  },
   "score": 1,
   "tags": []
  },
@@ -14945,6 +17188,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_cathedral_v1-5-pruned-emaonly-20260808-055659#1": {
+  "at": "2026-08-08T07:28:46",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_v1-5-pruned-emaonly-20260808-055659.json",
+   "sha256": "48d9994c71db6c75e7ef9bb4a2e736f6d6c3905a791b2921fc3c58940045040b"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_v1-5-pruned-emaonly-20260808-055659#2": {
+  "at": "2026-08-08T07:28:48",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_v1-5-pruned-emaonly-20260808-055659.json",
+   "sha256": "d4fe5bf1245e5c2adbcaac308afc0e026d2b86db815d53587f654f92abece097"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_v1-5-pruned-emaonly-20260808-055659#3": {
+  "at": "2026-08-08T07:28:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_v1-5-pruned-emaonly-20260808-055659.json",
+   "sha256": "e507cc977ee7bb87696b8de138a3849871605e4e2ca1f371ea3265b43c8c65c7"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_v1-5-pruned-emaonly-20260808-055659#4": {
+  "at": "2026-08-08T07:28:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_v1-5-pruned-emaonly-20260808-055659.json",
+   "sha256": "19930f70432bcac100265e1bac01cb3fec7decaa5f48f2bfedaded9f9349e01e"
+  },
+  "score": 0,
+  "tags": []
+ },
  "wallPiece-overnight_cathedral_virileReality_v20-20260803-034655#1": {
   "at": "2026-08-03T23:48:52",
   "score": 1,
@@ -14953,6 +17232,47 @@
  "wallPiece-overnight_cathedral_virileReality_v20-20260803-034655#2": {
   "at": "2026-08-03T23:48:55",
   "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_virileReality_v20-20260808-055946#1": {
+  "at": "2026-08-08T07:28:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_virileReality_v20-20260808-055946.json",
+   "sha256": "d1922c72b714d91e3252a4ea6ec04a11a2fb2da484c114b2a5ed115daa4c48b9"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_cathedral_virileReality_v20-20260808-055946#2": {
+  "at": "2026-08-08T07:28:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_virileReality_v20-20260808-055946.json",
+   "sha256": "d2ccf666fde17148fa63a6ee095d1edd8a6e5c1736680bdeeb8eaa2a39f0bc5e"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_cathedral_virileReality_v20-20260808-055946#3": {
+  "at": "2026-08-08T07:28:42",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_virileReality_v20-20260808-055946.json",
+   "sha256": "bc0adac2c3471821464035fa77b2ae0af578078ff81e220c6182392528109fad"
+  },
+  "score": 1,
+  "tags": [
+   "blank",
+   "fragment"
+  ]
+ },
+ "wallPiece-overnight_cathedral_virileReality_v20-20260808-055946#4": {
+  "at": "2026-08-08T07:28:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_cathedral_virileReality_v20-20260808-055946.json",
+   "sha256": "d231a278a74358dc964735c5cb7972c3f0287fe46606d70b2ba85972dfa8c89c"
+  },
+  "score": 2,
   "tags": []
  },
  "wallPiece-overnight_masonry_DreamShaper_8_pruned-20260803-005024#1": {
@@ -14965,6 +17285,43 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_masonry_DreamShaper_8_pruned-20260808-002853#1": {
+  "at": "2026-08-08T08:04:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_DreamShaper_8_pruned-20260808-002853.json",
+   "sha256": "4ebfa9d2b12627cf2560be97d871263da0dee4496e44a2384ccb11b87c04875e"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_DreamShaper_8_pruned-20260808-002853#2": {
+  "at": "2026-08-08T08:04:53",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_DreamShaper_8_pruned-20260808-002853.json",
+   "sha256": "be2bdda7a3b58e841d241c464e30e8042e2666caeee13f55b7024536bfdddbe8"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_DreamShaper_8_pruned-20260808-002853#3": {
+  "at": "2026-08-08T08:05:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_DreamShaper_8_pruned-20260808-002853.json",
+   "sha256": "528a0108afed20e2e65e6014190ecb7ab333c7aa0c4c778b6b40e24aaee6e483"
+  },
+  "note": "spotlight",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_DreamShaper_8_pruned-20260808-002853#4": {
+  "at": "2026-08-08T08:05:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_DreamShaper_8_pruned-20260808-002853.json",
+   "sha256": "50839515a7155fa184c6128c6b7984575759598be624147364ccf5aeb080ad7a"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260803-005153#1": {
   "at": "2026-08-04T11:54:38",
   "score": 2,
@@ -14974,6 +17331,50 @@
   "at": "2026-08-04T11:54:40",
   "score": 1,
   "tags": []
+ },
+ "wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260808-003332#1": {
+  "at": "2026-08-08T08:04:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260808-003332.json",
+   "sha256": "a8c7cc5eb82518263d97b3b06271cfb89a21fa81f54ed25067cf754f76699330"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260808-003332#2": {
+  "at": "2026-08-08T08:04:41",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260808-003332.json",
+   "sha256": "df95b147d67b8e2373cd219579513334d31750656aa00d4fd3c0a558d2e5465b"
+  },
+  "score": 1,
+  "tags": [
+   "flat",
+   "seam"
+  ]
+ },
+ "wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260808-003332#3": {
+  "at": "2026-08-08T08:04:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260808-003332.json",
+   "sha256": "3237003bcca063a2ccf3fdd8932516ea7f46782839ef69da74f3bf4ebc88eb4e"
+  },
+  "score": 1,
+  "tags": [
+   "flat",
+   "repeat"
+  ]
+ },
+ "wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260808-003332#4": {
+  "at": "2026-08-08T08:04:50",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_aLunarDreamBeta_aLunarDreamV1-20260808-003332.json",
+   "sha256": "67b80a46e09e96668f79973df623b150d04aa0bfb77e8f86e4e861246442a589"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
  },
  "wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260803-005622#1": {
   "at": "2026-08-04T11:54:34",
@@ -14985,6 +17386,42 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260808-003624#1": {
+  "at": "2026-08-08T08:04:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260808-003624.json",
+   "sha256": "1582cdd51fe851befe44aba98838155957fc117511d87850b7b9e5eac0f02512"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260808-003624#2": {
+  "at": "2026-08-08T08:04:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260808-003624.json",
+   "sha256": "f7f16283a836e5cc61a763d8fed538d52e2742caefcf072934d5f27fbb91af1a"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260808-003624#3": {
+  "at": "2026-08-08T08:04:32",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260808-003624.json",
+   "sha256": "d9935ebdb7754ba7b7bd66056b527ba1232bf6a94929092aa8859565a2cdfb9d"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260808-003624#4": {
+  "at": "2026-08-08T08:04:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_aamAnyloraAnimeMixAnime_v1-20260808-003624.json",
+   "sha256": "bf27d623babd4ca785fe506d5fdb90acf2a42d817734c31c3c628b2eeaca6226"
+  },
+  "score": 5,
+  "tags": []
+ },
  "wallPiece-overnight_masonry_airfucksWildMix_v10-20260803-005745#1": {
   "at": "2026-08-04T11:54:30",
   "score": 1,
@@ -14992,6 +17429,42 @@
  },
  "wallPiece-overnight_masonry_airfucksWildMix_v10-20260803-005745#2": {
   "at": "2026-08-04T11:54:33",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_airfucksWildMix_v10-20260808-003922#1": {
+  "at": "2026-08-08T08:04:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_airfucksWildMix_v10-20260808-003922.json",
+   "sha256": "372f8559ff395dadb55ecca6a0a4a5c168a92a7329062b9cef7457f883702ec5"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_airfucksWildMix_v10-20260808-003922#2": {
+  "at": "2026-08-08T08:04:15",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_airfucksWildMix_v10-20260808-003922.json",
+   "sha256": "a0e6e1b01aa77212f8ce266f81b8b3a72b177477db9e91c6878ad621aa5ec569"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_airfucksWildMix_v10-20260808-003922#3": {
+  "at": "2026-08-08T08:04:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_airfucksWildMix_v10-20260808-003922.json",
+   "sha256": "1c48a28621a149ab5188154840663c1c143bf6bf3c20a2ea97c20b065da7e22e"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_airfucksWildMix_v10-20260808-003922#4": {
+  "at": "2026-08-08T08:04:26",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_airfucksWildMix_v10-20260808-003922.json",
+   "sha256": "ebe9a2f0c038df4dc446f4d0fd3d9fa0bb4173d7a6a4422afad0a38e6fbcf847"
+  },
   "score": 1,
   "tags": []
  },
@@ -15005,6 +17478,51 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-004223#1": {
+  "at": "2026-08-08T08:03:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-004223.json",
+   "sha256": "2499a95df8ef635baf80968e96cf975eb4a0b86b93b28849240a647c1136773d"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-004223#2": {
+  "at": "2026-08-08T08:04:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-004223.json",
+   "sha256": "8086857f032923c7c2fdd8c62db938ba95be6013eda6858a98126f67c6baad83"
+  },
+  "score": 2,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-004223#3": {
+  "at": "2026-08-08T08:04:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-004223.json",
+   "sha256": "d5e20ac932a57c13cc51444e1290d96c7e8aca203d361eb349595ca2531e919c"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-004223#4": {
+  "at": "2026-08-08T08:04:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-004223.json",
+   "sha256": "490b2da14ef6a08483b3341ad8e7561a44627ede31bb2685f6b319577d6ea62a"
+  },
+  "score": 2,
+  "tags": [
+   "flat",
+   "harsh"
+  ]
+ },
  "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260803-010131#1": {
   "at": "2026-08-04T11:54:23",
   "score": 3,
@@ -15015,6 +17533,48 @@
  "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260803-010131#2": {
   "at": "2026-08-04T11:54:25",
   "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-004516#1": {
+  "at": "2026-08-08T08:03:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-004516.json",
+   "sha256": "cb1b1c59c5b765c1aea2c55ea8be318c9e1f1c86234fd668256d17b0838b8166"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-004516#2": {
+  "at": "2026-08-08T08:03:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-004516.json",
+   "sha256": "5ff655feb53c8b83c02242543f21ec10b4cb0c332d024fdbda526d3fa5b340da"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-004516#3": {
+  "at": "2026-08-08T08:03:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-004516.json",
+   "sha256": "cb7771e2ffdbf1c9c0646eec8b6d476fb698b1a3f0c862a8541ff0c23bc7a2a7"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-004516#4": {
+  "at": "2026-08-08T08:03:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-004516.json",
+   "sha256": "c283de42293066403fc937743758db4930753c3bce73115b8535b9015cfb36f2"
+  },
+  "score": 2,
   "tags": [
    "blank"
   ]
@@ -15031,6 +17591,49 @@
    "blank"
   ]
  },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_lcm-20260808-004807#1": {
+  "at": "2026-08-08T08:03:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_lcm-20260808-004807.json",
+   "sha256": "d768dc124c3c93801ac22c6277d08056de7077563bdadacf6c5c64937213e6f1"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_lcm-20260808-004807#2": {
+  "at": "2026-08-08T08:03:34",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_lcm-20260808-004807.json",
+   "sha256": "da9320b8c76d241de0d47aa8cc06aad22b5458b03a1c803b798514b3a80c051d"
+  },
+  "score": 4,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_lcm-20260808-004807#3": {
+  "at": "2026-08-08T08:03:39",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_lcm-20260808-004807.json",
+   "sha256": "914f4e3d044000267bd9dc19afa4b2d9009e9fa6c4439a0a115e68840bb177af"
+  },
+  "score": 4,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_anyloraCheckpoint_lcm-20260808-004807#4": {
+  "at": "2026-08-08T08:03:43",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_anyloraCheckpoint_lcm-20260808-004807.json",
+   "sha256": "138e3687679dfa4a05773d4fe91cfed92696f9096d5267a68088ad07692ee8b0"
+  },
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
  "wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260803-010430#1": {
   "at": "2026-08-04T11:54:07",
   "score": 0,
@@ -15040,6 +17643,46 @@
   "at": "2026-08-04T11:54:07",
   "score": 0,
   "tags": []
+ },
+ "wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260808-005054#1": {
+  "at": "2026-08-08T08:03:15",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260808-005054.json",
+   "sha256": "eca1c9a080e5059b175eb4a5fad79f088762869b2eb74c3cb96f894a907c66dc"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260808-005054#2": {
+  "at": "2026-08-08T08:03:18",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260808-005054.json",
+   "sha256": "a84971b2c1a2a74db3880b18693265471ac0ae71d3ac6dcc0802ba1176ab16db"
+  },
+  "score": 1,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260808-005054#3": {
+  "at": "2026-08-08T08:03:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260808-005054.json",
+   "sha256": "76f58c659be35c3de0f7d2982770eb5bc49343b24fce114ca7213521cd562853"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260808-005054#4": {
+  "at": "2026-08-08T08:03:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_boxmix25DMale_v10Boxcat-20260808-005054.json",
+   "sha256": "0481f852fc8d661e0376f477f09ebacce9837f8647a261cb052bfd372569c848"
+  },
+  "score": 1,
+  "tags": [
+   "blank"
+  ]
  },
  "wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260803-010609#1": {
   "at": "2026-08-04T11:54:02",
@@ -15051,6 +17694,42 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260808-005354#1": {
+  "at": "2026-08-08T08:03:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260808-005354.json",
+   "sha256": "ca55567e5dc5e9974149e8ac804f5ad3c5cb5c882ecfe8537622b958a1e4e4d3"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260808-005354#2": {
+  "at": "2026-08-08T08:03:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260808-005354.json",
+   "sha256": "1acd0095671ca60405396fe5ed80a3beb89315b0d95afaf2eee64268f86243ff"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260808-005354#3": {
+  "at": "2026-08-08T08:03:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260808-005354.json",
+   "sha256": "7ec1ada8e6faeb8612e0353b2b97217b6b9990bb6d1ef44e5579576d0a70e8f2"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260808-005354#4": {
+  "at": "2026-08-08T08:03:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_chilloutmix_NiPrunedFp32Fix-20260808-005354.json",
+   "sha256": "4b8a39fea101f3f3369671d36e411581185a95253ee32c8abab1d2c1b8b49c50"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_masonry_daddyDiffusion_v1-20260803-010749#1": {
   "at": "2026-08-04T11:53:59",
   "score": 1,
@@ -15058,6 +17737,45 @@
  },
  "wallPiece-overnight_masonry_daddyDiffusion_v1-20260803-010749#2": {
   "at": "2026-08-04T11:54:00",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_daddyDiffusion_v1-20260808-005648#1": {
+  "at": "2026-08-08T08:03:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_daddyDiffusion_v1-20260808-005648.json",
+   "sha256": "da51faa6e3a6f5178dfc604d938571dfd06047b2d8ceaa153fa50c978b1b4e71"
+  },
+  "score": 3,
+  "tags": [
+   "blank",
+   "busy"
+  ]
+ },
+ "wallPiece-overnight_masonry_daddyDiffusion_v1-20260808-005648#2": {
+  "at": "2026-08-08T08:03:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_daddyDiffusion_v1-20260808-005648.json",
+   "sha256": "acdb5b11b51199a26c384075c75eb35f382af98ca5f832e29f954cd04254908d"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_daddyDiffusion_v1-20260808-005648#3": {
+  "at": "2026-08-08T08:03:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_daddyDiffusion_v1-20260808-005648.json",
+   "sha256": "1d931da50a2bba44ae48b9bd9ff43d352d9bc27210d06fe062124c9191e70eae"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_daddyDiffusion_v1-20260808-005648#4": {
+  "at": "2026-08-08T08:03:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_daddyDiffusion_v1-20260808-005648.json",
+   "sha256": "73ca4d56d7b88ececd39aebb7b64b42120b9ce8639ef8a2dfe6e302b411130c5"
+  },
   "score": 1,
   "tags": []
  },
@@ -15073,6 +17791,49 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_masonry_deepboys25D_v20-20260808-005934#1": {
+  "at": "2026-08-08T08:02:51",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_deepboys25D_v20-20260808-005934.json",
+   "sha256": "dd91dc1f3eab59e1352519b1558332824da39656666e0ea868196f19438d8c23"
+  },
+  "score": 2,
+  "tags": [
+   "harsh",
+   "outdoor",
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-overnight_masonry_deepboys25D_v20-20260808-005934#2": {
+  "at": "2026-08-08T08:02:53",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_deepboys25D_v20-20260808-005934.json",
+   "sha256": "c19c418d3dbf059831787c85151e227cdc6b2e08cfa49879730564160b600e33"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_deepboys25D_v20-20260808-005934#3": {
+  "at": "2026-08-08T08:02:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_deepboys25D_v20-20260808-005934.json",
+   "sha256": "ac99d38e7928990b69204c3b9a348224c086929a4d5a90cff5e4e3f8edd64e90"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_deepboys25D_v20-20260808-005934#4": {
+  "at": "2026-08-08T08:02:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_deepboys25D_v20-20260808-005934.json",
+   "sha256": "572c78e16017458531b22b1f06b03f5f3430da1207e33e71ec43c87dccbedb52"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
  "wallPiece-overnight_masonry_dreamshaper_8LCM-20260803-011104#1": {
   "at": "2026-08-04T11:53:43",
   "score": 0,
@@ -15085,6 +17846,55 @@
    "burned"
   ]
  },
+ "wallPiece-overnight_masonry_dreamshaper_8LCM-20260808-010219#1": {
+  "at": "2026-08-08T08:02:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_dreamshaper_8LCM-20260808-010219.json",
+   "sha256": "2256ba066d2b4c5757c7e1a8d25c4abe94f4fcdd7b8deedc1edd590361ee8500"
+  },
+  "score": 5,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_masonry_dreamshaper_8LCM-20260808-010219#2": {
+  "at": "2026-08-08T08:02:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_dreamshaper_8LCM-20260808-010219.json",
+   "sha256": "d0c88ae0efc2515c264ab80feced6f754e7df592acdc8dfb9c4afb8a8c687099"
+  },
+  "score": 5,
+  "tags": [
+   "burned",
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_dreamshaper_8LCM-20260808-010219#3": {
+  "at": "2026-08-08T08:02:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_dreamshaper_8LCM-20260808-010219.json",
+   "sha256": "7c844d6776789fe36ff7fffb424e478d1f70bd6839e5e0013fce4b1876a244a8"
+  },
+  "score": 4,
+  "tags": [
+   "burned",
+   "busy"
+  ]
+ },
+ "wallPiece-overnight_masonry_dreamshaper_8LCM-20260808-010219#4": {
+  "at": "2026-08-08T08:02:43",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_dreamshaper_8LCM-20260808-010219.json",
+   "sha256": "fd60ab5627af4493384facf10c605a02b164089e1d1980703192f5a3fc5cd928"
+  },
+  "score": 3,
+  "tags": [
+   "burned",
+   "harsh",
+   "outdoor"
+  ]
+ },
  "wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260803-011239#1": {
   "at": "2026-08-04T11:53:40",
   "score": 0,
@@ -15095,6 +17905,52 @@
   "score": 0,
   "tags": []
  },
+ "wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260808-010506#1": {
+  "at": "2026-08-08T08:02:00",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260808-010506.json",
+   "sha256": "d25400a983222e007f37bb49786da0c3038b5b735c33fedef46d6884b12cbe5a"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260808-010506#2": {
+  "at": "2026-08-08T08:02:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260808-010506.json",
+   "sha256": "a4ac9bae9b03c5e422843b6d769e2818266673adeea13957c10a733b69f26a03"
+  },
+  "score": 1,
+  "tags": [
+   "blank",
+   "burned",
+   "fragment"
+  ]
+ },
+ "wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260808-010506#3": {
+  "at": "2026-08-08T08:02:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260808-010506.json",
+   "sha256": "b11d87438fbe7ef4559c3bf95879144c2dae2d30fa16ae1961e869571ad3209b"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260808-010506#4": {
+  "at": "2026-08-08T08:02:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_everyjourneylcm_v10Ace-20260808-010506.json",
+   "sha256": "5baff286834d2f040ae7d97b05ca91c1f4f05bb6c19859377fc3dc1959e65419"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "burned"
+  ]
+ },
  "wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260803-011441#1": {
   "at": "2026-08-04T11:53:35",
   "score": 3,
@@ -15102,6 +17958,42 @@
  },
  "wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260803-011441#2": {
   "at": "2026-08-04T11:53:36",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260808-010903#1": {
+  "at": "2026-08-08T08:01:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260808-010903.json",
+   "sha256": "99024125e52af38ed1f190041ef092b60f2fda5c6819e63352039ad1a0ddd477"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260808-010903#2": {
+  "at": "2026-08-08T08:01:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260808-010903.json",
+   "sha256": "069bb1c86a23e78aec598350d499f4de5ef011fee3af711ce9af6b79258d2a66"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260808-010903#3": {
+  "at": "2026-08-08T08:01:51",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260808-010903.json",
+   "sha256": "a2b3ff0a61201929f21edc68f0be29ffe6e05498935834d45aaa1fd5af262c12"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260808-010903#4": {
+  "at": "2026-08-08T08:01:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_homodiffusionGay_homoDiffusionV10FP32-20260808-010903.json",
+   "sha256": "d4f07b9cbec919da0f176f39d46f717d7167e3840c64c1e4baa4232332f7011a"
+  },
   "score": 1,
   "tags": []
  },
@@ -15115,6 +18007,46 @@
   "score": 3,
   "tags": []
  },
+ "wallPiece-overnight_masonry_homosimile_v40-20260808-011156#1": {
+  "at": "2026-08-08T08:01:22",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_homosimile_v40-20260808-011156.json",
+   "sha256": "02c1803cc71f168f9c8156e285946ca1527901be176569b88e56ad13df6953c4"
+  },
+  "score": 4,
+  "tags": [
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_homosimile_v40-20260808-011156#2": {
+  "at": "2026-08-08T08:01:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_homosimile_v40-20260808-011156.json",
+   "sha256": "d43b80a798f6ba19310d0f2cff1c4f9c71892b5efae7f66855f9e496ffb97540"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_homosimile_v40-20260808-011156#3": {
+  "at": "2026-08-08T08:01:38",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_homosimile_v40-20260808-011156.json",
+   "sha256": "bcdce2cde4658fdc152f574e39c31bb676225d3dfcb837da5b69b34523ceb0c9"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_homosimile_v40-20260808-011156#4": {
+  "at": "2026-08-08T08:01:43",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_homosimile_v40-20260808-011156.json",
+   "sha256": "5f9b1f7ecb527f098af2b08c8c03f07ef785cf11cf900a73b652ecfb6f56de82"
+  },
+  "score": 4,
+  "tags": [
+   "seam"
+  ]
+ },
  "wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260803-011747#1": {
   "at": "2026-08-04T11:53:28",
   "score": 4,
@@ -15125,6 +18057,55 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260808-011435#1": {
+  "at": "2026-08-08T08:00:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260808-011435.json",
+   "sha256": "8fcb3ef715790eed7a7308f880f28f764356dc825cbfeb0a24a654d549559e68"
+  },
+  "score": 2,
+  "tags": [
+   "repeat",
+   "seam"
+  ]
+ },
+ "wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260808-011435#2": {
+  "at": "2026-08-08T08:00:58",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260808-011435.json",
+   "sha256": "80d4fda91a1f00163294b20b63601de3115a49696679077c0cd233c4062531ea"
+  },
+  "score": 3,
+  "tags": [
+   "burned",
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260808-011435#3": {
+  "at": "2026-08-08T08:01:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260808-011435.json",
+   "sha256": "61b67806d309d7bede20dc91d076a7adf0b8429195a470f02112213e5db90c03"
+  },
+  "score": 3,
+  "tags": [
+   "blank",
+   "repeat",
+   "seam"
+  ]
+ },
+ "wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260808-011435#4": {
+  "at": "2026-08-08T08:01:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_littleFishNaiLCM_v10-20260808-011435.json",
+   "sha256": "034d32b45621add62bfd09e10f203783248078a23823d017886f981762e3775c"
+  },
+  "score": 3,
+  "tags": [
+   "burned"
+  ]
+ },
  "wallPiece-overnight_masonry_lyriel_v16-20260803-011916#1": {
   "at": "2026-08-04T11:53:03",
   "score": 3,
@@ -15133,6 +18114,46 @@
  "wallPiece-overnight_masonry_lyriel_v16-20260803-011916#2": {
   "at": "2026-08-04T11:53:05",
   "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_lyriel_v16-20260808-011705#1": {
+  "at": "2026-08-08T08:00:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_lyriel_v16-20260808-011705.json",
+   "sha256": "4f23a18403dfc2a41677d12b5e6280683277675984d7b0a36dee14706fa09e3a"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_lyriel_v16-20260808-011705#2": {
+  "at": "2026-08-08T08:00:34",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_lyriel_v16-20260808-011705.json",
+   "sha256": "2f51ea598ab2e8dedbaa8dfb9f27a5d5c953fe308e6cffb410eba0d2fc3a7cdf"
+  },
+  "score": 3,
+  "tags": [
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight_masonry_lyriel_v16-20260808-011705#3": {
+  "at": "2026-08-08T08:00:41",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_lyriel_v16-20260808-011705.json",
+   "sha256": "4d59743e0fcad3b6d7839fb51054fada33fe8f67e96be40adcd547bb9000e528"
+  },
+  "score": 4,
+  "tags": [
+   "busy"
+  ]
+ },
+ "wallPiece-overnight_masonry_lyriel_v16-20260808-011705#4": {
+  "at": "2026-08-08T08:00:43",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_lyriel_v16-20260808-011705.json",
+   "sha256": "d4ef521fb3e99fe4f062a03f4ba2f4c2e6b668201061c466e7bd7a333232cc84"
+  },
+  "score": 3,
   "tags": []
  },
  "wallPiece-overnight_masonry_maturemalemix_v13-20260803-012044#1": {
@@ -15145,6 +18166,52 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_masonry_maturemalemix_v13-20260808-011938#1": {
+  "at": "2026-08-08T08:00:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_maturemalemix_v13-20260808-011938.json",
+   "sha256": "4a17d8451fbb872d60fa98e447bd49d0d5b226b93f455cbfffd20b51a6e6e227"
+  },
+  "score": 4,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_maturemalemix_v13-20260808-011938#2": {
+  "at": "2026-08-08T08:00:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_maturemalemix_v13-20260808-011938.json",
+   "sha256": "6bbd321e035706a61d559b5b56b310a189e1e19e0f515c7921f4b3c0cc542be9"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_maturemalemix_v13-20260808-011938#3": {
+  "at": "2026-08-08T08:00:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_maturemalemix_v13-20260808-011938.json",
+   "sha256": "267c7c2a67c849eaa036b194568ac8db2fcea6e797376e9e47d36f040c29ba80"
+  },
+  "score": 2,
+  "tags": [
+   "flat",
+   "harsh"
+  ]
+ },
+ "wallPiece-overnight_masonry_maturemalemix_v13-20260808-011938#4": {
+  "at": "2026-08-08T08:00:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_maturemalemix_v13-20260808-011938.json",
+   "sha256": "777b2da241b7f46e27d2ce4aa7c79515048f1ede117e6c91c013dba2103eee14"
+  },
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
  "wallPiece-overnight_masonry_megatronmerge-20260803-012212#1": {
   "at": "2026-08-04T11:52:58",
   "score": 1,
@@ -15152,6 +18219,47 @@
  },
  "wallPiece-overnight_masonry_megatronmerge-20260803-012212#2": {
   "at": "2026-08-04T11:53:00",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_megatronmerge-20260808-012209#1": {
+  "at": "2026-08-08T07:59:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_megatronmerge-20260808-012209.json",
+   "sha256": "934cc6f71df8ff7cce98b382100624523778c84cb4c6121eeac285b0e0cfe3da"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_masonry_megatronmerge-20260808-012209#2": {
+  "at": "2026-08-08T08:00:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_megatronmerge-20260808-012209.json",
+   "sha256": "9c1b73691b0c9611c961664cde5a79385d340af000db63d3b7bb2264c5d1ff64"
+  },
+  "score": 3,
+  "tags": [
+   "busy",
+   "harsh"
+  ]
+ },
+ "wallPiece-overnight_masonry_megatronmerge-20260808-012209#3": {
+  "at": "2026-08-08T08:00:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_megatronmerge-20260808-012209.json",
+   "sha256": "66327539e230e9a69b4888c6fb184813d54875792a8d489c5c99ef046efecdd3"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_megatronmerge-20260808-012209#4": {
+  "at": "2026-08-08T08:00:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_megatronmerge-20260808-012209.json",
+   "sha256": "4490d19a42763e5f7e6e220194e05e6695347c8bcd71367757d567b48b75c8e9"
+  },
   "score": 1,
   "tags": []
  },
@@ -15164,6 +18272,50 @@
   "at": "2026-08-04T11:51:09",
   "score": 0,
   "tags": []
+ },
+ "wallPiece-overnight_masonry_mistoonAnime_v30-20260808-012440#1": {
+  "at": "2026-08-08T07:59:36",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_mistoonAnime_v30-20260808-012440.json",
+   "sha256": "6ac67c7b3fd0af78c13dcb02b8a9e00ff7d4e0f1cfaac48b1beba04d060aef11"
+  },
+  "score": 3,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_mistoonAnime_v30-20260808-012440#2": {
+  "at": "2026-08-08T07:59:40",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_mistoonAnime_v30-20260808-012440.json",
+   "sha256": "a3da91333a970df75f959a9a3193af1d0c8234ac29518725f0b881159296226c"
+  },
+  "score": 3,
+  "tags": [
+   "blank",
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_mistoonAnime_v30-20260808-012440#3": {
+  "at": "2026-08-08T07:59:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_mistoonAnime_v30-20260808-012440.json",
+   "sha256": "0332e58b3e1131828fdf476a722897d2205230a98549e6ec2239221971268c6a"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_mistoonAnime_v30-20260808-012440#4": {
+  "at": "2026-08-08T07:59:53",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_mistoonAnime_v30-20260808-012440.json",
+   "sha256": "fe504497b6a6b9dbc6e613cb5f6c26bb8f941c1d6d40b745c159eeadcfb27008"
+  },
+  "score": 4,
+  "tags": [
+   "harsh"
+  ]
  },
  "wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260803-012503#1": {
   "at": "2026-08-04T11:50:57",
@@ -15178,6 +18330,49 @@
    "repeat"
   ]
  },
+ "wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260808-012711#1": {
+  "at": "2026-08-08T07:59:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260808-012711.json",
+   "sha256": "3b242974973566791743373a71e4eb8f07077ad71bdcb7b0b1b69439ac7adcf4"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260808-012711#2": {
+  "at": "2026-08-08T07:59:18",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260808-012711.json",
+   "sha256": "0a2461a94c11a9b3b16886fa3fca3112de583f3ae3269a51709e3072062b1c70"
+  },
+  "score": 5,
+  "tags": [
+   "repeat",
+   "seam"
+  ]
+ },
+ "wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260808-012711#3": {
+  "at": "2026-08-08T07:59:22",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260808-012711.json",
+   "sha256": "77b7a1931a8faef66f636b9c8fe5e1c1f9dc34dae38aba45443fc2322b07e285"
+  },
+  "score": 4,
+  "tags": [
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260808-012711#4": {
+  "at": "2026-08-08T07:59:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_newERANewEstheticRetro_retroV60VAE-20260808-012711.json",
+   "sha256": "a7b4652eb4c4ee115a70717387bb898a441bfccc62b77e148e382be5839c4f2c"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
  "wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260803-012628#1": {
   "at": "2026-08-04T11:50:53",
   "score": 4,
@@ -15186,6 +18381,42 @@
  "wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260803-012628#2": {
   "at": "2026-08-04T11:50:56",
   "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260808-012948#1": {
+  "at": "2026-08-08T07:59:00",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260808-012948.json",
+   "sha256": "88a5e0eeab07f95d9165262a7ecf69482b2229af8288d3f78ebb4cd37ca71c6e"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260808-012948#2": {
+  "at": "2026-08-08T07:59:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260808-012948.json",
+   "sha256": "77984850c63b0c7a86157710c57e96059469231e6ef1ac14e47cb51c1c1409a2"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260808-012948#3": {
+  "at": "2026-08-08T07:59:05",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260808-012948.json",
+   "sha256": "9e3b0d7e7cc7286cb8bb45534eaf653bad79877036e5b2c5be101333907c74f4"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260808-012948#4": {
+  "at": "2026-08-08T07:59:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_ohmenOrigins_ohmenOriginsV3-20260808-012948.json",
+   "sha256": "5cb44749d0fbf51df6fcd525f7a8efec9981375174cdef2e928392d27167cf65"
+  },
+  "score": 4,
   "tags": []
  },
  "wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260803-012804#1": {
@@ -15198,6 +18429,42 @@
   "score": 4,
   "tags": []
  },
+ "wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260808-013216#1": {
+  "at": "2026-08-08T07:58:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260808-013216.json",
+   "sha256": "97287c4a0bb59ef7c2d97aac82475b464cf34fda7e54b02f15c07c4359df603d"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260808-013216#2": {
+  "at": "2026-08-08T07:58:55",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260808-013216.json",
+   "sha256": "4346ef63ce2cc61b272d4fe314addd845f704dd0831e0528c9842f38e226026c"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260808-013216#3": {
+  "at": "2026-08-08T07:58:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260808-013216.json",
+   "sha256": "26327ef6e31c695ea7537c9c1446ae11f89db47a6f34122479761824d3b24460"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260808-013216#4": {
+  "at": "2026-08-08T07:58:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_ohmenToontastic_ohmenToontasticV2-20260808-013216.json",
+   "sha256": "e92fa8d96ebe3091e200b3cdcc69ebed2ea261cc38bbfe76966d87de561d4779"
+  },
+  "score": 3,
+  "tags": []
+ },
  "wallPiece-overnight_masonry_perfectWorld_v3Baked-20260803-012937#1": {
   "at": "2026-08-04T11:50:44",
   "score": 1,
@@ -15208,6 +18475,42 @@
   "score": 4,
   "tags": []
  },
+ "wallPiece-overnight_masonry_perfectWorld_v3Baked-20260808-013445#1": {
+  "at": "2026-08-08T07:58:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_perfectWorld_v3Baked-20260808-013445.json",
+   "sha256": "eb816a17e6eb55a0ff870194a0e8d8f2e155842201dc9eccd68c3e7c24ac3cb7"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_perfectWorld_v3Baked-20260808-013445#2": {
+  "at": "2026-08-08T07:58:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_perfectWorld_v3Baked-20260808-013445.json",
+   "sha256": "d680705cc7727b51d33f6a51f9b5d1c0c8e53141e0ed2513646e5ee4a02b0eaf"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_perfectWorld_v3Baked-20260808-013445#3": {
+  "at": "2026-08-08T07:58:50",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_perfectWorld_v3Baked-20260808-013445.json",
+   "sha256": "3e11f1f79b0ab5ee6964b096f01975e970464430d3a67f1dc7610928ba712727"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_perfectWorld_v3Baked-20260808-013445#4": {
+  "at": "2026-08-08T07:58:53",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_perfectWorld_v3Baked-20260808-013445.json",
+   "sha256": "90cfd91e8505c11f12a9ab6f9ba128f76225d2187d05997783731c025dd59518"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_masonry_sd-v1-4-20260803-013141#1": {
   "at": "2026-08-04T11:50:42",
   "score": 1,
@@ -15215,6 +18518,42 @@
  },
  "wallPiece-overnight_masonry_sd-v1-4-20260803-013141#2": {
   "at": "2026-08-04T11:50:43",
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_sd-v1-4-20260808-013728#1": {
+  "at": "2026-08-08T07:58:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_sd-v1-4-20260808-013728.json",
+   "sha256": "7dc061d2a8e0a9723ccd6c96bd16a8b6dc0be2b971366521dbbb5efce117bc3e"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_sd-v1-4-20260808-013728#2": {
+  "at": "2026-08-08T07:58:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_sd-v1-4-20260808-013728.json",
+   "sha256": "dd625513435d4bd7d919ab220294378c08923fc51ed19f7cdc5769c85c1a69a9"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_sd-v1-4-20260808-013728#3": {
+  "at": "2026-08-08T07:58:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_sd-v1-4-20260808-013728.json",
+   "sha256": "394c56255e880f47c4c518cf11cc23de7197ad8379a8166290983e65ec46b5b0"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_sd-v1-4-20260808-013728#4": {
+  "at": "2026-08-08T07:58:46",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_sd-v1-4-20260808-013728.json",
+   "sha256": "16a6845f8ba48d3f50308920680a2e02f4e074169a4c6b3b5c1ea7b53212cc29"
+  },
   "score": 0,
   "tags": []
  },
@@ -15228,6 +18567,50 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_masonry_sigmatron_Hyper-20260808-014003#1": {
+  "at": "2026-08-08T07:58:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_sigmatron_Hyper-20260808-014003.json",
+   "sha256": "9a0fe0408fd5f7c552cfc14746035c5b10a78f2b6a2f976d054277873065d76f"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "text"
+  ]
+ },
+ "wallPiece-overnight_masonry_sigmatron_Hyper-20260808-014003#2": {
+  "at": "2026-08-08T07:58:29",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_sigmatron_Hyper-20260808-014003.json",
+   "sha256": "285ec6505e395d8ac33cfd21c956023240edd77df5e9a12f66fcc1cc9afff288"
+  },
+  "score": 2,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_sigmatron_Hyper-20260808-014003#3": {
+  "at": "2026-08-08T07:58:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_sigmatron_Hyper-20260808-014003.json",
+   "sha256": "6fef9d1b59e440c6d7ab4dc55dce850e552484f6776b881086b2049fa1bd6ade"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_sigmatron_Hyper-20260808-014003#4": {
+  "at": "2026-08-08T07:58:40",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_sigmatron_Hyper-20260808-014003.json",
+   "sha256": "44abef2dec28c132805381d82a1175347bb3940a62f8eb170df47618f89f581e"
+  },
+  "score": 4,
+  "tags": [
+   "harsh"
+  ]
+ },
  "wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260803-013423#1": {
   "at": "2026-08-04T11:50:36",
   "score": 1,
@@ -15235,6 +18618,44 @@
  },
  "wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260803-013423#2": {
   "at": "2026-08-04T11:50:37",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-014234#1": {
+  "at": "2026-08-08T07:58:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-014234.json",
+   "sha256": "5755887fc85c8596a041e471ad3d16bce4ed09e81761ee89dfda1dab71e82b12"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-014234#2": {
+  "at": "2026-08-08T07:58:15",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-014234.json",
+   "sha256": "3acdbb8bf69df7129dad0763d639b5c5f1b13442e7971677ccb0bcc760b034c8"
+  },
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-014234#3": {
+  "at": "2026-08-08T07:58:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-014234.json",
+   "sha256": "edc578f7f9d48ce41992cb1bb9655584fa2a898867592359d2e5c8a5e2dbda0a"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-014234#4": {
+  "at": "2026-08-08T07:58:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-014234.json",
+   "sha256": "2fd733d5b08cf6f6cb6fe5d502d41beaefe7962495271758af5450d5ea035eb0"
+  },
   "score": 1,
   "tags": []
  },
@@ -15248,6 +18669,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_masonry_tAnimeV4Pruned_v40-20260808-014502#1": {
+  "at": "2026-08-08T07:57:55",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_tAnimeV4Pruned_v40-20260808-014502.json",
+   "sha256": "b705da60876ce19b7cb99f6d2d39307fe5ff6c6a9310d9c3b75292e8ace298ba"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_tAnimeV4Pruned_v40-20260808-014502#2": {
+  "at": "2026-08-08T07:57:58",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_tAnimeV4Pruned_v40-20260808-014502.json",
+   "sha256": "3e738f9945f2d897342f1f004cc9883ca328b32d52d6573b63c9f7a7a5d6f7c2"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_tAnimeV4Pruned_v40-20260808-014502#3": {
+  "at": "2026-08-08T07:58:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_tAnimeV4Pruned_v40-20260808-014502.json",
+   "sha256": "09627aadbf1db0345356f48dc6edaf8b1305ad136f5736ea812c891bd026773d"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_tAnimeV4Pruned_v40-20260808-014502#4": {
+  "at": "2026-08-08T07:58:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_tAnimeV4Pruned_v40-20260808-014502.json",
+   "sha256": "25ae1ebbe579c9a8c3ef80cf6d024e227d5e01aa8bbb83f59299b8aed4289c20"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260803-013721#1": {
   "at": "2026-08-04T11:50:33",
   "score": 0,
@@ -15255,6 +18712,42 @@
  },
  "wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260803-013721#2": {
   "at": "2026-08-04T11:50:33",
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260808-014732#1": {
+  "at": "2026-08-08T07:57:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260808-014732.json",
+   "sha256": "3c8aa902e8f2cc86a07794563214996d12fa2c7d84e638e8ad4d0c94b9124203"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260808-014732#2": {
+  "at": "2026-08-08T07:57:50",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260808-014732.json",
+   "sha256": "91f6a36cc4ff79e5782d0bcd0c81e87d65fe915d4c2ca9584242ba3533a99d5f"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260808-014732#3": {
+  "at": "2026-08-08T07:57:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260808-014732.json",
+   "sha256": "17390b0bb59c39db95f924681d36cdd89ba5fbc7d8b7582282f96b1740c93057"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260808-014732#4": {
+  "at": "2026-08-08T07:57:53",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_v1-5-pruned-emaonly-20260808-014732.json",
+   "sha256": "159a4fe7b3d2b3f712ce2d3460bb1a7cb34610191774e7430ba1b6671af12828"
+  },
   "score": 0,
   "tags": []
  },
@@ -15266,6 +18759,50 @@
  "wallPiece-overnight_masonry_virileReality_v20-20260803-013850#2": {
   "at": "2026-08-04T11:50:31",
   "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_masonry_virileReality_v20-20260808-015011#1": {
+  "at": "2026-08-08T07:57:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_virileReality_v20-20260808-015011.json",
+   "sha256": "3ee27db1cdca770202c06ed367be982344346ed3f9ed1c4dd27102be2d606c82"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_masonry_virileReality_v20-20260808-015011#2": {
+  "at": "2026-08-08T07:57:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_virileReality_v20-20260808-015011.json",
+   "sha256": "c3066cd7fd7558b777d890ba4ff5245c1471cec24a58ad9842a9cce9aa4b7112"
+  },
+  "score": 4,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_masonry_virileReality_v20-20260808-015011#3": {
+  "at": "2026-08-08T07:57:40",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_virileReality_v20-20260808-015011.json",
+   "sha256": "510d6cbdf2801a33e0b55b6ed3c028805c202fea7cc18ef0936a784e53ca3ed2"
+  },
+  "score": 3,
+  "tags": [
+   "burned",
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_masonry_virileReality_v20-20260808-015011#4": {
+  "at": "2026-08-08T07:57:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_masonry_virileReality_v20-20260808-015011.json",
+   "sha256": "d859f501cc046d17ec66f0c07146c63dada72622c48dbbafe32dd5c2a8d7cdbd"
+  },
+  "score": 3,
   "tags": []
  },
  "wallPiece-overnight_probe_ohmen-20260803-005321#1": {
@@ -15283,6 +18820,48 @@
   "score": 3,
   "tags": []
  },
+ "wallPiece-overnight_shrine_DreamShaper_8_pruned-20260808-015557#1": {
+  "at": "2026-08-08T07:56:55",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_DreamShaper_8_pruned-20260808-015557.json",
+   "sha256": "ef5c4da6f40aaccf6925a1c0027c20329a1842a9f546edc77ddf11d371f67dd9"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_DreamShaper_8_pruned-20260808-015557#2": {
+  "at": "2026-08-08T07:56:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_DreamShaper_8_pruned-20260808-015557.json",
+   "sha256": "3efb6564bf7992805b9f8f153406d284cc3a7214a5537cf563874bcc1415a143"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_DreamShaper_8_pruned-20260808-015557#3": {
+  "at": "2026-08-08T07:57:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_DreamShaper_8_pruned-20260808-015557.json",
+   "sha256": "ea9a0dcd39a072d70bab52495c6f899fe380f5cb448d4fecb28835ac8fabeadc"
+  },
+  "score": 3,
+  "tags": [
+   "busy",
+   "harsh"
+  ]
+ },
+ "wallPiece-overnight_shrine_DreamShaper_8_pruned-20260808-015557#4": {
+  "at": "2026-08-08T07:57:16",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_DreamShaper_8_pruned-20260808-015557.json",
+   "sha256": "5569f20be6be4038ad0b549e3c42f5855378c62695f35af5008f57baa5a69344"
+  },
+  "score": 3,
+  "tags": [
+   "busy",
+   "unguided"
+  ]
+ },
  "wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260803-014335#1": {
   "at": "2026-08-04T11:50:19",
   "score": 1,
@@ -15290,6 +18869,42 @@
  },
  "wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260803-014335#2": {
   "at": "2026-08-04T11:50:21",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260808-015825#1": {
+  "at": "2026-08-08T07:56:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260808-015825.json",
+   "sha256": "874660b67d2067d7ad818e28d9effa69f4dfe6e26b31f49f6c47faed7f0593a8"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260808-015825#2": {
+  "at": "2026-08-08T07:56:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260808-015825.json",
+   "sha256": "e976c1e07b89b799df008e5cc4cbe82feb777d1eac87bd374c925bcc9310b283"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260808-015825#3": {
+  "at": "2026-08-08T07:56:50",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260808-015825.json",
+   "sha256": "7134261dadece071470f9b9dc057ccd54635c390dc95ca5fa8e4e6968494e5e8"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260808-015825#4": {
+  "at": "2026-08-08T07:56:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_aLunarDreamBeta_aLunarDreamV1-20260808-015825.json",
+   "sha256": "acaf27c302593b887733e714ed546075515a464cdc7624f4c91e634a156cce73"
+  },
   "score": 1,
   "tags": []
  },
@@ -15303,6 +18918,47 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_shrine_aamAnyloraAnimeMixAnime_v1-20260808-020053#1": {
+  "at": "2026-08-08T07:56:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_aamAnyloraAnimeMixAnime_v1-20260808-020053.json",
+   "sha256": "f7a3c03d7a1a62aaec15931e0ec522dec26a997d48e915b3d530ab27c0ac8199"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_aamAnyloraAnimeMixAnime_v1-20260808-020053#2": {
+  "at": "2026-08-08T07:56:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_aamAnyloraAnimeMixAnime_v1-20260808-020053.json",
+   "sha256": "e95c231964809b225a577b80f4131631db5366e75bd6277119b94646fdac6881"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_aamAnyloraAnimeMixAnime_v1-20260808-020053#3": {
+  "at": "2026-08-08T07:56:37",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_aamAnyloraAnimeMixAnime_v1-20260808-020053.json",
+   "sha256": "fb2d8e533b2db3585056438540599326b44fcc3a733d4e0a546f7dc53d27d93e"
+  },
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_shrine_aamAnyloraAnimeMixAnime_v1-20260808-020053#4": {
+  "at": "2026-08-08T07:56:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_aamAnyloraAnimeMixAnime_v1-20260808-020053.json",
+   "sha256": "683daccf4ad459c526d197f6ce4868b8ee584be1941910b6327bbfbeb479c322"
+  },
+  "score": 2,
+  "tags": [
+   "blank",
+   "flat"
+  ]
+ },
  "wallPiece-overnight_shrine_airfucksWildMix_v10-20260803-014615#1": {
   "at": "2026-08-04T11:50:06",
   "score": 1,
@@ -15313,6 +18969,48 @@
   "score": 0,
   "tags": []
  },
+ "wallPiece-overnight_shrine_airfucksWildMix_v10-20260808-020327#1": {
+  "at": "2026-08-08T07:56:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_airfucksWildMix_v10-20260808-020327.json",
+   "sha256": "03abf1b005ce17e453649621267eb878a0407d2f1a274846e61843f7c0d9d80d"
+  },
+  "score": 5,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_shrine_airfucksWildMix_v10-20260808-020327#2": {
+  "at": "2026-08-08T07:56:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_airfucksWildMix_v10-20260808-020327.json",
+   "sha256": "7d95cc4da734557cdfdbe60cb9628ab82c40cd26dbaacaa559526b189bc3556b"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_airfucksWildMix_v10-20260808-020327#3": {
+  "at": "2026-08-08T07:56:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_airfucksWildMix_v10-20260808-020327.json",
+   "sha256": "63c9f54199afc5a9650c0b3e1e09e51441bd091f933fea7e6edd3c5ffbb1d77b"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_airfucksWildMix_v10-20260808-020327#4": {
+  "at": "2026-08-08T07:56:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_airfucksWildMix_v10-20260808-020327.json",
+   "sha256": "7e66567a43ccf7984440107f5f086274180fe5ae1c9b23dd681d81018f145d8b"
+  },
+  "score": 4,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
  "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260803-014759#1": {
   "at": "2026-08-04T11:50:03",
   "score": 1,
@@ -15321,6 +19019,42 @@
  "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260803-014759#2": {
   "at": "2026-08-04T11:50:04",
   "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-020605#1": {
+  "at": "2026-08-08T07:56:01",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-020605.json",
+   "sha256": "3f025e3a02981bfb378f48f1cdc537107d5caa9e035df481195233c385129758"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-020605#2": {
+  "at": "2026-08-08T07:56:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-020605.json",
+   "sha256": "5c1e90b9175d24cf205065b926fec5709aa66e12116ed34c5f87813e60dd2860"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-020605#3": {
+  "at": "2026-08-08T07:56:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-020605.json",
+   "sha256": "1e3eeeef36fda3765804e5fb66615a8ca20045a9da9f283793a5816ce3467f39"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-020605#4": {
+  "at": "2026-08-08T07:56:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeBlessedFp16-20260808-020605.json",
+   "sha256": "ed7caffb8a30e5194a12ef9101da4a05960a1768f1c685e5a36489512c9d992a"
+  },
+  "score": 2,
   "tags": []
  },
  "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260803-014926#1": {
@@ -15334,6 +19068,46 @@
   "tags": [
    "blank",
    "text"
+  ]
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-020839#1": {
+  "at": "2026-08-08T07:55:50",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-020839.json",
+   "sha256": "4de10c678fe3460962099d90bfa5f112d152a7d83b547861142930f865384f1e"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-020839#2": {
+  "at": "2026-08-08T07:55:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-020839.json",
+   "sha256": "e0cfd884aa0139ca3606edbab5fb13340b0db619af41136c0c012fb44b4836ff"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-020839#3": {
+  "at": "2026-08-08T07:55:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-020839.json",
+   "sha256": "39235e4b0fa4b811c4921a2e75ed562455098d348803de90f81198633b2f5330"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-020839#4": {
+  "at": "2026-08-08T07:55:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_bakedvaeFtmseFp16NOT-20260808-020839.json",
+   "sha256": "c218cc21ce9e8a1c834d3209c9a8d42977a6e8a4ae7ddfc74e0dd48bb233f3bb"
+  },
+  "score": 4,
+  "tags": [
+   "fragment"
   ]
  },
  "wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260803-015056#1": {
@@ -15353,6 +19127,45 @@
    "text"
   ]
  },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260808-021112#1": {
+  "at": "2026-08-08T07:53:55",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260808-021112.json",
+   "sha256": "392a73591d777009586ea7711f7353e452117b6869d5ccf10548c81e4618d827"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260808-021112#2": {
+  "at": "2026-08-08T07:53:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260808-021112.json",
+   "sha256": "7a13365bcb4084da030ac7f0c3b45c56424513ae3710025642ac2abce5568f39"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260808-021112#3": {
+  "at": "2026-08-08T07:54:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260808-021112.json",
+   "sha256": "1dbfbcf6d60115bb826283f1e7736954896b9c29223a1da2111350b38d7c1c7b"
+  },
+  "score": 5,
+  "tags": [
+   "blank",
+   "fragment"
+  ]
+ },
+ "wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260808-021112#4": {
+  "at": "2026-08-08T07:54:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_anyloraCheckpoint_lcm-20260808-021112.json",
+   "sha256": "cb70d7abefbcb0e4716d3284397200a6c73414fcac9779f6e7c1aba166b331f1"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260803-015219#1": {
   "at": "2026-08-04T11:49:42",
   "score": 1,
@@ -15367,6 +19180,42 @@
    "fragment"
   ]
  },
+ "wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260808-021340#1": {
+  "at": "2026-08-08T07:53:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260808-021340.json",
+   "sha256": "dbdc3b1169f8c8506b06201612cf07c46ae363d4fff4d46f80643a4b06f962a6"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260808-021340#2": {
+  "at": "2026-08-08T07:53:48",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260808-021340.json",
+   "sha256": "160e0d32105190d7d8203e70f348ec899aa7592678f636706779b99f746d3dee"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260808-021340#3": {
+  "at": "2026-08-08T07:53:51",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260808-021340.json",
+   "sha256": "1a123c3896bfbf06a1bcc52e3b1af8d453a1149fd10b8f9560821b2cbd644120"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260808-021340#4": {
+  "at": "2026-08-08T07:53:53",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_boxmix25DMale_v10Boxcat-20260808-021340.json",
+   "sha256": "915d4defe967e273bfeff0ab2455e992613e17e5b35a214dedda2855c9a8936a"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260803-015351#1": {
   "at": "2026-08-04T11:49:37",
   "score": 2,
@@ -15377,6 +19226,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260808-021623#1": {
+  "at": "2026-08-08T07:53:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260808-021623.json",
+   "sha256": "fdb729839f94409383422751f777f01fd9c9fee9198b8f0feb6acd22a0d1729e"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260808-021623#2": {
+  "at": "2026-08-08T07:53:38",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260808-021623.json",
+   "sha256": "1d6a19dfd1dc948372249ffb4991ed1ecff21415fd5416a5c33ec49a768a5fbf"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260808-021623#3": {
+  "at": "2026-08-08T07:53:40",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260808-021623.json",
+   "sha256": "62a7189d162c20c3d2f246405348332c9f1c973f7f57ba58ba365d8ed33e8565"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260808-021623#4": {
+  "at": "2026-08-08T07:53:46",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_chilloutmix_NiPrunedFp32Fix-20260808-021623.json",
+   "sha256": "0dc4925f273817c4cab729a69e649f2b481a0bc3c8967b7458cf2a44abfcd693"
+  },
+  "score": 5,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_daddyDiffusion_v1-20260803-015518#1": {
   "at": "2026-08-04T11:49:34",
   "score": 0,
@@ -15384,6 +19269,42 @@
  },
  "wallPiece-overnight_shrine_daddyDiffusion_v1-20260803-015518#2": {
   "at": "2026-08-04T11:49:35",
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_daddyDiffusion_v1-20260808-021900#1": {
+  "at": "2026-08-08T07:53:26",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_daddyDiffusion_v1-20260808-021900.json",
+   "sha256": "b844b9280151eae4131a37c718030d185e8a366609d53e38baed4cad4569acf1"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_daddyDiffusion_v1-20260808-021900#2": {
+  "at": "2026-08-08T07:53:29",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_daddyDiffusion_v1-20260808-021900.json",
+   "sha256": "85dea547d6b7dbb3824c3ae16487f24c7c4a88d0da373e3e56df6e09a0bf3a40"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_daddyDiffusion_v1-20260808-021900#3": {
+  "at": "2026-08-08T07:53:31",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_daddyDiffusion_v1-20260808-021900.json",
+   "sha256": "32d1b47b3568e848f40808e116cc283aaa7e68a0d7077d148d3a4b511ef6bfdb"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_daddyDiffusion_v1-20260808-021900#4": {
+  "at": "2026-08-08T07:53:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_daddyDiffusion_v1-20260808-021900.json",
+   "sha256": "67661c108db24b3adfe6e15ab13dc4691fb493a5baeb6ab3ec88caef0e7788f9"
+  },
   "score": 0,
   "tags": []
  },
@@ -15397,6 +19318,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_shrine_deepboys25D_v20-20260808-022128#1": {
+  "at": "2026-08-08T07:53:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_deepboys25D_v20-20260808-022128.json",
+   "sha256": "611cf5de4958b4b4df38ffa749ad035eb4aeac0741e66de26dae8f7eaa764018"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_deepboys25D_v20-20260808-022128#2": {
+  "at": "2026-08-08T07:53:15",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_deepboys25D_v20-20260808-022128.json",
+   "sha256": "b5105fb74e6124fb6b155669268f90f9915469c4cd9bd22dcf0fc8815c384285"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_deepboys25D_v20-20260808-022128#3": {
+  "at": "2026-08-08T07:53:16",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_deepboys25D_v20-20260808-022128.json",
+   "sha256": "44848e731bea7d592ae2e8371a7334cfdb33a8002e33f0a0ec463bd0ab4f799a"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_deepboys25D_v20-20260808-022128#4": {
+  "at": "2026-08-08T07:53:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_deepboys25D_v20-20260808-022128.json",
+   "sha256": "0240e16cfb1435177d1cbfcd26fe4960820b62db7c7d2f4be9b02c6103dfcc42"
+  },
+  "score": 2,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_dreamshaper_8LCM-20260803-015822#1": {
   "at": "2026-08-04T11:49:28",
   "score": 1,
@@ -15407,6 +19364,50 @@
  "wallPiece-overnight_shrine_dreamshaper_8LCM-20260803-015822#2": {
   "at": "2026-08-04T11:49:30",
   "score": 1,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_shrine_dreamshaper_8LCM-20260808-022356#1": {
+  "at": "2026-08-08T07:52:55",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_dreamshaper_8LCM-20260808-022356.json",
+   "sha256": "981a3cf497dce2d15fe462a758987c7c7c65d6372ac12a1395da2e989742f7da"
+  },
+  "score": 4,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_shrine_dreamshaper_8LCM-20260808-022356#2": {
+  "at": "2026-08-08T07:52:56",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_dreamshaper_8LCM-20260808-022356.json",
+   "sha256": "46c58a6bcfcf2c7154c88e8e70993e08610cf603eafa6b1d2f8d25f2479e565c"
+  },
+  "score": 2,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_shrine_dreamshaper_8LCM-20260808-022356#3": {
+  "at": "2026-08-08T07:53:00",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_dreamshaper_8LCM-20260808-022356.json",
+   "sha256": "14a0e1a7405014357e749ab7ca0a8b68493a840a9c2b0c33902f5aa09ca859ff"
+  },
+  "score": 5,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_shrine_dreamshaper_8LCM-20260808-022356#4": {
+  "at": "2026-08-08T07:53:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_dreamshaper_8LCM-20260808-022356.json",
+   "sha256": "bdaa2d1948cbd110f552ca2e40f057e1c8acb24d950e2bca5950452bbe21701d"
+  },
+  "score": 4,
   "tags": [
    "burned"
   ]
@@ -15425,6 +19426,50 @@
    "burned"
   ]
  },
+ "wallPiece-overnight_shrine_everyjourneylcm_v10Ace-20260808-022628#1": {
+  "at": "2026-08-08T07:52:43",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_everyjourneylcm_v10Ace-20260808-022628.json",
+   "sha256": "6344de2aa0e05c7da3a8c6fdc4bd9a367118cde89cff4a8144a8d49486a7abb5"
+  },
+  "score": 3,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_shrine_everyjourneylcm_v10Ace-20260808-022628#2": {
+  "at": "2026-08-08T07:52:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_everyjourneylcm_v10Ace-20260808-022628.json",
+   "sha256": "367363d65b7b4b0791bc55e195c8ffaea3e3183cf7d0d790ca428514ad78d498"
+  },
+  "score": 3,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_shrine_everyjourneylcm_v10Ace-20260808-022628#3": {
+  "at": "2026-08-08T07:52:46",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_everyjourneylcm_v10Ace-20260808-022628.json",
+   "sha256": "786a37a1957160dc7116c4d7f77592ae4ef13d7154cf1895bd3dda260a28fd36"
+  },
+  "score": 3,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-overnight_shrine_everyjourneylcm_v10Ace-20260808-022628#4": {
+  "at": "2026-08-08T07:52:49",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_everyjourneylcm_v10Ace-20260808-022628.json",
+   "sha256": "e3175d6c386dfa96cb1a14b02f7ea647976cd2a2aed6097d187e4f98791196c8"
+  },
+  "score": 2,
+  "tags": [
+   "burned"
+  ]
+ },
  "wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260803-020253#1": {
   "at": "2026-08-04T11:49:15",
   "score": 4,
@@ -15434,6 +19479,44 @@
   "at": "2026-08-04T11:49:17",
   "score": 4,
   "tags": []
+ },
+ "wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260808-023010#1": {
+  "at": "2026-08-08T07:52:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260808-023010.json",
+   "sha256": "9b439dd24fad19416419fcabe2bb06a385dd200052e447c4f451ec86ec198b8c"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260808-023010#2": {
+  "at": "2026-08-08T07:52:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260808-023010.json",
+   "sha256": "ca96171403d31b873573a4cf3c82d4441ef59148614ffe0a7329b3bc776a6b9d"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260808-023010#3": {
+  "at": "2026-08-08T07:52:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260808-023010.json",
+   "sha256": "6307ebfac69cd362a8861446b5e18c207dbc4251f18938e05a4a54ca920dd621"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260808-023010#4": {
+  "at": "2026-08-08T07:52:29",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_homodiffusionGay_homoDiffusionV10FP32-20260808-023010.json",
+   "sha256": "f55006e78486176234d03d72f5be368f057700e3605be3fea17635016e9c34d7"
+  },
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
  },
  "wallPiece-overnight_shrine_homosimile_v40-20260803-020444#1": {
   "at": "2026-08-04T11:55:45",
@@ -15445,6 +19528,50 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_shrine_homosimile_v40-20260808-023246#1": {
+  "at": "2026-08-08T07:51:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_homosimile_v40-20260808-023246.json",
+   "sha256": "ffb4cd9a4e09b863ff7724a72d30b977add52d573314553cba0d588c39891ac0"
+  },
+  "score": 3,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_shrine_homosimile_v40-20260808-023246#2": {
+  "at": "2026-08-08T07:52:04",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_homosimile_v40-20260808-023246.json",
+   "sha256": "4b24ba0701d741f848a2a40384afe7fa7b1bb79c5616288761ff09d071cbeb0a"
+  },
+  "score": 3,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_shrine_homosimile_v40-20260808-023246#3": {
+  "at": "2026-08-08T07:52:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_homosimile_v40-20260808-023246.json",
+   "sha256": "9ca346e1a57234dbbab272c523f800433fb368164f0e2a09d41ec8cd29c9e201"
+  },
+  "score": 3,
+  "tags": [
+   "flat",
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_shrine_homosimile_v40-20260808-023246#4": {
+  "at": "2026-08-08T07:52:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_homosimile_v40-20260808-023246.json",
+   "sha256": "096c471d0ede689b4721fac455119747a37cf991322245caed8ca6895a70baec"
+  },
+  "score": 2,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260803-020620#1": {
   "at": "2026-08-04T11:49:03",
   "score": 1,
@@ -15453,6 +19580,46 @@
  "wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260803-020620#2": {
   "at": "2026-08-04T11:49:07",
   "score": 2,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260808-023518#1": {
+  "at": "2026-08-08T07:51:38",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260808-023518.json",
+   "sha256": "611ac7753bf91ca35b0e99278cde6ebbec4b65f196a8d72546922f5d0be206fb"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260808-023518#2": {
+  "at": "2026-08-08T07:51:40",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260808-023518.json",
+   "sha256": "ac65b620533bd9ced032f3f79306a29a9adac5ed3d6adab3960f00b2677f5954"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260808-023518#3": {
+  "at": "2026-08-08T07:51:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260808-023518.json",
+   "sha256": "44011be0f30e7085d6af71998a51683749c6c42b8bbcb8c136773f8d64586968"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260808-023518#4": {
+  "at": "2026-08-08T07:51:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_littleFishNaiLCM_v10-20260808-023518.json",
+   "sha256": "e25fe0f48994b85a1c00bc706ddab7233932252fa0dd73527d4a73ccc789e0ae"
+  },
+  "score": 3,
   "tags": [
    "blank"
   ]
@@ -15469,6 +19636,42 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_shrine_lyriel_v16-20260808-023747#1": {
+  "at": "2026-08-08T07:51:28",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_lyriel_v16-20260808-023747.json",
+   "sha256": "5349860f1b00fb70e49a9ef29d115bad111907726a3e6b738051bf5fa7379e46"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_lyriel_v16-20260808-023747#2": {
+  "at": "2026-08-08T07:51:31",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_lyriel_v16-20260808-023747.json",
+   "sha256": "787f28070d2a79f1188ca15a3c8d044caba027430156e6e96783e6a7bb30656d"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_lyriel_v16-20260808-023747#3": {
+  "at": "2026-08-08T07:51:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_lyriel_v16-20260808-023747.json",
+   "sha256": "053de0d82a3d05d4efbb5a525e12cc8ecb6629a74f5a8a2a9f9df5de69124f34"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_lyriel_v16-20260808-023747#4": {
+  "at": "2026-08-08T07:51:36",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_lyriel_v16-20260808-023747.json",
+   "sha256": "6116ee346ab6d4c7c0194750d5598185cfc019e3f24d8b5509bb35bf3deb6f85"
+  },
+  "score": 3,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_maturemalemix_v13-20260803-020911#1": {
   "at": "2026-08-04T11:48:51",
   "score": 2,
@@ -15478,6 +19681,42 @@
  },
  "wallPiece-overnight_shrine_maturemalemix_v13-20260803-020911#2": {
   "at": "2026-08-04T11:48:52",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_maturemalemix_v13-20260808-024019#1": {
+  "at": "2026-08-08T07:51:09",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_maturemalemix_v13-20260808-024019.json",
+   "sha256": "f578a321420c5b9cf3dd46ba53b68795d7c2d3864d1814ba1df970b502376af3"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_maturemalemix_v13-20260808-024019#2": {
+  "at": "2026-08-08T07:51:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_maturemalemix_v13-20260808-024019.json",
+   "sha256": "8fdbaddd3f71f729242cedbfe0a32f24343b7cf028f19797ef41c59edac76dfa"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_maturemalemix_v13-20260808-024019#3": {
+  "at": "2026-08-08T07:51:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_maturemalemix_v13-20260808-024019.json",
+   "sha256": "5df101cc4c17c24363a101a133ad046f2c93de17c48593978295a568db29d6d4"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_maturemalemix_v13-20260808-024019#4": {
+  "at": "2026-08-08T07:51:26",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_maturemalemix_v13-20260808-024019.json",
+   "sha256": "1bc6b343ab2fe69cb35798812d90c9dff74d32f98c83eb46b13f03c285339f03"
+  },
   "score": 1,
   "tags": []
  },
@@ -15491,6 +19730,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_shrine_megatronmerge-20260808-024251#1": {
+  "at": "2026-08-08T07:50:55",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_megatronmerge-20260808-024251.json",
+   "sha256": "41f3fa843e6541c09ccf2c07208fe192b0c23795f1290d3a2abb546c09303280"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_megatronmerge-20260808-024251#2": {
+  "at": "2026-08-08T07:50:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_megatronmerge-20260808-024251.json",
+   "sha256": "d2027cd05a0f4a3fbf2ed29005016cf3581a87bafb7c677af2939f30a8575db6"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_megatronmerge-20260808-024251#3": {
+  "at": "2026-08-08T07:50:59",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_megatronmerge-20260808-024251.json",
+   "sha256": "04cfc3a0c262719603bff1bc520ff1edccd87a5c0db00191adc3ec105a1582ab"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_megatronmerge-20260808-024251#4": {
+  "at": "2026-08-08T07:51:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_megatronmerge-20260808-024251.json",
+   "sha256": "7060770e039b00eab4c8a01bf754c7854b331212a893209ea0d6fe168f72c653"
+  },
+  "score": 6,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_mistoonAnime_v30-20260803-021159#1": {
   "at": "2026-08-04T11:48:42",
   "score": 3,
@@ -15502,6 +19777,50 @@
   "at": "2026-08-04T11:48:45",
   "score": 3,
   "tags": []
+ },
+ "wallPiece-overnight_shrine_mistoonAnime_v30-20260808-024522#1": {
+  "at": "2026-08-08T07:50:42",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_mistoonAnime_v30-20260808-024522.json",
+   "sha256": "4465f3b6ada05ff70b8a9a24a024ff7fcb72b8365858dcddc1c12eab14e8324d"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_shrine_mistoonAnime_v30-20260808-024522#2": {
+  "at": "2026-08-08T07:50:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_mistoonAnime_v30-20260808-024522.json",
+   "sha256": "910df1a840ed3694e55016c9ecb6d2eee91a0b83228733d245f446460318f70e"
+  },
+  "score": 2,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_shrine_mistoonAnime_v30-20260808-024522#3": {
+  "at": "2026-08-08T07:50:48",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_mistoonAnime_v30-20260808-024522.json",
+   "sha256": "1a0df4517ea77329a06ee8f33018f314601026d82edf2612d4799c6ace88778b"
+  },
+  "score": 1,
+  "tags": [
+   "picture"
+  ]
+ },
+ "wallPiece-overnight_shrine_mistoonAnime_v30-20260808-024522#4": {
+  "at": "2026-08-08T07:50:51",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_mistoonAnime_v30-20260808-024522.json",
+   "sha256": "7aafae1a8435d613dde0dd3873fc9e8035f3d896ff487cb9d97fedd2f35ff422"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
  },
  "wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260803-021319#1": {
   "at": "2026-08-04T11:48:37",
@@ -15517,6 +19836,44 @@
    "burned"
   ]
  },
+ "wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260808-024752#1": {
+  "at": "2026-08-08T07:50:30",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260808-024752.json",
+   "sha256": "c87271338aa91a11ab178e57d51c3e9c7501a3719fc888c50c1f88ffae74bf57"
+  },
+  "score": 3,
+  "tags": [
+   "blank"
+  ]
+ },
+ "wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260808-024752#2": {
+  "at": "2026-08-08T07:50:33",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260808-024752.json",
+   "sha256": "dcaeb73824f1801c841a79d4c4b96b7f6731a003bcd589e088ac0f1c6bb369a6"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260808-024752#3": {
+  "at": "2026-08-08T07:50:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260808-024752.json",
+   "sha256": "5273f03cb224e1c8b29622651ea3962769d38b0ba2198468aa41d41f68114184"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260808-024752#4": {
+  "at": "2026-08-08T07:50:36",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_newERANewEstheticRetro_retroV60VAE-20260808-024752.json",
+   "sha256": "0b4400b9c952ba9c9da9838121527a3c1ca4c1bfa117f3d1edf14f4ae3d6a653"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260803-021449#1": {
   "at": "2026-08-04T11:45:01",
   "score": 2,
@@ -15529,6 +19886,45 @@
    "harsh"
   ]
  },
+ "wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260808-025025#1": {
+  "at": "2026-08-08T07:50:16",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260808-025025.json",
+   "sha256": "ef61a1e9b8a9d8810043241d2dafa46269cf09a84ca0955c86aa52ec6aac39a6"
+  },
+  "score": 4,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
+ },
+ "wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260808-025025#2": {
+  "at": "2026-08-08T07:50:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260808-025025.json",
+   "sha256": "29b951a93b0731ad390606301e94d3723ee39e241b149711575d91e21d6e239e"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260808-025025#3": {
+  "at": "2026-08-08T07:50:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260808-025025.json",
+   "sha256": "ee1202bb7ad56a9e64ad0ceac930b28df25eacf481b2a5e5e0599aa1270f36e3"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260808-025025#4": {
+  "at": "2026-08-08T07:50:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_ohmenOrigins_ohmenOriginsV3-20260808-025025.json",
+   "sha256": "b4247cb1453eb049a1b0c56315c2d3af690f35c2a0cfbf632b09c8b7f939968e"
+  },
+  "score": 5,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260803-021608#1": {
   "at": "2026-08-04T11:44:58",
   "score": 1,
@@ -15537,6 +19933,42 @@
  "wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260803-021608#2": {
   "at": "2026-08-04T11:44:59",
   "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260808-025254#1": {
+  "at": "2026-08-08T07:50:09",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260808-025254.json",
+   "sha256": "586691121c27bb3369d0b20ab3f04a8d0b7089aa8d5a31d9210726efe86902af"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260808-025254#2": {
+  "at": "2026-08-08T07:50:09",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260808-025254.json",
+   "sha256": "dd8190d3a3f639f7b07f2ab7d7c051b35fb71efef905a8429357897e77d11f43"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260808-025254#3": {
+  "at": "2026-08-08T07:50:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260808-025254.json",
+   "sha256": "da5797ab87849036e400ad1b6ed843c88d4253641cb3dd2bd866dbb748b5dd06"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260808-025254#4": {
+  "at": "2026-08-08T07:50:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_ohmenToontastic_ohmenToontasticV2-20260808-025254.json",
+   "sha256": "267ca2139550e21dddc9f56cd2d943031b455cf6cd6bb59643f333dc319c5827"
+  },
+  "score": 3,
   "tags": []
  },
  "wallPiece-overnight_shrine_perfectWorld_v3Baked-20260803-021723#1": {
@@ -15549,6 +19981,47 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_shrine_perfectWorld_v3Baked-20260808-025522#1": {
+  "at": "2026-08-08T07:49:55",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_perfectWorld_v3Baked-20260808-025522.json",
+   "sha256": "cde55f4ead1228ad2f25e39a71a2f98d08616ddbdbdea7fba03a9cf93d04100c"
+  },
+  "score": 1,
+  "tags": [
+   "flat",
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight_shrine_perfectWorld_v3Baked-20260808-025522#2": {
+  "at": "2026-08-08T07:49:58",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_perfectWorld_v3Baked-20260808-025522.json",
+   "sha256": "fe14b2598938cc2500e4be3158f386693ba30efa2191463ce98ed95f207c9a00"
+  },
+  "score": 1,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_shrine_perfectWorld_v3Baked-20260808-025522#3": {
+  "at": "2026-08-08T07:50:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_perfectWorld_v3Baked-20260808-025522.json",
+   "sha256": "34bf1a7e5b286ace3cdd96972db5f013b91f5ab2f419ed9555f842b62e11fca9"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_perfectWorld_v3Baked-20260808-025522#4": {
+  "at": "2026-08-08T07:50:07",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_perfectWorld_v3Baked-20260808-025522.json",
+   "sha256": "9041a5d17af9f37a9075c699a2777242745fdcb19692c2cb73f91008018be4e3"
+  },
+  "score": 6,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_sd-v1-4-20260803-021858#1": {
   "at": "2026-08-04T11:44:54",
   "score": 0,
@@ -15556,6 +20029,42 @@
  },
  "wallPiece-overnight_shrine_sd-v1-4-20260803-021858#2": {
   "at": "2026-08-04T11:44:55",
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_sd-v1-4-20260808-025804#1": {
+  "at": "2026-08-08T07:49:44",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_sd-v1-4-20260808-025804.json",
+   "sha256": "8ed9f47092eb170883d68e5791a3f2abec1a57a38d6c764c6e5562aed931daaa"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_sd-v1-4-20260808-025804#2": {
+  "at": "2026-08-08T07:49:45",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_sd-v1-4-20260808-025804.json",
+   "sha256": "6537739c2755a8f894069c737ffa7966b4baf677a91cb965f5af6dca515a43d5"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_sd-v1-4-20260808-025804#3": {
+  "at": "2026-08-08T07:49:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_sd-v1-4-20260808-025804.json",
+   "sha256": "7dac5df46ff037290c5c3f904b0a210eef2a39345ce8d5923754cd36020167df"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_sd-v1-4-20260808-025804#4": {
+  "at": "2026-08-08T07:49:47",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_sd-v1-4-20260808-025804.json",
+   "sha256": "29ace8ffa90097fe0cae005f8ef1710fd74cb9a11fb226bdbb217eacd1831612"
+  },
   "score": 0,
   "tags": []
  },
@@ -15569,6 +20078,46 @@
   "score": 2,
   "tags": []
  },
+ "wallPiece-overnight_shrine_sigmatron_Hyper-20260808-030037#1": {
+  "at": "2026-08-08T07:49:26",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_sigmatron_Hyper-20260808-030037.json",
+   "sha256": "f7bf4c0335536c11973ef65ea46045110a40cbab8cf456709194977c839fa3ea"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_sigmatron_Hyper-20260808-030037#2": {
+  "at": "2026-08-08T07:49:27",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_sigmatron_Hyper-20260808-030037.json",
+   "sha256": "a960627d8e3689aa609beae69f6c3e7cc35682d6a615f47cdfcda4f23e1e7aa3"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_sigmatron_Hyper-20260808-030037#3": {
+  "at": "2026-08-08T07:49:35",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_sigmatron_Hyper-20260808-030037.json",
+   "sha256": "64036b7708d9fb42dc5b1fb6b34de3c9ebe3ac9d9232520a7ad364e33390bf49"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_sigmatron_Hyper-20260808-030037#4": {
+  "at": "2026-08-08T07:49:42",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_sigmatron_Hyper-20260808-030037.json",
+   "sha256": "067c18a5eaf1ff93121b2f385451704ce67a5c55e0381c4d2107e356b00a9500"
+  },
+  "score": 2,
+  "tags": [
+   "busy",
+   "harsh",
+   "unguided"
+  ]
+ },
  "wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260803-022132#1": {
   "at": "2026-08-04T11:44:48",
   "score": 2,
@@ -15576,6 +20125,44 @@
  },
  "wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260803-022132#2": {
   "at": "2026-08-04T11:44:49",
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-030305#1": {
+  "at": "2026-08-08T07:49:16",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-030305.json",
+   "sha256": "447faf265e826ff97264c4a78de5808e61a52b7b3ff34986611bc7cabed4828c"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-030305#2": {
+  "at": "2026-08-08T07:49:17",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-030305.json",
+   "sha256": "0471570071fa995d9755952ac2cffb8119083fbd87486deb70a09ed79565eab2"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-030305#3": {
+  "at": "2026-08-08T07:49:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-030305.json",
+   "sha256": "3468e11673f89f6b08a07038089d636a1023a762396df3896515a4ebf9bf6173"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-030305#4": {
+  "at": "2026-08-08T07:49:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_slimexFp16NoEmaClipFix_slimex2KClipFix-20260808-030305.json",
+   "sha256": "462a678da6d747507175ab6e456d28cd2841939dba19f683f7d27639fb3dceb7"
+  },
   "score": 1,
   "tags": []
  },
@@ -15589,6 +20176,42 @@
   "score": 1,
   "tags": []
  },
+ "wallPiece-overnight_shrine_tAnimeV4Pruned_v40-20260808-030535#1": {
+  "at": "2026-08-08T07:49:12",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_tAnimeV4Pruned_v40-20260808-030535.json",
+   "sha256": "76b1d4e297ef5180574ef965686526e70e42309b85b87952e0c773ba42003fa7"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_tAnimeV4Pruned_v40-20260808-030535#2": {
+  "at": "2026-08-08T07:49:13",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_tAnimeV4Pruned_v40-20260808-030535.json",
+   "sha256": "4110078a114b4876fecb94d5597a910a0e31c22ebf299564671bf231b3d268ed"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_tAnimeV4Pruned_v40-20260808-030535#3": {
+  "at": "2026-08-08T07:49:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_tAnimeV4Pruned_v40-20260808-030535.json",
+   "sha256": "7de19ab2989e8f8a98fbd44b13f72192f5fbc70ca3be06a45dcefd878162cc9b"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_tAnimeV4Pruned_v40-20260808-030535#4": {
+  "at": "2026-08-08T07:49:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_tAnimeV4Pruned_v40-20260808-030535.json",
+   "sha256": "cb3c12ad40427d227b365a45024871a0f2774fbbd3c6cd63f503620ed23156b3"
+  },
+  "score": 1,
+  "tags": []
+ },
  "wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260803-022403#1": {
   "at": "2026-08-04T11:44:41",
   "score": 0,
@@ -15597,6 +20220,42 @@
  "wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260803-022403#2": {
   "at": "2026-08-04T11:44:44",
   "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260808-030805#1": {
+  "at": "2026-08-08T07:49:05",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260808-030805.json",
+   "sha256": "68c0bc1fdd3a8b163c42e34613e4c64aeccaa53987914f9a7c87bf1c69ed685c"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260808-030805#2": {
+  "at": "2026-08-08T07:49:06",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260808-030805.json",
+   "sha256": "95c0e0de51342eb9183a3b173d9cbc9c6bd798a1e25f343c59feb9f095c8ee1a"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260808-030805#3": {
+  "at": "2026-08-08T07:49:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260808-030805.json",
+   "sha256": "eeb76578b86093733eeeebcc1a53764bd3c7c18520bfa9ba3f67b1e5265d03b8"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260808-030805#4": {
+  "at": "2026-08-08T07:49:11",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_v1-5-pruned-emaonly-20260808-030805.json",
+   "sha256": "fd64f50f4b7e63d5288e83f6b9f24b814c574248634abeb50d8a52638199ed6c"
+  },
+  "score": 1,
   "tags": []
  },
  "wallPiece-overnight_shrine_virileReality_v20-20260803-022524#1": {
@@ -15608,6 +20267,47 @@
   "at": "2026-08-04T11:44:39",
   "score": 3,
   "tags": []
+ },
+ "wallPiece-overnight_shrine_virileReality_v20-20260808-031044#1": {
+  "at": "2026-08-08T07:48:46",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_virileReality_v20-20260808-031044.json",
+   "sha256": "982af8c7ad311b811e25cbd1c2b87fc21a8e855d5a973b8b20382e105f02bb03"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_virileReality_v20-20260808-031044#2": {
+  "at": "2026-08-08T07:48:52",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_virileReality_v20-20260808-031044.json",
+   "sha256": "f1fb1d4cf8f5133f02d8101d99f34854f74cf739e1bcfadc1ede50af981660e1"
+  },
+  "score": 4,
+  "tags": [
+   "harsh"
+  ]
+ },
+ "wallPiece-overnight_shrine_virileReality_v20-20260808-031044#3": {
+  "at": "2026-08-08T07:48:57",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_virileReality_v20-20260808-031044.json",
+   "sha256": "02b4a234f9d1cba4a6986608260566ea60a96bed6dc3334310dc2be83cc3da95"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight_shrine_virileReality_v20-20260808-031044#4": {
+  "at": "2026-08-08T07:49:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight_shrine_virileReality_v20-20260808-031044.json",
+   "sha256": "6e4ddd7694c8e298e00e8d8db98011689ce5114ff6ddb4884ec1c16822e0aa59"
+  },
+  "score": 5,
+  "tags": [
+   "harsh",
+   "outdoor"
+  ]
  },
  "wallPiece-rating_wall_homosimile_fitted-20260803-220236#1": {
   "at": "2026-08-04T10:51:38",
