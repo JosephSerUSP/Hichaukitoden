@@ -1,11 +1,14 @@
 # Repository CI baseline (issue #164).
 #
-# Phase A -- REQUIRED: G1, unit and save run on a clean GitHub-hosted Windows
-# runner and fail the job when red.
+# Phase A: G1, unit and save run on a clean GitHub-hosted Windows runner.
 #
-# Phase B -- PROBE ONLY: the golden gates G2/G3/G4 run but cannot fail the job.
-# They are gathering determinism evidence across repeated runs on fresh runners;
-# promoting them to required is a separate, deliberate change.
+# Phase B: the golden gates G2/G3/G4 are enabled here too. They were first run
+# as non-blocking probes; across repeated dispatches of the same commit on fresh
+# runners they agreed with local results every time, which is the evidence this
+# promotion rests on. The single failure seen while probing (G4) was not
+# flakiness -- it was a real parse bug in check-state.ps1, fixed separately.
+#
+# reachability stays non-blocking by design: it is a report, not a gate.
 #
 # G5/G6 are out of scope for hosted CI entirely: they depend on GPU/driver and
 # browser rendering environments, so an uncontrolled cloud runner would
@@ -20,8 +23,8 @@ on:
   push:
     branches: [main]
   pull_request:
-  # Phase B determinism evidence requires re-running the SAME commit on fresh
-  # runners; manual dispatch is how those repeat runs are triggered.
+  # Re-running the SAME commit on fresh runners is how gate determinism was
+  # established, and how it can be re-checked later.
   workflow_dispatch:
 
 permissions:
@@ -33,7 +36,7 @@ concurrency:
 
 jobs:
   phase-a:
-    name: G1 + unit + save (Windows)
+    name: gates (Windows)
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -153,9 +156,9 @@ jobs:
           Write-Host $info.Trim()
           if ($info -notmatch "renderer:") { throw "LOVE could not create an OpenGL context" }
 
-      # The three verification commands below are the project's canonical entry
-      # points, invoked unmodified. Gate semantics live in the repository, not
-      # in this YAML, so local and CI verification stay aligned as they evolve.
+      # Every gate below is a canonical project entry point, invoked unmodified.
+      # Gate semantics live in the repository, not in this YAML, so local and CI
+      # verification stay aligned as those entry points evolve.
 
       - name: G1 - data validation
         shell: pwsh
@@ -179,54 +182,46 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "save gate failed (exit $LASTEXITCODE)" }
 
       # ---------------------------------------------------------------------
-      # Phase B probe -- NON-BLOCKING on purpose.
+      # Golden gates, invoked exactly as they are locally (bare `lovec`,
+      # resolved via PATH), so CI cannot drift from local gate semantics.
       #
-      # Issue #164 requires each golden gate to be exercised repeatedly from
-      # fresh hosted runners against the same known-good commit before it can be
-      # trusted as a required check; a single green run is not evidence of
-      # determinism. These steps therefore gather that evidence without being
-      # able to fail the job. Promoting them to required is a separate,
-      # deliberate change once the runs justify it.
-      #
-      # The gate scripts are invoked exactly as they are locally (bare `lovec`,
-      # resolved via PATH), so CI cannot drift from local semantics.
+      # A red gate here means a behavioral regression to investigate for G2/G3,
+      # or a stale docs/ENGINE-STATE.md for G4. CI never regenerates either --
+      # recapturing a reference is an owner-signed action.
       # ---------------------------------------------------------------------
 
-      - name: 'Phase B probe: G2 battle golden traces'
+      - name: G2 - battle golden traces
         id: g2
-        continue-on-error: true
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check.ps1
           if ($LASTEXITCODE -ne 0) { throw "G2 mismatch (exit $LASTEXITCODE)" }
 
-      - name: 'Phase B probe: G3 UI golden traces'
+      - name: G3 - UI golden traces
         id: g3
-        continue-on-error: true
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check-ui.ps1
           if ($LASTEXITCODE -ne 0) { throw "G3 mismatch (exit $LASTEXITCODE)" }
 
-      - name: 'Phase B probe: G4 engine-state consistency'
+      - name: G4 - engine-state consistency
         id: g4
-        continue-on-error: true
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/golden/check-state.ps1
           if ($LASTEXITCODE -ne 0) { throw "G4 mismatch (exit $LASTEXITCODE)" }
 
-      - name: 'Phase B probe: reachability (informational, never a gate)'
+      - name: reachability (informational, never a gate)
         continue-on-error: true
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
           & $env:LOVEC . reachability
 
-      - name: Phase B probe summary
+      - name: Gate summary
         if: always()
         shell: pwsh
         run: |
@@ -235,7 +230,7 @@ jobs:
             @{ gate = "G3 UI";           result = "${{ steps.g3.outcome }}" }
             @{ gate = "G4 engine-state"; result = "${{ steps.g4.outcome }}" }
           )
-          "## Phase B probe (non-blocking)" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "## Golden gates" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           "" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           "| gate | result |" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           "|---|---|" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
